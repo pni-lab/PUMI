@@ -13,7 +13,7 @@ subjects = ['001', '002', '003']  # subjects for which a brain extraction should
 
 
 # Change current working directory to PUMI, if necessary
-if os.getcwd().find('/PUMI/scripts') != -1:
+if os.getcwd().find('/PUMI/examples') != -1:
     os.chdir('..')
 
 # Step 1: Create a subroutine (subgraph) for every subject
