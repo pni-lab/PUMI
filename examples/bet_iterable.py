@@ -1,6 +1,7 @@
 from nipype import Node, IdentityInterface, Workflow, DataSink, Function
 from nipype.interfaces import BIDSDataGrabber, fsl
 from nipype.utils.filemanip import list_to_filename
+import PUMI.anat_preproc.Better as bet
 import os
 
 # experiment specific parameters:
@@ -45,7 +46,7 @@ path_extractor = Node(
 )
 
 # Step 4: Do the brain extraction
-bet = Node(fsl.BET(), name='bet_node')
+bet_wf = bet.bet_workflow()
 
 # Step 5: Save results
 sinker = Node(DataSink(), name='sinker')
@@ -58,7 +59,7 @@ wf.base_dir = os.path.abspath(working_dir)
 wf.connect([
     (inputspec, bids_grabber, [('subject', 'subject')]),
     (bids_grabber, path_extractor, [('T1w', 'filelist')]),
-    (path_extractor, bet, [('out_file', 'in_file')]),
-    (bet, sinker, [('out_file', 'BET')])
+    (path_extractor, bet_wf, [('out_file', 'inputspec.in_file')]),
+    (bet_wf, sinker, [('outputspec.brain', 'BET')])
 ])
 wf.run()
