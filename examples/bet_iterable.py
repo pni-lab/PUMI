@@ -1,5 +1,6 @@
 from nipype import Node, IdentityInterface, Workflow, DataSink, Function
 from nipype.interfaces import BIDSDataGrabber, fsl
+from nipype.utils.filemanip import list_to_filename
 import os
 
 # experiment specific parameters:
@@ -30,16 +31,18 @@ bids_grabber.inputs.output_query = {
         extension=['nii', 'nii.gz']
     )
 }
-# bids_grabber output is a list
 
 # Step 3: 'Unpack' list from bids_grabber
 # bids_grabber returns a list with a string (path to the anat image of a subject),
 # but fsl.Bet does not take a list as a input file
-extract_path = lambda in_list: in_list[0]
-path_extractor = Node(Function(input_names=["in_list"],
-                               output_names=["out_file"],
-                               function=extract_path),
-                      name="list_extract")
+path_extractor = Node(
+    Function(
+        input_names=["filelist"],
+        output_names=["out_file"],
+        function=list_to_filename
+    ),
+    name="path_extractor_node"
+)
 
 # Step 4: Do the brain extraction
 bet = Node(fsl.BET(), name='bet_node')
@@ -54,7 +57,7 @@ wf = Workflow(name='bet_iter_wf')
 wf.base_dir = os.path.abspath(working_dir)
 wf.connect([
     (inputspec, bids_grabber, [('subject', 'subject')]),
-    (bids_grabber, path_extractor, [('T1w', 'in_list')]),
+    (bids_grabber, path_extractor, [('T1w', 'filelist')]),
     (path_extractor, bet, [('out_file', 'in_file')]),
     (bet, sinker, [('out_file', 'BET')])
 ])
