@@ -1,21 +1,28 @@
 def bet_workflow(Robust=True, fmri=False, SinkTag="anat_preproc", wf_name="brain_extraction"):
     """
-    Modified version of CPAC.anat_preproc.anat_preproc:
-
-    'source: https://github.com/FCP-INDI/C-PAC/blob/master/CPAC/anat_preproc/anat_preproc.py'
-
-    and 'Balint Kincses (2018)' code.
-
 
     Creates a brain extracted image and its mask from a T1w anatomical image.
 
-    Workflow inputs:
-        :param anat: The reoriented anatomical file.
-        :param SinkDir:
-        :param SinkTag: The output directiry in which the returned images (see workflow outputs) could be found.
+    :param bool Robust: Perform robust brain centre estimation (iterates BET several times)?
+    :param bool fmri: Input from an fMRI?
+    :param str SinkTag: Output directory in which the results can be found.
+    :param str wf_name: Name of the workflow.
+    :return: bet workflow
 
-    Workflow outputs:
-        :return: bet_workflow - workflow
+    **workflow inputs**:
+
+    - in_file (str) - The reoriented anatomical file.
+    - [optional] fract_int_thr (float) - FSL BET fractional intensity threshold.
+    - [optional] vertical_gradient (float) - FSL BET vertical gradient in fractional intensity threshold.
+
+    **workflow outputs**:
+
+    - brain (str) - Path to resulting extracted brain.
+    - brain-mask (str) - Path to binary brain mask.
+
+    Modified version of CPAC.anat_preproc.anat_preproc
+    (https://github.com/FCP-INDI/C-PAC/blob/master/CPAC/anat_preproc/anat_preproc.py)
+    and Balint Kincses (2018) code.
 
     """
 
