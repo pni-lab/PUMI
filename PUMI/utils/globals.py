@@ -1,6 +1,6 @@
 import os
 
-_SinkDir_ = "."
+_SinkDir_ = "data_out"
 _QCDir_ = "QC"
 _FSLDIR_ = os.environ['FSLDIR']
 
