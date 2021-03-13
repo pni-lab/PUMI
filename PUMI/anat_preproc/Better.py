@@ -54,21 +54,13 @@ def bet_workflow(Robust=True, fmri=False, SinkTag="anat_preproc", wf_name="brain
     inputspec.inputs.vertical_gradient = globals._fsl_bet_vertical_gradient_
 
     # Wraps command **bet**
-    bet = pe.MapNode(
-        interface=fsl.BET(),
-        iterfield=['in_file'],
-        name='bet'
-    )
+    bet = pe.Node(interface=fsl.BET(), name='bet')
     bet.inputs.mask = True
     # bet.inputs.robust=Robust
     if fmri:
         bet.inputs.functional = True
         myonevol = onevol.onevol_workflow(wf_name="onevol")
-        applymask = pe.MapNode(
-            fsl.ApplyMask(),
-            iterfield=['in_file', 'mask_file'],
-            name="apply_mask"
-        )
+        applymask = pe.Node(fsl.ApplyMask(), name="apply_mask")
 
     myqc = qc.vol2png(wf_name, overlay=True)
 
@@ -84,10 +76,7 @@ def bet_workflow(Robust=True, fmri=False, SinkTag="anat_preproc", wf_name="brain
     )
 
     # Save outputs which are important
-    ds = pe.Node(
-        interface=io.DataSink(),
-        name='ds'
-    )
+    ds = pe.Node(interface=io.DataSink(), name='ds')
     ds.inputs.base_directory = SinkDir
     ds.inputs.regexp_substitutions = [("(\/)[^\/]*$", ".nii.gz")]
 
