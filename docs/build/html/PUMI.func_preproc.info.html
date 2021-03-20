@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PUMI.func_preproc.info package &#8212; PUMI  documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PUMI.plot package" href="PUMI.plot.html" />
+    <link rel="prev" title="PUMI.func_preproc package" href="PUMI.func_preproc.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pumi-func-preproc-info-package">
+<h1>PUMI.func_preproc.info package<a class="headerlink" href="#pumi-func-preproc-info-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-PUMI.func_preproc.info.info_get">
+<span id="pumi-func-preproc-info-info-get-module"></span><h2>PUMI.func_preproc.info.info_get module<a class="headerlink" href="#module-PUMI.func_preproc.info.info_get" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="PUMI.func_preproc.info.info_get.get_idx">
+<code class="sig-prename descclassname"><span class="pre">PUMI.func_preproc.info.info_get.</span></code><code class="sig-name descname"><span class="pre">get_idx</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refvolnumb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#PUMI.func_preproc.info.info_get.get_idx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adapted from C-PAC (<a class="reference external" href="https://github.com/FCP-INDI/C-PAC">https://github.com/FCP-INDI/C-PAC</a>)
+Method to get the first and the last slice for
+the functional run. It verifies the user specified
+first and last slice. If the values are not valid, it
+calculates and returns the very first and the last slice</p>
+<dl class="simple">
+<dt>in_file<span class="classifier">string (nifti file)</span></dt><dd><p>Path to input functional run</p>
+</dd>
+<dt>stop_idx<span class="classifier">int</span></dt><dd><p>Last volume to be considered, specified by user
+in the configuration file</p>
+</dd>
+<dt>stop_idx<span class="classifier">int</span></dt><dd><p>First volume to be considered, specified by user
+in the configuration file</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>stop_idx<span class="classifier">int</span></dt><dd><p>Value of first slice to consider for the functional run</p>
+</dd>
+<dt>start_idx<span class="classifier">int</span></dt><dd><p>Value of last slice to consider for the functional run</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="PUMI.func_preproc.info.info_get.get_scan_info">
+<code class="sig-prename descclassname"><span class="pre">PUMI.func_preproc.info.info_get.</span></code><code class="sig-name descname"><span class="pre">get_scan_info</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#PUMI.func_preproc.info.info_get.get_scan_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get useful scan-parameters.</p>
+<p>Function to extract some useful scan-parameters.</p>
+<dl class="simple">
+<dt>in_file<span class="classifier">str</span></dt><dd><p>Path to (functional!) nifti-image</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>TR<span class="classifier">float</span></dt><dd><p>Time-to-repetition of file</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-PUMI.func_preproc.info">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-PUMI.func_preproc.info" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PUMI</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">PUMI</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="PUMI.html">PUMI package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">PUMI</a><ul>
+  <li><a href="PUMI.html">PUMI package</a><ul>
+  <li><a href="PUMI.func_preproc.html">PUMI.func_preproc package</a><ul>
+      <li>Previous: <a href="PUMI.func_preproc.html" title="previous chapter">PUMI.func_preproc package</a></li>
+      <li>Next: <a href="PUMI.plot.html" title="next chapter">PUMI.plot package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Laboratory of Predictive Neuroimaging - University Hospital Essen, Germany.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/PUMI.func_preproc.info.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
