@@ -7,7 +7,7 @@ def plot_matrix(matrix_file, modules, atlas=False, output_file="matrix.png"):
     from matplotlib.colors import ListedColormap
     import matplotlib.cm as cm
     import nibabel as nb
-    import PUMI.utils.globals as glb
+    import PUMI.utils.default as default
     import numpy as np
     from nilearn.plotting import plot_img
 
@@ -55,7 +55,7 @@ def plot_matrix(matrix_file, modules, atlas=False, output_file="matrix.png"):
         gslegend = mgs.GridSpecFromSubplotSpec(
             5, 1, subplot_spec=gs[2], wspace=0.0, hspace=0.0)
 
-        background_file = glb._FSLDIR_ + "/data/standard/MNI152_T1_3mm_brain.nii.gz" #TODO: works only for 3mm atlas
+        background_file = default._FSLDIR_ + "/data/standard/MNI152_T1_3mm_brain.nii.gz" #TODO: works only for 3mm atlas
         background = nb.load(background_file)
         atlas = nb.load(atlas)
 
@@ -88,7 +88,7 @@ def plot_conn_hist(matrix_file, modules, atlas=False, output_file="hist.png"):
     from matplotlib import gridspec as mgs
     import matplotlib.cm as cm
     from matplotlib.colors import ListedColormap
-    import PUMI.utils.globals as glb
+    import PUMI.utils.default as default
     import pandas as pd
     import numpy as np
     import nibabel as nb
@@ -139,7 +139,7 @@ def plot_conn_hist(matrix_file, modules, atlas=False, output_file="hist.png"):
         gslegend = mgs.GridSpecFromSubplotSpec(
             5, 1, subplot_spec=gs[1], wspace=0.0, hspace=0.0)
 
-        background_file = glb._FSLDIR_ + "/data/standard/MNI152_T1_3mm_brain.nii.gz" #TODO: works only for 3mm atlas
+        background_file = default._FSLDIR_ + "/data/standard/MNI152_T1_3mm_brain.nii.gz" #TODO: works only for 3mm atlas
         background = nb.load(background_file)
         atlas = nb.load(atlas)
 
@@ -172,7 +172,7 @@ def plot_conn_polar(matrix_file, modules, atlas=False, output_file="hist.png"):
     from matplotlib import gridspec as mgs
     import matplotlib.cm as cm
     from matplotlib.colors import ListedColormap
-    import PUMI.utils.globals as glb
+    import PUMI.utils.default as default
     import pandas as pd
     import numpy as np
     import nibabel as nb
@@ -236,7 +236,7 @@ def plot_conn_polar(matrix_file, modules, atlas=False, output_file="hist.png"):
         gslegend = mgs.GridSpecFromSubplotSpec(
             5, 1, subplot_spec=gs[1], wspace=0.0, hspace=0.0)
 
-        background_file = glb._FSLDIR_ + "/data/standard/MNI152_T1_3mm_brain.nii.gz" #TODO: works only for 3mm atlas
+        background_file = default._FSLDIR_ + "/data/standard/MNI152_T1_3mm_brain.nii.gz" #TODO: works only for 3mm atlas
         background = nb.load(background_file)
         atlas = nb.load(atlas)
 

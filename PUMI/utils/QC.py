@@ -4,14 +4,14 @@ import nipype.interfaces.fsl as fsl
 import nipype.interfaces.io as io
 from nipype.interfaces.utility import Function
 import os
-import PUMI.utils.globals as globals
+import PUMI.utils.default as default
 
 # TODO_ready: its not really .png, its .ppm
 # HINT: you can try to put various qc images in the same folder by using the tag parameter, like e.g. in IcaAroma.py
 def vol2png(qcname, tag="", overlay=True, overlayiterated=True):
     import PUMI.func_preproc.Onevol as onevol
 
-    QCDir = os.path.abspath(globals._SinkDir_ + "/" + globals._QCDir_)
+    QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
         os.makedirs(QCDir)
 
@@ -83,7 +83,7 @@ def timecourse2png(qcname, tag="", type=TsPlotType.ALL, SinkDir=".", QCDIR="QC")
     import nipype.interfaces.fsl as fsl
     import nipype.interfaces.io as io
 
-    QCDir = os.path.abspath(globals._SinkDir_ + "/" + globals._QCDir_)
+    QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
         os.makedirs(QCDir)
 
@@ -161,7 +161,7 @@ def fMRI2QC(qcname, tag="", SinkDir=".", QCDIR="QC", indiv_atlas=False):
     import nipype.interfaces.utility as utility
     import PUMI.plot.image as plot
 
-    QCDir = os.path.abspath(globals._SinkDir_ + "/" + globals._QCDir_)
+    QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
         os.makedirs(QCDir)
 
@@ -171,7 +171,7 @@ def fMRI2QC(qcname, tag="", SinkDir=".", QCDIR="QC", indiv_atlas=False):
     # Basic interface class generates identity mappings
     inputspec = pe.Node(utility.IdentityInterface(fields=['func', 'atlas', 'confounds']),
                         name='inputspec')
-    inputspec.inputs.atlas = globals._FSLDIR_ + '/data/atlases/HarvardOxford/HarvardOxford-cort-maxprob-thr25-3mm.nii.gz'
+    inputspec.inputs.atlas = default._FSLDIR_ + '/data/atlases/HarvardOxford/HarvardOxford-cort-maxprob-thr25-3mm.nii.gz'
 
 
     if indiv_atlas:
@@ -214,7 +214,7 @@ def regTimeseriesQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
     import nipype.interfaces.utility as utility
     import PUMI.plot.timeseries as plot
 
-    QCDir = os.path.abspath(globals._SinkDir_ + "/" + globals._QCDir_)
+    QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
         os.makedirs(QCDir)
 
@@ -257,7 +257,7 @@ def matrixQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
     import nipype.interfaces.utility as utility
     import PUMI.plot.connectivity as plot
 
-    QCDir = os.path.abspath(globals._SinkDir_ + "/" + globals._QCDir_)
+    QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
         os.makedirs(QCDir)
 

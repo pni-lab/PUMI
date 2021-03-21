@@ -27,9 +27,9 @@ def onevol_workflow(SinkTag="anat_preproc", wf_name="get_example_vol"):
     import nipype.interfaces. fsl as fsl
     import PUMI.func_preproc.info.info_get as info_get
     import nipype.interfaces.io as io
-    import PUMI.utils.globals as globals
+    import PUMI.utils.default as default
 
-    SinkDir = os.path.abspath(globals._SinkDir_ + "/" + SinkTag)
+    SinkDir = os.path.abspath(default._SinkDir_ + "/" + SinkTag)
     if not os.path.exists(SinkDir):
         os.makedirs(SinkDir)
 
