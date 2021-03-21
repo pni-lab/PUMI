@@ -8,6 +8,10 @@
 # 
 #     https://github.com/ReproNim/neurodocker
 
+
+# FSL is non-free!
+# Read the licence of FSL at https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Licence
+
 FROM neurodebian:stretch-non-free
 
 USER root
