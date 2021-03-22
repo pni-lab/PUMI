@@ -39,14 +39,12 @@ def onevol_workflow(SinkTag="anat_preproc", wf_name="get_example_vol"):
     #inputspec.inputs.func = "/home/balint/Dokumentumok/phd/essen/PAINTER/probe/s002/func_data.nii.gz"
 
     # Get dimension infos
-    idx = pe.MapNode(interface=info_get.tMinMax,
-                     iterfield=['in_files'],
-                     name='idx')
+    idx = pe.Node(interface=info_get.tMinMax,
+                  name='idx')
 
     # Get the last volume of the func image
-    fslroi = pe.MapNode(fsl.ExtractROI(),
-                      iterfield=['in_file', 't_min'],
-                      name='fslroi')
+    fslroi = pe.Node(fsl.ExtractROI(),
+                     name='fslroi')
     fslroi.inputs.t_size = 1
 
     # Basic interface class generates identity mappings
