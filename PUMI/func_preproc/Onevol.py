@@ -36,7 +36,6 @@ def onevol_workflow(SinkTag="anat_preproc", wf_name="get_example_vol"):
     # Basic interface class generates identity mappings
     inputspec = pe.Node(utility.IdentityInterface(fields=['func']),
                         name='inputspec')
-    #inputspec.inputs.func = "/home/balint/Dokumentumok/phd/essen/PAINTER/probe/s002/func_data.nii.gz"
 
     # Get dimension infos
     idx = pe.Node(interface=info_get.tMinMax,
