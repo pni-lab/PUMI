@@ -33,10 +33,10 @@ def bet_workflow(Robust=True, fmri=False, SinkTag="anat_preproc", wf_name="brain
     import nipype.interfaces.fsl as fsl
     import nipype.interfaces.io as io
     import PUMI.utils.QC as qc
-    import PUMI.utils.globals as globals
+    import PUMI.utils.default as default
     import PUMI.func_preproc.Onevol as onevol
 
-    SinkDir = os.path.abspath(globals._SinkDir_ + "/" + SinkTag)
+    SinkDir = os.path.abspath(default._SinkDir_ + "/" + SinkTag)
     if not os.path.exists(SinkDir):
         os.makedirs(SinkDir)
 
@@ -54,11 +54,11 @@ def bet_workflow(Robust=True, fmri=False, SinkTag="anat_preproc", wf_name="brain
     )
     inputspec.inputs.opt_R = Robust
     if fmri:
-        inputspec.inputs.fract_int_thr = globals._fsl_bet_fract_int_thr_func_
+        inputspec.inputs.fract_int_thr = default._fsl_bet_fract_int_thr_func_
     else:
-        inputspec.inputs.fract_int_thr = globals._fsl_bet_fract_int_thr_anat_
+        inputspec.inputs.fract_int_thr = default._fsl_bet_fract_int_thr_anat_
 
-    inputspec.inputs.vertical_gradient = globals._fsl_bet_vertical_gradient_
+    inputspec.inputs.vertical_gradient = default._fsl_bet_vertical_gradient_
 
     # Wraps command **bet**
     bet = pe.Node(interface=fsl.BET(), name='bet')

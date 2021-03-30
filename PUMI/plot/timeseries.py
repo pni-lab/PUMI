@@ -35,7 +35,7 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, nskip=
     from matplotlib import gridspec as mgs
     import matplotlib.cm as cm
     from matplotlib.colors import ListedColormap
-    import PUMI.utils.globals as glb
+    import PUMI.utils.default as default
 
     from nilearn.plotting import plot_img
 
@@ -123,7 +123,7 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, nskip=
             5, 1, subplot_spec=gs[2], wspace=0.0, hspace=0.0)
 
         if not background_file:
-            background_file = atlas#glb._FSLDIR_ + "/data/standard/MNI152_T1_2mm_brain.nii.gz" #TODO: works only for 3mm atlas
+            background_file = atlas#default._FSLDIR_ + "/data/standard/MNI152_T1_2mm_brain.nii.gz" #TODO: works only for 3mm atlas
         background = nb.load(background_file)
         atlas = nb.load(atlas)
 
