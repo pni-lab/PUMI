@@ -1,24 +1,24 @@
 def onevol_workflow(SinkTag="anat_preproc", wf_name="get_example_vol"):
 
+    """
+    This function receives the raw functional image and returns the ROI of the last volume for registration purposes
+    as well as information from the header file.
 
-    '''
-    This function receive the raw functional image and return its last volume for registration purposes.
-    MORE: It also returns information from the header file.
-        Workflow inputs:
-            :param func: Functional image.
-            :param SinkDir:
-            :param SinkTag: The output directiry in which the returned images (see workflow outputs) could be found.
+    :param str SinkTag: The output directory in which the returned images could be found.
+    :param str wf_name: Name of the workflow.
 
-        Workflow outputs:
+    **workflow inputs**:
 
+    - func (str) - The functional image.
 
-            :return: onevol_workflow - workflow
+    **workflow outputs**:
 
-        Balint Kincses
-        kincses.balint@med.u-szeged.hu
-        2018
+    - func1vol (str) - ROI of last volume.
+    - brain-mask (str) - Path to binary brain mask.
 
-    '''
+    Modified version of Balint Kincses (2018) code.
+
+    """
 
     import os
     import nipype
@@ -36,17 +36,14 @@ def onevol_workflow(SinkTag="anat_preproc", wf_name="get_example_vol"):
     # Basic interface class generates identity mappings
     inputspec = pe.Node(utility.IdentityInterface(fields=['func']),
                         name='inputspec')
-    #inputspec.inputs.func = "/home/balint/Dokumentumok/phd/essen/PAINTER/probe/s002/func_data.nii.gz"
 
     # Get dimension infos
-    idx = pe.MapNode(interface=info_get.tMinMax,
-                     iterfield=['in_files'],
-                     name='idx')
+    idx = pe.Node(interface=info_get.tMinMax,
+                  name='idx')
 
     # Get the last volume of the func image
-    fslroi = pe.MapNode(fsl.ExtractROI(),
-                      iterfield=['in_file', 't_min'],
-                      name='fslroi')
+    fslroi = pe.Node(fsl.ExtractROI(),
+                     name='fslroi')
     fslroi.inputs.t_size = 1
 
     # Basic interface class generates identity mappings
