@@ -60,7 +60,6 @@ def plot_matrix(matrix_file, modules, atlas=False, output_file="matrix.png"):
         atlas = nb.load(atlas)
 
         nslices = background.shape[-1]
-        #coords = np.linspace(int(0 * nslices), int(0.99 * nslices), 5).astype(np.uint8)
         coords = [-40, 20, 0, 20, 40] #works in MNI space
         lut2 = lut
         lut2 = np.array([0] + lut2.tolist())
@@ -144,7 +143,6 @@ def plot_conn_hist(matrix_file, modules, atlas=False, output_file="hist.png"):
         atlas = nb.load(atlas)
 
         nslices = background.shape[-1]
-        #coords = np.linspace(int(0 * nslices), int(0.99 * nslices), 5).astype(np.uint8)
         coords = [-40, 20, 0, 20, 40] #works in MNI space
         lut2 = lut
         lut2 = np.array([0] + lut2.tolist())
@@ -195,7 +193,6 @@ def plot_conn_polar(matrix_file, modules, atlas=False, output_file="hist.png"):
         mat[np.ix_(idx, idx)] = None
         meandata.append( np.abs(np.array(sym_matrix_to_vec(submat))).mean())
 
-    #meandata.insert(0, np.array([0])) # temporary hack to make nicer inter-modular colors
     intermod = [x for x in sym_matrix_to_vec(mat) if x is not None]
     intermod = np.array(intermod)
     intermod = intermod[~np.isnan(intermod)]
@@ -225,10 +222,8 @@ def plot_conn_polar(matrix_file, modules, atlas=False, output_file="hist.png"):
     polx  = np.linspace(0, 2 * np.pi, len(meandata), endpoint=False)
     ax0.grid(True)
     ax0.set_xticks(polx)
-    #ax0.set_theta_zero_location("N")
-    #ax0.set_theta_direction(-1)
     ax0.bar(polx, meandata, color=cols)
-    labels=pd.Series(modules).unique().tolist() #.append("intermodular")
+    labels=pd.Series(modules).unique().tolist()
     labels.insert(0, "intermodular")
     ax0.set_xticklabels(labels)
 
@@ -241,7 +236,6 @@ def plot_conn_polar(matrix_file, modules, atlas=False, output_file="hist.png"):
         atlas = nb.load(atlas)
 
         nslices = background.shape[-1]
-        #coords = np.linspace(int(0 * nslices), int(0.99 * nslices), 5).astype(np.uint8)
         coords = [-40, 20, 0, 20, 40] #works in MNI space
         lut2 = lut
         lut2 = np.array([0] + lut2.tolist())

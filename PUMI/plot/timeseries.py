@@ -102,7 +102,6 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, nskip=
     xticks = list(range(0, timeseries.shape[-1])[::interval])
     ax1.set_xticks(xticks)
     ax1.set_xlabel('time')
-    #ax1.set_xticklabels(['%.02f' % t for t in labels.tolist()], fontsize=5)
 
     # Remove and redefine spines
     for side in ["top", "right"]:
@@ -123,12 +122,11 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, nskip=
             5, 1, subplot_spec=gs[2], wspace=0.0, hspace=0.0)
 
         if not background_file:
-            background_file = atlas#default._FSLDIR_ + "/data/standard/MNI152_T1_2mm_brain.nii.gz" #TODO: works only for 3mm atlas
+            background_file = atlas  #TODO: works only for 3mm atlas
         background = nb.load(background_file)
         atlas = nb.load(atlas)
 
         nslices = background.shape[-1]
-        #coords = np.linspace(int(0 * nslices), int(0.99 * nslices), 5).astype(np.uint8)
         coords = [-40, 20, 0, 20, 40] #works in MNI space
         lut2 = lut
         lut2 = np.array([0] + lut2.tolist())

@@ -63,7 +63,6 @@ def bet_workflow(Robust=True, fmri=False, SinkTag="anat_preproc", wf_name="brain
     # Wraps command **bet**
     bet = pe.Node(interface=fsl.BET(), name='bet')
     bet.inputs.mask = True
-    # bet.inputs.robust=Robust
     if fmri:
         bet.inputs.functional = True
         myonevol = onevol.onevol_workflow(wf_name="onevol")
