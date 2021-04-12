@@ -27,8 +27,6 @@ def vol2png(qcname, tag="", overlay=True, overlayiterated=True):
     analysisflow.connect(inputspec, 'bg_image', myonevol_bg, 'inputspec.func')
 
     if overlay and not overlayiterated:
-        #myonevol_ol = onevol.onevol_workflow(wf_name="oneol")
-        #analysisflow.connect(inputspec, 'overlay_image', myonevol_ol, 'inputspec.func')
         slicer = pe.MapNode(interface=fsl.Slicer(),
                             iterfield=['in_file'],
                             name='slicer')
@@ -49,7 +47,6 @@ def vol2png(qcname, tag="", overlay=True, overlayiterated=True):
     slicer.inputs.out_file = qcname
     # set output all axial slices into one picture
     slicer.inputs.sample_axial = 5
-    #slicer.inputs.middle_slices = True
 
     # Save outputs which are important
     ds_qc = pe.Node(interface=io.DataSink(),
@@ -114,7 +111,6 @@ def timecourse2png(qcname, tag="", type=TsPlotType.ALL, SinkDir=".", QCDIR="QC")
         voxroi = pe.MapNode(fsl.ImageMaths(op_string= '-bin'),
                             iterfield=['in_file'],
                             name='voxroi')
-    # elif type == TsPloType.ROI: nothing to do here in this case, just connect it
 
 
     meants=pe.MapNode(fsl.ImageMeants(),
@@ -268,7 +264,6 @@ def matrixQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
     inputspec = pe.Node(utility.IdentityInterface(fields=['matrix_file', 'modules', 'atlas', 'output_file']),
                         name='inputspec')
     inputspec.inputs.modules = None
-    #inputspec.inputs.atlas = False
     inputspec.inputs.output_file = "qc_matrix.png"
 
     plt = pe.MapNode(interface=Function(input_names=['matrix_file', 'modules', 'atlas', 'output_file'],

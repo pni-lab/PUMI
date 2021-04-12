@@ -72,17 +72,12 @@ def plot_fmri_qc(func, atlaslabels, confounds, output_file=None):
         tr = img_nii.header.get_zooms()[-1]
         ntsteps = func_data.shape[-1]
 
-        data = func_data.reshape(-1, ntsteps)#[atlaslabels > 0].reshape(-1, ntsteps)
+        data = func_data.reshape(-1, ntsteps)
         seg = atlaslabels[atlaslabels > 0].reshape(-1)
 
         # Map segmentation
         if lut is None:
             lut = np.zeros((256,), dtype='int')
-            #lut[1:11] = 1
-            #lut[255] = 2
-            #lut[30:99] = 3
-            #lut[100:201] = 4
-
             lut[1] = 1
             lut[2] = 2
             lut[3] = 3
@@ -95,13 +90,6 @@ def plot_fmri_qc(func, atlaslabels, confounds, output_file=None):
         newsegm = lut[seg.astype(int)]
 
         p_dec = 1 + data.shape[0] // size[0]
-        #if p_dec:
-        #    data = data[::p_dec, :]
-        #    newsegm = newsegm[::p_dec]
-
-        #t_dec = 1 + data.shape[1] // size[1]
-        #if t_dec:
-        #    data = data[:, ::t_dec]
 
         # Detrend data
         v = (None, None)
@@ -262,10 +250,8 @@ def plot_fmri_qc(func, atlaslabels, confounds, output_file=None):
             ax_ts.spines["bottom"].set_color('none')
             ax_ts.spines["bottom"].set_visible(False)
 
-        # ax_ts.spines["left"].set_position(('outward', 30))
         ax_ts.spines["left"].set_color('none')
         ax_ts.spines["left"].set_visible(False)
-        # ax_ts.yaxis.set_ticks_position('left')
 
         # Calculate Y limits
         def_ylims = [tseries[~np.isnan(tseries)].min() - 0.1 * abs(tseries[~np.isnan(tseries)].min()),
@@ -281,8 +267,6 @@ def plot_fmri_qc(func, atlaslabels, confounds, output_file=None):
 
         ax_ts.set_ylim(def_ylims)
         yticks = sorted(def_ylims)
-        #ax_ts.set_yticks([])
-        #ax_ts.set_yticklabels([])
         ax_ts.set_yticks(yticks)
         ax_ts.set_yticklabels(['%.02f' % y for y in yticks], fontsize=5)
 
@@ -359,9 +343,7 @@ def plot_fmri_qc(func, atlaslabels, confounds, output_file=None):
         import nibabel as nib
 
         rest_data = nib.load(rest).get_data().astype(np.float32)
-        #maximum = rest_data.max()
         mask_data = rest_data[:, :, :, 0]
-        #mask_data[mask_data ] = 0  # 10% threshold fro DVARS!!! # should be already masked...
 
         # square of relative intensity value for each voxel across
         # every timepoint
@@ -408,8 +390,6 @@ def plot_fmri_qc(func, atlaslabels, confounds, output_file=None):
         confoundplot(
             tseries, grid[grid_id], color=palette[i], **kwargs)
         grid_id += 1
-
-    #plot_carpet(func, atlaslabels, subplot=grid[-1], detrend=True)
 
     if output_file is not None:
         figure = plt.gcf()
