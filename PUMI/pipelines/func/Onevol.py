@@ -1,4 +1,14 @@
-def onevol_workflow(SinkTag="anat_preproc", wf_name="get_example_vol"):
+import os
+from PUMI.engine import NestedWorkflow as Workflow
+from PUMI.engine import NestedNode as Node
+import nipype.interfaces.utility as utility
+import nipype.interfaces.fsl as fsl
+import PUMI.pipelines.func.info.info_get as info_get
+import nipype.interfaces.io as io
+import PUMI.utils_obsolate.default as default
+
+
+def onevol_workflow(SinkTag="anat", wf_name="get_example_vol"):
 
     """
     This function receives the raw functional image and returns the ROI of the last volume for registration purposes
@@ -20,43 +30,34 @@ def onevol_workflow(SinkTag="anat_preproc", wf_name="get_example_vol"):
 
     """
 
-    import os
-    import nipype
-    import nipype.pipeline as pe
-    import nipype.interfaces.utility as utility
-    import nipype.interfaces. fsl as fsl
-    import PUMI.func_preproc.info.info_get as info_get
-    import nipype.interfaces.io as io
-    import PUMI.utils.default as default
-
     SinkDir = os.path.abspath(default._SinkDir_ + "/" + SinkTag)
     if not os.path.exists(SinkDir):
         os.makedirs(SinkDir)
 
     # Basic interface class generates identity mappings
-    inputspec = pe.Node(utility.IdentityInterface(fields=['func']),
+    inputspec = Node(utility.IdentityInterface(fields=['func']),
                         name='inputspec')
 
     # Get dimension infos
-    idx = pe.Node(interface=info_get.tMinMax,
-                  name='idx')
+    idx = Node(interface=info_get.tMinMax,
+               name='idx')
 
     # Get the last volume of the func image
-    fslroi = pe.Node(fsl.ExtractROI(),
+    fslroi = Node(fsl.ExtractROI(),
                      name='fslroi')
     fslroi.inputs.t_size = 1
 
     # Basic interface class generates identity mappings
-    outputspec = pe.Node(utility.IdentityInterface(fields=['func1vol']),
+    outputspec = Node(utility.IdentityInterface(fields=['func1vol']),
                          name='outputspec')
 
     # Generic datasink module to store structured outputs
-    ds = pe.Node(interface=io.DataSink(),
+    ds = Node(interface=io.DataSink(),
                  name='ds')
     ds.inputs.base_directory = SinkDir
     ds.inputs.regexp_substitutions = [("(\/)[^\/]*$", ".nii.gz")]
 
-    analysisflow = nipype.Workflow(wf_name)
+    analysisflow = Workflow(wf_name)
     analysisflow.connect(inputspec, 'func', idx, 'in_files')
     analysisflow.connect(inputspec, 'func', fslroi, 'in_file')
     analysisflow.connect(idx, 'refvolidx', fslroi, 't_min')

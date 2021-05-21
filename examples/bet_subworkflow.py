@@ -1,7 +1,9 @@
-from nipype import Node, IdentityInterface, Workflow, DataSink, Function
+from nipype import IdentityInterface, Function
+from PUMI.engine import NestedWorkflow as Workflow
+from PUMI.engine import NestedNode as Node
 from nipype.interfaces import BIDSDataGrabber
 from nipype.utils.filemanip import list_to_filename
-import PUMI.pipelines.anat.Better_bckp as bet
+from PUMI.pipelines.anat.segmentation import bet_fsl
 import os
 
 # experiment specific parameters:
@@ -15,7 +17,7 @@ subjects = ['001', '002', '003']  # subjects for which a brain extraction should
 
 
 # Change current working directory to PUMI, if necessary
-if os.getcwd().find('/PUMI/examples') != -1:
+if os.getcwd().find('/PUMI_new/examples') != -1:
     os.chdir('..')
 
 # Step 1: Create a subroutine (subgraph) for every subject
@@ -46,20 +48,18 @@ path_extractor = Node(
 )
 
 # Step 4: Do the brain extraction
-bet_wf = bet.bet_workflow()
-
-# Step 5: Save results
-sinker = Node(DataSink(), name='sinker')
-sinker.inputs.base_directory = os.path.abspath(output_dir)
-sinker.inputs.substitutions = [('_subject_', 'bet-subject-')]
+# All PUMI subworkflows take care sinking and qc-ing the most important results
+bet_wf = bet_fsl('brain_extraction', qc_dir=os.path.abspath(working_dir) + '/qc',
+                 sink_dir=os.path.abspath(working_dir) + '/derivatives')
 
 # Step 6: Start workflow
-wf = Workflow(name='bet_iter_wf')
+wf = Workflow(name='workflow')
 wf.base_dir = os.path.abspath(working_dir)
 wf.connect([
     (inputspec, bids_grabber, [('subject', 'subject')]),
     (bids_grabber, path_extractor, [('T1w', 'filelist')]),
-    (path_extractor, bet_wf, [('out_file', 'inputspec.in_file')]),
-    (bet_wf, sinker, [('outputspec.brain', 'BET')])
+    (path_extractor, bet_wf, [('out_file', 'in_file')])
 ])
-wf.run()
+
+wf.run(plugin='MultiProc')
+wf.write_graph('graph.png')

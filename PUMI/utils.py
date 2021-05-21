@@ -1,5 +1,6 @@
 from nipype.interfaces.utility import Function
 
+
 def get_scan_info(in_file):
     """ Get useful scan-parameters.
 
@@ -21,6 +22,7 @@ def get_scan_info(in_file):
     header = func.header
     TR = header['pixdim'][4]
     return float(TR)
+
 
 def get_idx(in_files,refvolnumb=1, stop_idx=None, start_idx=None):
 

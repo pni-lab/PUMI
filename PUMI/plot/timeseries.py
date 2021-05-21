@@ -35,7 +35,7 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, nskip=
     from matplotlib import gridspec as mgs
     import matplotlib.cm as cm
     from matplotlib.colors import ListedColormap
-    import PUMI.utils.default as default
+    import PUMI.utils_obsolate.default as default
 
     from nilearn.plotting import plot_img
 

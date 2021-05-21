@@ -1,16 +1,20 @@
-import nipype.pipeline as pe
-import nipype.interfaces.utility as utility
+from PUMI.engine import NestedNode as Node
+from PUMI.engine import NestedMapNode as MapNode
+from PUMI.engine import NestedWorkflow as Workflow
+from nipype.interfaces.utility import Function
+import PUMI.utils_obsolate.default as default
 import nipype.interfaces.fsl as fsl
 import nipype.interfaces.io as io
-from nipype.interfaces.utility import Function
+import PUMI.plot.image as plot
 import os
-import PUMI.utils.default as default
+import nipype
+import nipype.interfaces.utility as utility
+import PUMI.plot.connectivity as plot
+
 
 # TODO_ready: its not really .png, its .ppm
 # HINT: you can try to put various qc images in the same folder by using the tag parameter, like e.g. in IcaAroma.py
 def vol2png(qcname, tag="", overlay=True, overlayiterated=True):
-    import PUMI.func_preproc.Onevol as onevol
-
     QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
         os.makedirs(QCDir)
@@ -18,28 +22,28 @@ def vol2png(qcname, tag="", overlay=True, overlayiterated=True):
     if tag:
         tag = "_" + tag
 
-    inputspec = pe.Node(utility.IdentityInterface(fields=['bg_image', 'overlay_image']),
+    inputspec = Node(utility.IdentityInterface(fields=['bg_image', 'overlay_image']),
                         name='inputspec')
 
-    analysisflow = pe.Workflow(name=qcname + tag + '_qc')
+    analysisflow = Workflow(name=qcname + tag + '_qc')
 
-    myonevol_bg = onevol.onevol_workflow(wf_name="onebg")
+    myonevol_bg = Onevol.onevol_workflow(wf_name="onebg")
     analysisflow.connect(inputspec, 'bg_image', myonevol_bg, 'inputspec.func')
 
     if overlay and not overlayiterated:
-        slicer = pe.MapNode(interface=fsl.Slicer(),
+        slicer = MapNode(interface=fsl.Slicer(),
                             iterfield=['in_file'],
                             name='slicer')
 
     # Create png images for quality check
     if overlay and overlayiterated:
-        myonevol_ol = onevol.onevol_workflow(wf_name="oneol")
+        myonevol_ol = Onevol.onevol_workflow(wf_name="oneol")
         analysisflow.connect(inputspec, 'overlay_image', myonevol_ol, 'inputspec.func')
-        slicer = pe.MapNode(interface=fsl.Slicer(),
+        slicer = MapNode(interface=fsl.Slicer(),
                         iterfield=['in_file', 'image_edges'],
                         name='slicer')
     if not overlay:
-        slicer = pe.MapNode(interface=fsl.Slicer(),
+        slicer = MapNode(interface=fsl.Slicer(),
                             iterfield=['in_file'],
                             name='slicer')
 
@@ -49,7 +53,7 @@ def vol2png(qcname, tag="", overlay=True, overlayiterated=True):
     slicer.inputs.sample_axial = 5
 
     # Save outputs which are important
-    ds_qc = pe.Node(interface=io.DataSink(),
+    ds_qc = Node(interface=io.DataSink(),
                  name='ds_qc')
     ds_qc.inputs.base_directory = QCDir
     ds_qc.inputs.regexp_substitutions = [("(\/)[^\/]*$", tag + ".ppm")]
@@ -73,12 +77,7 @@ class TsPlotType:
 
 # HINT: yopu can trey to put various qc images in the same folder by using the tag parameter, like in IcaAroma.py
 def timecourse2png(qcname, tag="", type=TsPlotType.ALL, SinkDir=".", QCDIR="QC"):
-    import os
-    import nipype
-    import nipype.pipeline as pe
-    import nipype.interfaces.utility as utility
-    import nipype.interfaces.fsl as fsl
-    import nipype.interfaces.io as io
+
 
     QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
@@ -88,11 +87,11 @@ def timecourse2png(qcname, tag="", type=TsPlotType.ALL, SinkDir=".", QCDIR="QC")
         tag = "_" + tag
 
     # Basic interface class generates identity mappings
-    inputspec = pe.Node(utility.IdentityInterface(fields=['func', 'mask', 'x', 'y', 'z']),
+    inputspec = Node(utility.IdentityInterface(fields=['func', 'mask', 'x', 'y', 'z']),
                         name='inputspec')
 
     if type == TsPlotType.VOX:
-        voxroi=pe.MapNode(fsl.ImageMaths(),
+        voxroi=MapNode(fsl.ImageMaths(),
                           iterfield=['in_file'],
                           name='voxroi')
         #TODO add voxel coordinates
@@ -103,26 +102,26 @@ def timecourse2png(qcname, tag="", type=TsPlotType.ALL, SinkDir=".", QCDIR="QC")
                            + str(y) + ' 1 '\
                            + str(z) + ' 1 0 -1 -bin'
 
-        voxroi_args = pe.Node(Function(input_names=['x', 'y', 'z'],
+        voxroi_args = Node(Function(input_names=['x', 'y', 'z'],
                                        output_names=['args'],
                                        function=setInputs),
                               name="voxroi_args")
     elif type == TsPlotType.ALL:
-        voxroi = pe.MapNode(fsl.ImageMaths(op_string= '-bin'),
+        voxroi = MapNode(fsl.ImageMaths(op_string= '-bin'),
                             iterfield=['in_file'],
                             name='voxroi')
 
 
-    meants=pe.MapNode(fsl.ImageMeants(),
+    meants=MapNode(fsl.ImageMeants(),
                       iterfield=['in_file', 'mask'],
                       name='meants')
 
-    plottimeser=pe.MapNode(fsl.PlotTimeSeries(),
+    plottimeser=MapNode(fsl.PlotTimeSeries(),
                            iterfield=['in_file'],
                            name='plottimeser')
 
     # Save outputs which are important
-    ds_qc = pe.Node(interface=io.DataSink(),
+    ds_qc = Node(interface=io.DataSink(),
                     name='ds_qc')
     ds_qc.inputs.base_directory = QCDir
     ds_qc.inputs.regexp_substitutions = [("(\/)[^\/]*$", tag + ".png")]
@@ -151,11 +150,7 @@ def timecourse2png(qcname, tag="", type=TsPlotType.ALL, SinkDir=".", QCDIR="QC")
 
 
 def fMRI2QC(qcname, tag="", SinkDir=".", QCDIR="QC", indiv_atlas=False):
-    import os
-    import nipype
-    import nipype.pipeline as pe
-    import nipype.interfaces.utility as utility
-    import PUMI.plot.image as plot
+
 
     QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
@@ -165,19 +160,19 @@ def fMRI2QC(qcname, tag="", SinkDir=".", QCDIR="QC", indiv_atlas=False):
         tag = "_" + tag
 
     # Basic interface class generates identity mappings
-    inputspec = pe.Node(utility.IdentityInterface(fields=['func', 'atlas', 'confounds']),
+    inputspec = Node(utility.IdentityInterface(fields=['func', 'atlas', 'confounds']),
                         name='inputspec')
     inputspec.inputs.atlas = default._FSLDIR_ + '/data/atlases/HarvardOxford/HarvardOxford-cort-maxprob-thr25-3mm.nii.gz'
 
 
     if indiv_atlas:
-        plotfmri = pe.MapNode(interface=Function(input_names=['func', 'atlaslabels', 'confounds', 'output_file'],
+        plotfmri = MapNode(interface=Function(input_names=['func', 'atlaslabels', 'confounds', 'output_file'],
                                                   output_names=['plotfile'],
                                                   function=plot.plot_fmri_qc),
                                iterfield=['func', 'confounds', 'atlaslabels'],
                                name="qc_fmri")
     else:
-        plotfmri = pe.MapNode(interface=Function(input_names=['func', 'atlaslabels', 'confounds', 'output_file'],
+        plotfmri = MapNode(interface=Function(input_names=['func', 'atlaslabels', 'confounds', 'output_file'],
                                              output_names=['plotfile'],
                                              function=plot.plot_fmri_qc),
                           iterfield=['func', 'confounds'],
@@ -187,7 +182,7 @@ def fMRI2QC(qcname, tag="", SinkDir=".", QCDIR="QC", indiv_atlas=False):
     # default atlas works only for standardized, 3mm-resoultion data
 
     # Save outputs which are important
-    ds_qc = pe.Node(interface=io.DataSink(),
+    ds_qc = Node(interface=io.DataSink(),
                     name='ds_qc')
     ds_qc.inputs.base_directory = QCDir
     ds_qc.inputs.regexp_substitutions = [("(\/)[^\/]*$", tag + ".png")]
@@ -206,7 +201,6 @@ def fMRI2QC(qcname, tag="", SinkDir=".", QCDIR="QC", indiv_atlas=False):
 def regTimeseriesQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
     import os
     import nipype
-    import nipype.pipeline as pe
     import nipype.interfaces.utility as utility
     import PUMI.plot.timeseries as plot
 
@@ -218,11 +212,11 @@ def regTimeseriesQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
         tag = "_" + tag
 
     # Basic interface class generates identity mappings
-    inputspec = pe.Node(utility.IdentityInterface(fields=['timeseries', 'modules', 'atlas']),
+    inputspec = Node(utility.IdentityInterface(fields=['timeseries', 'modules', 'atlas']),
                         name='inputspec')
     inputspec.inputs.atlas = None
 
-    plotregts = pe.MapNode(interface=Function(input_names=['timeseries', 'modules', 'output_file', 'atlas'],
+    plotregts = MapNode(interface=Function(input_names=['timeseries', 'modules', 'output_file', 'atlas'],
                                                   output_names=['plotfile'],
                                                   function=plot.plot_carpet_ts),
                                iterfield=['timeseries'],
@@ -230,7 +224,7 @@ def regTimeseriesQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
     plotregts.inputs.output_file = "qc_timeseries.png"
 
     # Save outputs which are important
-    ds_qc = pe.Node(interface=io.DataSink(),
+    ds_qc = Node(interface=io.DataSink(),
                     name='ds_qc')
     ds_qc.inputs.base_directory = QCDir
     ds_qc.inputs.regexp_substitutions = [("(\/)[^\/]*$", tag + ".png")]
@@ -247,11 +241,7 @@ def regTimeseriesQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
 
 
 def matrixQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
-    import os
-    import nipype
-    import nipype.pipeline as pe
-    import nipype.interfaces.utility as utility
-    import PUMI.plot.connectivity as plot
+
 
     QCDir = os.path.abspath(default._SinkDir_ + "/" + default._QCDir_)
     if not os.path.exists(QCDir):
@@ -261,24 +251,24 @@ def matrixQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
         tag = "_" + tag
 
     # Basic interface class generates identity mappings
-    inputspec = pe.Node(utility.IdentityInterface(fields=['matrix_file', 'modules', 'atlas', 'output_file']),
+    inputspec = Node(utility.IdentityInterface(fields=['matrix_file', 'modules', 'atlas', 'output_file']),
                         name='inputspec')
     inputspec.inputs.modules = None
     inputspec.inputs.output_file = "qc_matrix.png"
 
-    plt = pe.MapNode(interface=Function(input_names=['matrix_file', 'modules', 'atlas', 'output_file'],
+    plt = MapNode(interface=Function(input_names=['matrix_file', 'modules', 'atlas', 'output_file'],
                                                   output_names=['plotfile'],
                                                   function=plot.plot_matrix),
                                iterfield=['matrix_file'],
                                name="qc_conn_matrix")
 
-    plt_hist = pe.MapNode(interface=Function(input_names=['matrix_file', 'modules', 'atlas', 'output_file'],
+    plt_hist = MapNode(interface=Function(input_names=['matrix_file', 'modules', 'atlas', 'output_file'],
                                         output_names=['plotfile'],
                                         function=plot.plot_conn_hist),
                      iterfield=['matrix_file'],
                      name="qc_conn_hist")
 
-    plt_polar = pe.MapNode(interface=Function(input_names=['matrix_file', 'modules', 'atlas', 'output_file'],
+    plt_polar = MapNode(interface=Function(input_names=['matrix_file', 'modules', 'atlas', 'output_file'],
                                              output_names=['plotfile'],
                                              function=plot.plot_conn_polar),
                           iterfield=['matrix_file'],
@@ -286,25 +276,25 @@ def matrixQC(qcname, tag="", SinkDir=".", QCDIR="QC"):
 
 
     # Save outputs which are important
-    ds_qc = pe.Node(interface=io.DataSink(),
+    ds_qc = Node(interface=io.DataSink(),
                     name='ds_qc')
     ds_qc.inputs.base_directory = QCDir
     ds_qc.inputs.regexp_substitutions = [("(\/)[^\/]*$", tag + ".png")]
 
     # Save outputs which are important
-    ds_qc_hist = pe.Node(interface=io.DataSink(),
+    ds_qc_hist = Node(interface=io.DataSink(),
                     name='ds_qc_hist')
     ds_qc_hist.inputs.base_directory = QCDir
     ds_qc_hist.inputs.regexp_substitutions = [("(\/)[^\/]*$", tag + ".png")]
 
     # Save outputs which are important
-    ds_qc_polar = pe.Node(interface=io.DataSink(),
+    ds_qc_polar = Node(interface=io.DataSink(),
                          name='ds_qc_polar')
     ds_qc_polar.inputs.base_directory = QCDir
     ds_qc_polar.inputs.regexp_substitutions = [("(\/)[^\/]*$", tag + ".png")]
 
     # Create a workflow
-    analysisflow = nipype.Workflow(name=qcname + tag + '_qc')
+    analysisflow = Workflow(name=qcname + tag + '_qc')
 
     analysisflow.connect(inputspec, 'matrix_file', plt, 'matrix_file')
     analysisflow.connect(inputspec, 'output_file', plt, 'output_file')
