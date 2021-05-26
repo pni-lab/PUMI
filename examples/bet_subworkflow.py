@@ -49,8 +49,9 @@ path_extractor = Node(
 
 # Step 4: Do the brain extraction
 # All PUMI subworkflows take care sinking and qc-ing the most important results
-bet_wf = bet_fsl('brain_extraction', qc_dir=os.path.abspath(working_dir) + '/qc',
-                 sink_dir=os.path.abspath(working_dir) + '/derivatives')
+#bet_wf = bet_fsl('brain_extraction', qc_dir=os.path.abspath(working_dir) + '/ myQC',
+#                 sink_dir=os.path.abspath(working_dir) + '/deriv')
+bet_wf = bet_fsl('brain_extraction')
 
 # Step 6: Start workflow
 wf = Workflow(name='workflow')

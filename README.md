@@ -22,7 +22,9 @@ Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 - @PumiPipeline funcions' are minimalistic and do NO "housekeeping".
 
 # ToDo:
-- data sinker added by decorator class
-- decorated functions's signature: wf, inputspec, outputspec, sinker
+- <del>data sinker added by decorator class</del>
+- <del>decorated functions's signature: wf, inputspec, outputspec, sinker</del>
 - create child-decorator classes for modalities (modalities)
 - create a __main_decorator__ class
+- take a closer look on refvolidx in Onevol.py 
+- revise onevol.py

@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
 import nipype.interfaces.utility as utility
 from nipype.interfaces.io import DataSink
 from hashlib import sha1
 import re
+from PUMI import default
 
 
 def _parameterization_dir(param):
@@ -135,15 +135,22 @@ class NestedWorkflow(Workflow):
 # decorator class
 class PumiPipeline:
 
-    def __init__(self, inputspec_fields, outputspec_fields):
+    def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None):
+        if regexp_sub is None:
+            regexp_sub = []
         self.inputspec_fields = inputspec_fields
         self.outputspec_fields = outputspec_fields
-
-    #def _regexp_sub()
+        self.regexp_sub = regexp_sub
 
     def __call__(self, pipeline_fun):
-        def wrapper(name, base_dir='.', sink_dir='.', qc_dir='.', **kwargs):
+        def wrapper(name, base_dir='.', sink_dir=None, qc_dir=None, **kwargs):
+            if not(sink_dir is None):
+                default._sink_dir = sink_dir
+            if not(qc_dir is None):
+                default._QCDir_ = qc_dir
             wf = NestedWorkflow(name, base_dir)
+            wf.sink_dir = default._sink_dir
+            wf.qc_dir = default._qc_dir
 
             inputspec = NestedNode(
                 utility.IdentityInterface(
@@ -152,6 +159,7 @@ class PumiPipeline:
                 ),
                 name='inputspec'
             )
+
             outputspec = NestedNode(
                 utility.IdentityInterface(
                     fields=self.outputspec_fields,
@@ -160,11 +168,15 @@ class PumiPipeline:
                 name='outputspec'
             )
 
-            #ds
-            # regexp
+            sinker = NestedNode(
+                DataSink(),
+                name='sinker'
+            )
+            sinker.inputs.base_directory = wf.qc_dir if isinstance(self, QcPipeline) else wf.sink_dir
+            sinker.inputs.regexp_substitutions = self.regexp_sub
 
-            wf.add_nodes([inputspec, outputspec])
-            pipeline_fun(wf=wf, sink_dir=sink_dir, qc_dir=qc_dir, **kwargs)
+            wf.add_nodes([inputspec, outputspec, sinker])
+            pipeline_fun(wf=wf, **kwargs)
 
             # todo: should we do any post workflow checks
             # e.g. is outputspec connected
@@ -174,5 +186,82 @@ class PumiPipeline:
 
         return wrapper
 
-#class AnatPipeline(PumiPipeline):
-    #def regexp_sub()
+    def _add_regex(self, regex):
+        if any(isinstance(i, list) for i in regex):
+            raise TypeError('No nested lists are allowed! Provide a tuple or a list containing tuples!')
+        elif isinstance(regex, list):
+            self.regexp_sub.extend(regex)
+        elif isinstance(regex, tuple):
+            self.regexp_sub.append(regex)
+        else:
+            raise TypeError('_add_regex takes a tuple or a list containing tuples!')
+
+    def _remove_regex(self, regex):
+        if any(isinstance(i, list) for i in regex):
+            raise TypeError('No nested lists are allowed! Provide a tuple or a list containing tuples!')
+        elif isinstance(regex, list):
+            for i in regex:
+                if i in self.regexp_sub:
+                    self.regexp_sub.remove(i)
+                else:
+                    raise ValueError(i, 'is not a registered regex substitution')
+        elif isinstance(regex, tuple):
+            if regex in self.regexp_sub:
+                self.regexp_sub.remove(regex)
+            else:
+                raise ValueError(regex, 'is not a registered regex substitution')
+        else:
+            raise TypeError('_add_regex takes a tuple or a list containing tuples!')
+
+    def _regex(self):
+        print('Regexp substitutions:', self.regexp_sub)
+
+
+class AnatPipeline(PumiPipeline):
+
+    def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None, default_regexp_sub=True):
+        regexp_sub = [] if regexp_sub is None else regexp_sub
+        substitutions = []
+
+        if default_regexp_sub:
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)\/([^\/]+)$', r'\g<1>\g<3>/\g<4>'),
+                             ('_subject_', 'sub-')]
+        substitutions.extend(regexp_sub)
+
+        super().__init__(inputspec_fields, outputspec_fields, substitutions)
+
+    def __call__(self, anat_fun):
+        return super().__call__(anat_fun)
+
+
+class QcPipeline(PumiPipeline):
+
+    def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None, default_regexp_sub=True):
+        regexp_sub = [] if regexp_sub is None else regexp_sub
+        substitutions = []
+
+        if default_regexp_sub:
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)\/([^\/]+)$', r'\g<1>\g<4>/\g<3>.png'),
+                             ('_subject_', 'sub-')]
+
+        substitutions.extend(regexp_sub)
+        super().__init__(inputspec_fields, outputspec_fields, substitutions)
+
+    def __call__(self, qc_fun):
+        return super().__call__(qc_fun)
+
+
+class FuncPipeline(PumiPipeline):
+
+    def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None, default_regexp_sub=True):
+        regexp_sub = [] if regexp_sub is None else regexp_sub
+        substitutions = []
+
+        if default_regexp_sub:
+            substitutions = []  # coming soon
+
+        substitutions.extend(regexp_sub)
+        super().__init__(inputspec_fields, outputspec_fields, substitutions)
+
+    def __call__(self, func_fun):
+        return super().__call__(func_fun)

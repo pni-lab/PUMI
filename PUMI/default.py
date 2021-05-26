@@ -1,7 +1,10 @@
 import os
 
-_SinkDir_ = "data_out"
-_QCDir_ = "QC"
+PUMI_ROOT = os.path.dirname(os.path.abspath(__file__))  # module location
+
+_sink_dir = os.path.join(PUMI_ROOT, '../data_out/derivatives')
+_qc_dir = os.path.join(PUMI_ROOT, '../data_out/qc')
+
 _FSLDIR_ = os.environ['FSLDIR']
 
 class _RegType_:
