@@ -32,6 +32,7 @@ class NestedNode(Node):
             self.base_dir = mkdtemp()
         outputdir = self.base_dir
 
+        # todo: maybe does not work with multiple mapnodes/iterables
         if self.parameterization:
             params_str = ["{}".format(p) for p in self.parameterization]
             # regexp magic to make subject handling more BIDS-like:
@@ -185,33 +186,6 @@ class PumiPipeline:
             return wf
 
         return wrapper
-
-    def _add_regex(self, regex):
-        if any(isinstance(i, list) for i in regex):
-            raise TypeError('No nested lists are allowed! Provide a tuple or a list containing tuples!')
-        elif isinstance(regex, list):
-            self.regexp_sub.extend(regex)
-        elif isinstance(regex, tuple):
-            self.regexp_sub.append(regex)
-        else:
-            raise TypeError('_add_regex takes a tuple or a list containing tuples!')
-
-    def _remove_regex(self, regex):
-        if any(isinstance(i, list) for i in regex):
-            raise TypeError('No nested lists are allowed! Provide a tuple or a list containing tuples!')
-        elif isinstance(regex, list):
-            for i in regex:
-                if i in self.regexp_sub:
-                    self.regexp_sub.remove(i)
-                else:
-                    raise ValueError(i, 'is not a registered regex substitution')
-        elif isinstance(regex, tuple):
-            if regex in self.regexp_sub:
-                self.regexp_sub.remove(regex)
-            else:
-                raise ValueError(regex, 'is not a registered regex substitution')
-        else:
-            raise TypeError('_add_regex takes a tuple or a list containing tuples!')
 
     def _regex(self):
         print('Regexp substitutions:', self.regexp_sub)
