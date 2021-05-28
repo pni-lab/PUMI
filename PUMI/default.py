@@ -1,9 +1,7 @@
 import os
 
-PUMI_ROOT = os.path.dirname(os.path.abspath(__file__))  # module location
-
-_sink_dir = os.path.join(PUMI_ROOT, '../data_out/derivatives')
-_qc_dir = os.path.join(PUMI_ROOT, '../data_out/qc')
+_sink_dir = 'derivatives'
+_qc_dir = 'derivatives/qc'
 
 _FSLDIR_ = os.environ['FSLDIR']
 

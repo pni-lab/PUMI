@@ -1,3 +1,5 @@
+import os
+
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
 import nipype.interfaces.utility as utility
@@ -145,13 +147,22 @@ class PumiPipeline:
 
     def __call__(self, pipeline_fun):
         def wrapper(name, base_dir='.', sink_dir=None, qc_dir=None, **kwargs):
-            if not(sink_dir is None):
-                default._sink_dir = sink_dir
-            if not(qc_dir is None):
-                default._QCDir_ = qc_dir
+            if sink_dir is None:
+                default_sink_dir = default._sink_dir
+                if default_sink_dir.startswith('/'):
+                    sink_dir = default_sink_dir
+                else:
+                    sink_dir = os.path.abspath(default_sink_dir)
+            if qc_dir is None:
+                default_qc_dir = default._qc_dir
+                if default_qc_dir.startswith('/'):
+                    qc_dir = default_qc_dir
+                else:
+                    qc_dir = os.path.abspath(default_qc_dir)
+
             wf = NestedWorkflow(name, base_dir)
-            wf.sink_dir = default._sink_dir
-            wf.qc_dir = default._qc_dir
+            wf.sink_dir = sink_dir
+            wf.qc_dir = qc_dir
 
             inputspec = NestedNode(
                 utility.IdentityInterface(

@@ -10,10 +10,10 @@ from nipype.interfaces import fsl
             outputspec_fields=['qc_image'])
 def qc(wf):
 
-    ex_vol_background = get_vol(name="ex_vol_background")
+    ex_vol_background = get_vol(name="ex_vol_background", qc_dir=wf.qc_dir)
     wf.connect('inputspec', 'background', ex_vol_background, 'in_file')
 
-    ex_vol_overlay = get_vol(name="ex_vol_overlay")
+    ex_vol_overlay = get_vol(name="ex_vol_overlay", qc_dir=wf.qc_dir)
     wf.connect('inputspec', 'overlay', ex_vol_overlay, 'in_file')
 
     slicer = Node(interface=fsl.Slicer(), name='slicer')
@@ -43,7 +43,7 @@ def bet_fsl(wf, **kwargs):
     wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
 
     #qc
-    qc_bet = qc(name='qc_bet')
+    qc_bet = qc(name='qc_bet', qc_dir=wf.qc_dir)
     wf.connect('inputspec', 'in_file', qc_bet, 'background')
     wf.connect(bet, 'out_file', qc_bet, 'overlay')
 
