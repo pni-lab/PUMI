@@ -1,8 +1,5 @@
 import os
 
-_sink_dir = 'derivatives'
-_qc_dir = 'derivatives/qc'
-
 _FSLDIR_ = os.environ['FSLDIR']
 
 class _RegType_:

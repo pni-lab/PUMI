@@ -1,4 +1,5 @@
 import os
+from configparser import SafeConfigParser
 
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
@@ -147,14 +148,18 @@ class PumiPipeline:
 
     def __call__(self, pipeline_fun):
         def wrapper(name, base_dir='.', sink_dir=None, qc_dir=None, **kwargs):
+
+            cfg_parser = SafeConfigParser()
+            cfg_parser.read(os.path.join(os.path.dirname(__file__), 'settings.ini'))
+
             if sink_dir is None:
-                default_sink_dir = default._sink_dir
+                default_sink_dir = cfg_parser['SINKING']['SinkDir']
                 if default_sink_dir.startswith('/'):
                     sink_dir = default_sink_dir
                 else:
                     sink_dir = os.path.abspath(default_sink_dir)
             if qc_dir is None:
-                default_qc_dir = default._qc_dir
+                default_qc_dir = cfg_parser['SINKING']['QcDir']
                 if default_qc_dir.startswith('/'):
                     qc_dir = default_qc_dir
                 else:
@@ -163,6 +168,7 @@ class PumiPipeline:
             wf = NestedWorkflow(name, base_dir)
             wf.sink_dir = sink_dir
             wf.qc_dir = qc_dir
+            wf.cfg_parser = cfg_parser
 
             inputspec = NestedNode(
                 utility.IdentityInterface(
