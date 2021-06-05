@@ -153,13 +153,13 @@ class PumiPipeline:
             cfg_parser.read(os.path.join(os.path.dirname(__file__), 'settings.ini'))
 
             if sink_dir is None:
-                default_sink_dir = cfg_parser['SINKING']['SinkDir']
+                default_sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
                 if default_sink_dir.startswith('/'):
                     sink_dir = default_sink_dir
                 else:
                     sink_dir = os.path.abspath(default_sink_dir)
             if qc_dir is None:
-                default_qc_dir = cfg_parser['SINKING']['QcDir']
+                default_qc_dir = cfg_parser.get('SINKING', 'qc_dir', fallback='derivatives/qc')
                 if default_qc_dir.startswith('/'):
                     qc_dir = default_qc_dir
                 else:
