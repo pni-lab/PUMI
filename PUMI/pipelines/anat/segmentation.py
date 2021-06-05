@@ -38,6 +38,8 @@ def bet_fsl(wf, **kwargs):
     #bet
     bet = Node(interface=fsl.BET(), name='bet')
     bet.inputs.mask = True
+    bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac', fallback=0.5)
+    bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=0)
     wf.connect('inputspec', 'in_file', bet, 'in_file')
     wf.connect(bet, 'out_file', 'sinker', 'out_file')
     wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
