@@ -7,7 +7,6 @@ import nipype.interfaces.utility as utility
 from nipype.interfaces.io import DataSink
 from hashlib import sha1
 import re
-from PUMI import default
 
 
 def _parameterization_dir(param):

@@ -1,4 +1,17 @@
 from nipype.interfaces.utility import Function
+import os
+
+
+def get_reference(wf, ref):
+    # ref should be either 'head', 'brain' or 'brain_mask'
+    if ref.lower() in ['brain', 'brain_mask', 'head']:
+        path = wf.cfg_parser.get('REFERENCES', ref.lower())
+        if path.startswith('/'):
+            return path
+        else:
+            return os.path.join(os.environ['FSLDIR'], path)
+    else:
+        raise ValueError("Can only provide references for 'head', 'brain', 'brain_mask'")
 
 
 def get_scan_info(in_file):
