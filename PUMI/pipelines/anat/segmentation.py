@@ -32,12 +32,13 @@ def qc(wf):
 
 
 @AnatPipeline(inputspec_fields=['in_file', 'opt_R', 'fract_int_thr', 'vertical_gradient'],
-              outputspec_fields=['brain', 'brain_mask'])
+              outputspec_fields=['out_file', 'brain_mask'])
 def bet_fsl(wf, **kwargs):
 
     #bet
     bet = Node(interface=fsl.BET(), name='bet')
     bet.inputs.mask = True
+    bet.inputs.robust = True
     bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac', fallback=0.5)
     bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=0)
     wf.connect('inputspec', 'in_file', bet, 'in_file')
