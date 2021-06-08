@@ -38,7 +38,7 @@ def get_vol_id(wf, ref_vol='last', **kwargs):
 
 
 @QcPipeline(inputspec_fields=['bg_image', 'overlay_image'],
-            outputspec_fields=['dummy'])  # todo: handle empty IdentityInterfaces in engine.py
+            outputspec_fields=[])
 def vol2png(wf, overlay=True, overlayiterated=True):
     myonevol_bg = get_vol(name="onebg")
     wf.connect('inputspec', 'bg_image', myonevol_bg, 'in_file')

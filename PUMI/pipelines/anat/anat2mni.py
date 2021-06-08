@@ -6,7 +6,7 @@ from PUMI.pipelines.multimodal.utils import vol2png
 
 
 @QcPipeline(inputspec_fields=['in_file'],
-            outputspec_fields=['dummy'])  # todo: handle empty IdentityInterfaces in engine.py
+            outputspec_fields=[])
 def qc(wf, image_width=500, threshold_edges=0.1):
     qc_wf = vol2png(name='qc_anat2mni', qc_dir=wf.qc_dir, overlayiterated=False)
     qc_wf.inputs.inputspec.overlay_image = get_reference(wf, 'brain')

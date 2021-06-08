@@ -138,7 +138,11 @@ class NestedWorkflow(Workflow):
 # decorator class
 class PumiPipeline:
 
-    def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None):
+    def __init__(self, inputspec_fields=None, outputspec_fields=None, regexp_sub=None):
+        if outputspec_fields is None:
+            outputspec_fields = []
+        if inputspec_fields is None:
+            inputspec_fields = []
         if regexp_sub is None:
             regexp_sub = []
         self.inputspec_fields = inputspec_fields
@@ -169,21 +173,25 @@ class PumiPipeline:
             wf.qc_dir = qc_dir
             wf.cfg_parser = cfg_parser
 
-            inputspec = NestedNode(
-                utility.IdentityInterface(
-                    fields=self.inputspec_fields,
-                    mandatory_inputs=True
-                ),
-                name='inputspec'
-            )
+            if len(self.inputspec_fields) != 0:
+                inputspec = NestedNode(
+                    utility.IdentityInterface(
+                        fields=self.inputspec_fields,
+                        mandatory_inputs=True
+                    ),
+                    name='inputspec'
+                )
+                wf.add_nodes([inputspec])
 
-            outputspec = NestedNode(
-                utility.IdentityInterface(
-                    fields=self.outputspec_fields,
-                    mandatory_inputs=True
-                ),
-                name='outputspec'
-            )
+            if len(self.outputspec_fields) != 0:
+                outputspec = NestedNode(
+                    utility.IdentityInterface(
+                        fields=self.outputspec_fields,
+                        mandatory_inputs=True
+                    ),
+                    name='outputspec'
+                )
+                wf.add_nodes([outputspec])
 
             sinker = NestedNode(
                 DataSink(),
@@ -191,8 +199,8 @@ class PumiPipeline:
             )
             sinker.inputs.base_directory = wf.qc_dir if isinstance(self, QcPipeline) else wf.sink_dir
             sinker.inputs.regexp_substitutions = self.regexp_sub
+            wf.add_nodes([sinker])
 
-            wf.add_nodes([inputspec, outputspec, sinker])
             pipeline_fun(wf=wf, **kwargs)
 
             # todo: should we do any post workflow checks
