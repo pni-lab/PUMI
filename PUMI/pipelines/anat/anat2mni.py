@@ -8,7 +8,7 @@ from PUMI.pipelines.multimodal.utils import vol2png
 @QcPipeline(inputspec_fields=['in_file'],
             outputspec_fields=[])
 def qc(wf, image_width=500, threshold_edges=0.1):
-    qc_wf = vol2png(name='qc_anat2mni', qc_dir=wf.qc_dir, overlayiterated=False)
+    qc_wf = vol2png(name='qc_anat2mni', qc_dir=wf.qc_dir, overlay_iterated=False)
     qc_wf.inputs.inputspec.overlay_image = get_reference(wf, 'brain')
     qc_wf.inputs.slicer.image_width = image_width
     qc_wf.inputs.slicer.threshold_edges = threshold_edges
@@ -53,6 +53,7 @@ def anat2mni_fsl(wf, **kwargs):
 
     # QC
     anat2mni_qc = qc(name='anat2mni_fsl_qc', qc_dir=wf.qc_dir)
+    wf.connect(brain_warp, 'out_file', anat2mni_qc, 'in_file')
 
     # sinking
     wf.connect(brain_warp, 'out_file', 'sinker', 'anat2mni_std')
@@ -66,4 +67,4 @@ def anat2mni_fsl(wf, **kwargs):
     wf.connect(nonlinear_reg, 'field_file', 'outputspec', 'field_file')
     wf.connect(inv_nonlinear_reg, 'inverse_warp', 'outputspec', 'inv_nonlinear_xfm')
     wf.connect(brain_warp, 'out_file', 'outputspec', 'output_brain')
-    wf.connect(brain_warp, 'out_file', anat2mni_qc, 'in_file')
+

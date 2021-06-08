@@ -8,7 +8,7 @@ from nipype.interfaces import fsl
 @QcPipeline(inputspec_fields=['in_file'],
             outputspec_fields=['out_file'])
 def get_vol(wf):
-
+    # todo: do we really get a volumme? Not a slice?
     # Get dimension infos
     vol_id = get_vol_id(name='vol_id')
     wf.connect('inputspec', 'in_file', vol_id, 'in_file')
@@ -39,30 +39,23 @@ def get_vol_id(wf, ref_vol='last', **kwargs):
 
 @QcPipeline(inputspec_fields=['bg_image', 'overlay_image'],
             outputspec_fields=[])
-def vol2png(wf, overlay=True, overlayiterated=True):
-    myonevol_bg = get_vol(name="onebg")
-    wf.connect('inputspec', 'bg_image', myonevol_bg, 'in_file')
+def vol2png(wf, overlay=True, overlay_iterated=True):
+    background_vol = get_vol(name="background_vol")
+    wf.connect('inputspec', 'bg_image', background_vol, 'in_file')
 
-    if overlay and not overlayiterated:
-        slicer = Node(interface=fsl.Slicer(), name='slicer')
+    if overlay and overlay_iterated:
+        overlay_vol = get_vol(name="overlay_vol")
+        wf.connect('inputspec', 'overlay_image', overlay_vol, 'in_file')
 
-    # Create png images for quality check
-    if overlay and overlayiterated:
-        myonevol_ol = get_vol(name="oneol")
-        wf.connect('inputspec', 'overlay_image', myonevol_ol, 'in_file')
-        slicer = Node(interface=fsl.Slicer(), name='slicer')
-    if not overlay:
-        slicer = Node(interface=fsl.Slicer(), name='slicer')
-
+    slicer = Node(interface=fsl.Slicer(), name='slicer')
     slicer.inputs.image_width = 2000
     slicer.inputs.out_file = wf.name
-    # set output all axial slices into one picture
-    slicer.inputs.sample_axial = 5
+    slicer.inputs.sample_axial = 5  # set output all axial slices into one picture
+    wf.connect(background_vol, 'out_file', slicer, 'in_file')
 
-    wf.connect(myonevol_bg, 'out_file', slicer, 'in_file')
-    if overlay and not overlayiterated:
+    if overlay and overlay_iterated:
+        wf.connect(overlay_vol, 'out_file', slicer, 'image_edges')
+    if overlay and not overlay_iterated:
         wf.connect('inputspec', 'overlay_image', slicer, 'image_edges')
-    if overlay and overlayiterated:
-        wf.connect(myonevol_ol, 'out_file', slicer, 'image_edges')
-    wf.connect(slicer, 'out_file', 'sinker', wf.name)
 
+    wf.connect(slicer, 'out_file', 'sinker', wf.name)
