@@ -1,24 +1,40 @@
-from ...engine import QcPipeline
+from ...engine import QcPipeline, PumiPipeline
 from ...engine import NestedNode as Node
-from ...utils import tMinMax
+from PUMI import utils
+from nipype import Function
 from nipype.interfaces import fsl
 
 
 @QcPipeline(inputspec_fields=['in_file'],
             outputspec_fields=['out_file'])
-def get_vol(wf, idx=0):
+def get_vol(wf):
 
     # Get dimension infos
-    idx = Node(interface=tMinMax, name='idx')
-    wf.connect('inputspec', 'in_file', idx, 'in_files')
+    vol_id = get_vol_id(name='vol_id')
+    wf.connect('inputspec', 'in_file', vol_id, 'in_file')
+    vol_id.get_node('inputspec').inputs.ref_vol = "first"
 
-    # todo: why  fslroi and not robustfov?
     # Get the last volume of the func image
     fslroi = Node(fsl.ExtractROI(), name='fslroi')
-    fslroi.inputs.t_size = 1
+    # ExtractROI(t_min=4, t_size=-1, ..) would "return" all (-1) scans FROM t=4. This would discard the first 4 scans
+    fslroi.inputs.t_size = 1  # get one slice
     wf.connect('inputspec', 'in_file', fslroi, 'in_file')
-    wf.connect(idx, 'refvolidx', fslroi, 't_min')
+    wf.connect(vol_id, 'out_file', fslroi, 't_min')
     wf.connect(fslroi, 'roi_file', 'outputspec', 'out_file')
+
+
+# todo: funcpipeline or multimodal?
+@PumiPipeline(inputspec_fields=['in_file'],
+              outputspec_fields=['out_file'])
+def get_vol_id(wf, ref_vol='last', **kwargs):
+    get_id = Node(Function(input_names=['in_file', 'ref_vol'],
+                           output_names=['out_file'],
+                           function=utils.vol_id),
+                  name='get_id')
+    wf.connect('inputspec', 'in_file', get_id, 'in_file')
+    get_id.inputs.ref_vol = ref_vol
+
+    wf.connect(get_id, 'out_file', 'outputspec', 'out_file')
 
 
 @QcPipeline(inputspec_fields=['bg_image', 'overlay_image'],
@@ -49,3 +65,4 @@ def vol2png(wf, overlay=True, overlayiterated=True):
     if overlay and overlayiterated:
         wf.connect(myonevol_ol, 'out_file', slicer, 'image_edges')
     wf.connect(slicer, 'out_file', 'sinker', wf.name)
+
