@@ -121,6 +121,7 @@ class NestedWorkflow(Workflow):
                         )
                         % srcnode.name
                     )
+
                 if sourcename and not srcnode._check_outputs(sourcename):
                     outputspec_source = 'outputspec.' + sourcename
                     if srcnode._check_outputs(outputspec_source):
@@ -129,8 +130,8 @@ class NestedWorkflow(Workflow):
                 if not destnode._check_inputs(dest):
                     inputspec_dest = 'inputspec.' + dest
                     if destnode._check_inputs(inputspec_dest):
-                        connection_list[i_conn_list][2][i_connects] = (source, inputspec_dest)
-
+                        src = connection_list[i_conn_list][2][i_connects][0]
+                        connection_list[i_conn_list][2][i_connects] = (src, inputspec_dest)
         # connect nodes
         super().connect(connection_list, **kwargs)
 
