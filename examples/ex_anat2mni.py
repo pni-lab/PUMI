@@ -52,19 +52,15 @@ wf.connect(bids_grabber, 'T1w', path_extractor, 'filelist')
 reorient = Node(interface=Reorient2Std(), name="reorient")
 wf.connect(path_extractor, 'out_file', reorient, 'in_file')
 
-# cropping image
-roi = Node(fsl.RobustFOV(), name="roi")
-wf.connect(reorient, 'out_file', roi, 'in_file')
-
 # Do the brain extraction
 # All PUMI subworkflows take care sinking and qc-ing the most important results
-brain_extraction = bet_fsl('brain_extraction')
-wf.connect(roi, 'out_roi', brain_extraction, 'in_file')
+brain_extraction = bet_fsl('brain_extraction')  # todo: use other brain extraction tool
+wf.connect(reorient, 'out_file', brain_extraction, 'in_file')
 
 # transform to MNI
 anat2mni_wf = anat2mni_fsl('anat2mni')
-wf.connect(brain_extraction, 'outputspec.out_file', anat2mni_wf, 'brain')  # todo: why is outputspec here necessary
-wf.connect(reorient, 'out_file', anat2mni_wf, 'skull')
+wf.connect(brain_extraction, 'out_file', anat2mni_wf, 'brain')
+wf.connect(reorient, 'out_file', anat2mni_wf, 'head')
 
 # run workflow
 wf.run(plugin='MultiProc')
