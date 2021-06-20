@@ -1,4 +1,4 @@
-from ...engine import QcPipeline, PumiPipeline
+from ...engine import QcPipeline, FuncPipeline
 from ...engine import NestedNode as Node
 from PUMI import utils
 from nipype import Function
@@ -21,8 +21,7 @@ def get_vol(wf, ref_vol='first'):
     wf.connect(fslroi, 'roi_file', 'outputspec', 'out_file')
 
 
-# todo: funcpipeline or multimodal?
-@PumiPipeline(inputspec_fields=['in_file'],
+@FuncPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file'])
 def get_vol_id(wf, ref_vol='last', **kwargs):
     get_id = Node(Function(input_names=['in_file', 'ref_vol'],
