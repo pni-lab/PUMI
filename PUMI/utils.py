@@ -1,10 +1,19 @@
 import os
-from nipype import Function
+
 
 def get_reference(wf, ref):
     # ref should be either 'head', 'brain' or 'brain_mask'
-    if ref.lower() in ['brain', 'brain_mask', 'head']:
-        path = wf.cfg_parser.get('REFERENCES', ref.lower())
+    if ref in ['head', 'brain', 'brain_mask', ]:
+        path = wf.cfg_parser.get('REFERENCES', ref.lower(), fallback=None)
+        if path is None:
+            # fallback values:
+            if ref == 'head':
+                return os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm.nii.gz')
+            elif ref == 'brain':
+                return os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm_brain.nii.gz')
+            else:
+                return os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm_brain_mask_dil.nii.gz')
+
         if path.startswith('/'):
             return path
         else:
