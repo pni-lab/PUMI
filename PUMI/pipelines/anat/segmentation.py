@@ -52,4 +52,4 @@ def bet_fsl(wf, **kwargs):
 
     # return
     wf.connect(bet, 'out_file', 'outputspec', 'out_file')
-    wf.connect(bet, 'mask_file', 'outputspec', 'mask_file')
+    wf.connect(bet, 'mask_file', 'outputspec', 'brain_mask')
