@@ -7,17 +7,15 @@ from nipype.interfaces import fsl
 
 @QcPipeline(inputspec_fields=['in_file'],
             outputspec_fields=['out_file'])
-def get_vol(wf):
-    # todo: do we really get a volumme? Not a slice?
+def get_vol(wf, ref_vol='first'):
     # Get dimension infos
-    vol_id = get_vol_id(name='vol_id')
+    vol_id = get_vol_id(name='vol_id', ref_vol='first')
     wf.connect('inputspec', 'in_file', vol_id, 'in_file')
-    vol_id.get_node('inputspec').inputs.ref_vol = "first"
 
     # Get the last volume of the func image
     fslroi = Node(fsl.ExtractROI(), name='fslroi')
     # ExtractROI(t_min=4, t_size=-1, ..) would "return" all (-1) scans FROM t=4. This would discard the first 4 scans
-    fslroi.inputs.t_size = 1  # get one slice
+    fslroi.inputs.t_size = 1  # get one volume
     wf.connect('inputspec', 'in_file', fslroi, 'in_file')
     wf.connect(vol_id, 'out_file', fslroi, 't_min')
     wf.connect(fslroi, 'roi_file', 'outputspec', 'out_file')
