@@ -4,7 +4,7 @@ import os
 def get_reference(wf, ref):
     # ref should be either 'head', 'brain' or 'brain_mask'
     if ref in ['head', 'brain', 'brain_mask', ]:
-        path = wf.cfg_parser.get('REFERENCES', ref.lower(), fallback=None)
+        path = wf.cfg_parser.get('TEMPLATES', ref.lower(), fallback=None)
         if path is None:
             # fallback values:
             if ref == 'head':
