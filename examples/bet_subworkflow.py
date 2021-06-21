@@ -1,7 +1,9 @@
-from nipype import Node, IdentityInterface, Workflow, DataSink, Function
+from nipype import IdentityInterface, Function
+from PUMI.engine import NestedWorkflow as Workflow
+from PUMI.engine import NestedNode as Node
 from nipype.interfaces import BIDSDataGrabber, fsl
 from nipype.utils.filemanip import list_to_filename
-import PUMI.anat_preproc.Better as bet
+from PUMI.pipelines.anat.segmentation import bet_fsl
 import os
 
 # experiment specific parameters:
@@ -13,16 +15,14 @@ working_dir = 'data_out'  # place where the folder 'bet_iter_wf' will be created
 subjects = ['001', '002', '003']  # subjects for which a brain extraction should be performed
 # ---
 
+wf = Workflow(name='workflow')
+wf.base_dir = os.path.abspath(working_dir)
 
-# Change current working directory to PUMI, if necessary
-if os.getcwd().find('/PUMI/examples') != -1:
-    os.chdir('..')
-
-# Step 1: Create a subroutine (subgraph) for every subject
+# create a subroutine (subgraph) for every subject
 inputspec = Node(IdentityInterface(fields=['subject']), name='input_node')
 inputspec.iterables = [('subject', subjects)]
 
-# Step 2: Get anatomical images
+# get anatomical images
 bids_grabber = Node(BIDSDataGrabber(), name='bids_grabber')
 bids_grabber.inputs.base_dir = os.path.abspath(input_dir)
 bids_grabber.inputs.output_query = {
@@ -32,8 +32,9 @@ bids_grabber.inputs.output_query = {
         extension=['nii', 'nii.gz']
     )
 }
+wf.connect(inputspec, 'subject', bids_grabber, 'subject')
 
-# Step 3: 'Unpack' list from bids_grabber
+# unpack list from bids_grabber
 # bids_grabber returns a list with a string (path to the anat image of a subject),
 # but fsl.Bet does not take a list as a input file
 path_extractor = Node(
@@ -44,22 +45,16 @@ path_extractor = Node(
     ),
     name="path_extractor_node"
 )
+wf.connect(bids_grabber, 'T1w', path_extractor, 'filelist')
+
+# crop image
+roi = Node(fsl.RobustFOV(), name="roi")
+wf.connect(path_extractor, 'out_file', roi, 'in_file')
 
 # Step 4: Do the brain extraction
-bet_wf = bet.bet_workflow()
+# All PUMI subworkflows take care sinking and qc-ing the most important results
+bet_wf = bet_fsl('brain_extraction')
+wf.connect(roi, 'out_roi', bet_wf, 'in_file')
 
-# Step 5: Save results
-sinker = Node(DataSink(), name='sinker')
-sinker.inputs.base_directory = os.path.abspath(output_dir)
-sinker.inputs.substitutions = [('_subject_', 'bet-subject-')]
-
-# Step 6: Start workflow
-wf = Workflow(name='bet_iter_wf')
-wf.base_dir = os.path.abspath(working_dir)
-wf.connect([
-    (inputspec, bids_grabber, [('subject', 'subject')]),
-    (bids_grabber, path_extractor, [('T1w', 'filelist')]),
-    (path_extractor, bet_wf, [('out_file', 'inputspec.in_file')]),
-    (bet_wf, sinker, [('outputspec.brain', 'BET')])
-])
-wf.run()
+wf.run(plugin='MultiProc')
+wf.write_graph('graph.png')
