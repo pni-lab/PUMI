@@ -73,13 +73,13 @@ class HDBet(CommandLine):
         The returned path leads to the same folder where the input file is located.
 
         If an output filename was specified (e.g. 'extracted_brain' or 'extracted_brain.nii.gz') and the input file
-        is in the folder '/home/data_in', the filename is simply '/home/data_in/extracted_brain.nii.gz.'
+        is in the folder '/home/data_in', the filename would be simply '/home/data_in/extracted_brain.nii.gz.'
 
         If no output filename is specified, '_bet' is appended to the input filename.
         Example: If the input was '/home/data_in/sub-001_T1w.nii.gz', the output name would be
                  '/home/data_in/sub-001_T1w_bet.nii.gz'.
 
-        Note: HD-Bet works only with .nii.gz files
+        Note: HD-Bet works only with .nii.gz files!
         """
         if traits_extension.isdefined(self.inputs.out_file):
             path = self.inputs.out_file
@@ -101,10 +101,10 @@ class HDBet(CommandLine):
                  be '/home/data_in/extracted_brain_mask.nii.gz'.
 
         If 'out_file' is not specified, '_mask' is appended to the filename of the extracted brain.
-        Example: If the skull stripped file is called 'sub-001_T1w_bet.nii.gz' and is located in the folder
-        '/home/data_in, the output filename would be '/home/data_in/sub-001_T1w_bet_mask.nii.gz'.
+        Example: If the skull stripped file is called 'sub-001_T1w_bet.nii.gz' and located in the folder
+                 '/home/data_in', the output filename would be '/home/data_in/sub-001_T1w_bet_mask.nii.gz'.
 
-        Note: HD-Bet works only with .nii.gz files
+        Note: HD-Bet works only with .nii.gz files!
         """
         if traits_extension.isdefined(self.inputs.out_file):
             path = self.inputs.out_file
