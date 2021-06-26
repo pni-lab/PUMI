@@ -1,5 +1,6 @@
-from ...engine import AnatPipeline, QcPipeline
+from ...engine import AnatPipeline, QcPipeline, PumiPipeline
 from ...engine import NestedNode as Node
+from ...interfaces.HDBet import HDBet
 from ..multimodal.utils import get_vol
 from nipype.interfaces import fsl
 
@@ -53,3 +54,39 @@ def bet_fsl(wf, **kwargs):
     # return
     wf.connect(bet, 'out_file', 'outputspec', 'out_file')
     wf.connect(bet, 'mask_file', 'outputspec', 'brain_mask')
+
+
+@AnatPipeline(inputspec_fields=['in_file'],
+              outputspec_fields=['out_file', 'brain_mask'])
+def bet_hd(wf, **kwargs):
+    """
+    Does brain extraction with HD-Bet.
+    """
+
+    #bet
+    bet = Node(interface=HDBet(), name='bet')
+    bet.inputs.mode = kwargs.get('mode', wf.cfg_parser.get('HD-Bet', 'mode', fallback='accurate'))
+    bet.inputs.device = kwargs.get('device', wf.cfg_parser.get('HD-Bet', 'device', fallback='0'))
+    bet.inputs.tta = kwargs.get('tta', wf.cfg_parser.getint('HD-Bet', 'tta', fallback=1))
+    bet.inputs.postprocessing = kwargs.get('postprocessing',
+                                           wf.cfg_parser.getint('HD-Bet', 'postprocessing', fallback=1))
+    bet.inputs.save_mask = kwargs.get('save_mask', wf.cfg_parser.getint('HD-Bet', 'save_mask', fallback=1))
+    bet.inputs.overwrite_existing = kwargs.get('overwrite_existing',
+                                               wf.cfg_parser.getint('HD-Bet', 'overwrite_existing', fallback=1))
+    wf.connect('inputspec', 'in_file', bet, 'in_file')
+
+    #qc
+    qc_bet = qc(name='qc_bet', qc_dir=wf.qc_dir)
+    wf.connect('inputspec', 'in_file', qc_bet, 'background')
+    wf.connect(bet, 'out_file', qc_bet, 'overlay')
+
+    #sinking
+    wf.connect(bet, 'out_file', 'sinker', 'out_file')
+    wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
+
+    # return
+    wf.connect(bet, 'out_file', 'outputspec', 'out_file')
+    wf.connect(bet, 'mask_file', 'outputspec', 'brain_mask')
+
+
+
