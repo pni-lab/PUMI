@@ -21,10 +21,5 @@ Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 
 - @PumiPipeline funcions' are minimalistic and do NO "housekeeping".
 
-# ToDo:
-- <del>data sinker added by decorator class</del>
-- <del>decorated functions's signature: wf, inputspec, outputspec, sinker</del>
-- create child-decorator classes for modalities (modalities)
-- create a __main_decorator__ class
-- take a closer look on refvolidx in Onevol.py 
-- revise onevol.py
+# cite
+- Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. https://doi.org/10.1002/hbm.24750

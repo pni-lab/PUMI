@@ -3,7 +3,7 @@ from PUMI.engine import NestedWorkflow as Workflow
 from PUMI.engine import NestedNode as Node
 from nipype.interfaces import BIDSDataGrabber, fsl
 from nipype.utils.filemanip import list_to_filename
-from PUMI.pipelines.anat.segmentation import bet_fsl
+from PUMI.pipelines.anat.segmentation import bet_fsl, bet_hd
 import os
 
 # experiment specific parameters:
@@ -12,7 +12,7 @@ input_dir = 'data_in/example-bids'  # place where the bids data is located
 output_dir = 'data_out'  # place where the folder 'BET' will be created for the results of this script
 working_dir = 'data_out'  # place where the folder 'bet_iter_wf' will be created for the workflow
 
-subjects = ['001', '002', '003']  # subjects for which a brain extraction should be performed
+subjects = ['001']  # subjects for which a brain extraction should be performed
 # ---
 
 wf = Workflow(name='workflow')
@@ -29,7 +29,7 @@ bids_grabber.inputs.output_query = {
     'T1w': dict(
         subject=subjects,
         datatype='anat',
-        extension=['nii', 'nii.gz']
+        extension=['nii.gz']
     )
 }
 wf.connect(inputspec, 'subject', bids_grabber, 'subject')
@@ -47,14 +47,10 @@ path_extractor = Node(
 )
 wf.connect(bids_grabber, 'T1w', path_extractor, 'filelist')
 
-# crop image
-roi = Node(fsl.RobustFOV(), name="roi")
-wf.connect(path_extractor, 'out_file', roi, 'in_file')
-
 # Step 4: Do the brain extraction
 # All PUMI subworkflows take care sinking and qc-ing the most important results
-bet_wf = bet_fsl('brain_extraction')
-wf.connect(roi, 'out_roi', bet_wf, 'in_file')
+bet_wf = bet_hd('brain_extraction')
+wf.connect(path_extractor, 'out_file', bet_wf, 'in_file')
 
 wf.run(plugin='MultiProc')
 wf.write_graph('graph.png')
