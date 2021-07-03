@@ -1,7 +1,7 @@
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
 from nipype.interfaces import fsl
-from PUMI.utils import get_reference
+from PUMI.utils import get_reference, get_config
 from PUMI.pipelines.multimodal.utils import vol2png
 
 
@@ -36,7 +36,7 @@ def anat2mni_fsl(wf, **kwargs):
     nonlinear_reg.inputs.refmask_file = get_reference(wf, 'brain_mask')
     nonlinear_reg.inputs.fieldcoeff_file = True
     nonlinear_reg.inputs.jacobian_file = True
-    nonlinear_reg.config_file = wf.cfg_parser.get('FSL', 'fnirt_config')
+    nonlinear_reg.config_file = get_config(wf, 'FSL', 'fnirt_config')
     wf.connect('inputspec', 'head', nonlinear_reg, 'in_file')
     wf.connect(linear_reg, 'out_matrix_file', nonlinear_reg, 'affine_file')
 
