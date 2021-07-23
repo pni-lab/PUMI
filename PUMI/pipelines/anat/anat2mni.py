@@ -3,6 +3,7 @@ from PUMI.engine import NestedNode as Node
 from nipype.interfaces import fsl
 from PUMI.utils import get_reference, get_config
 from PUMI.pipelines.multimodal.utils import vol2png
+from nipype.interfaces.ants import Registration, ApplyTransforms
 
 
 @QcPipeline(inputspec_fields=['in_file'],
@@ -67,3 +68,55 @@ def anat2mni_fsl(wf, **kwargs):
     wf.connect(nonlinear_reg, 'field_file', 'outputspec', 'field_file')
     wf.connect(inv_nonlinear_reg, 'inverse_warp', 'outputspec', 'inv_nonlinear_xfm')
     wf.connect(brain_warp, 'out_file', 'outputspec', 'output_brain')
+
+
+@AnatPipeline(inputspec_fields=['brain', 'head'],
+              outputspec_fields=['output_brain', 'xfm', 'inv_xfm', 'std_template'])
+def anat2mni_ants(wf, **kwargs):
+    reg = Node(interface=Registration(), name="reg")
+    reg.inputs.fixed_image = get_reference(wf, 'head')
+    reg.inputs.output_warped_image = True
+    # parameters based on: https://gist.github.com/satra/8439778
+    reg.inputs.transforms = ['Rigid', 'Affine', 'SyN']
+    reg.inputs.transform_parameters = [(0.1,), (0.1,), (0.2, 3.0, 0.0)]
+    reg.inputs.number_of_iterations = ([[10000, 111110, 11110]] * 2 + [[100, 50, 30]])
+    reg.inputs.dimension = 3
+    reg.inputs.write_composite_transform = True
+    reg.inputs.collapse_output_transforms = True
+    reg.inputs.initial_moving_transform_com = True
+    reg.inputs.metric = ['Mattes'] * 2 + [['Mattes', 'CC']]
+    reg.inputs.metric_weight = [1] * 2 + [[0.5, 0.5]]
+    reg.inputs.radius_or_number_of_bins = [32] * 2 + [[32, 4]]
+    reg.inputs.sampling_strategy = ['Regular'] * 2 + [[None, None]]
+    reg.inputs.sampling_percentage = [0.3] * 2 + [[None, None]]
+    reg.inputs.convergence_threshold = [1.e-8] * 2 + [-0.01]
+    reg.inputs.convergence_window_size = [20] * 2 + [5]
+    reg.inputs.smoothing_sigmas = [[4, 2, 1]] * 2 + [[1, 0.5, 0]]
+    reg.inputs.sigma_units = ['vox'] * 3
+    reg.inputs.shrink_factors = [[3, 2, 1]] * 2 + [[4, 2, 1]]
+    reg.inputs.use_estimate_learning_rate_once = [True] * 3
+    reg.inputs.use_histogram_matching = [False] * 2 + [True]
+    reg.inputs.winsorize_lower_quantile = 0.005
+    reg.inputs.winsorize_upper_quantile = 0.995
+    reg.inputs.args = '--float'
+    # ---
+    wf.connect('inputspec', 'head', reg, 'moving_image')
+
+    image_transform = Node(interface=ApplyTransforms(), name='image_transform')
+    image_transform.inputs.reference_image = get_reference(wf, 'brain')
+    wf.connect('inputspec', 'brain', image_transform, 'input_image')
+    wf.connect(reg, 'composite_transform', image_transform, 'transforms')
+
+    # Create png images for quality check
+    anat2mni_ants_qc = qc(name='anat2mni_ants_qc', qc_dir=wf.qc_dir)
+    wf.connect(image_transform, 'output_image', anat2mni_ants_qc, 'in_file')
+
+    # sinking
+    wf.connect(reg, 'composite_transform', 'sinker', 'anat2mni_warpfield')
+    wf.connect(image_transform, 'output_image', 'sinker', 'warped_brain')
+
+    # outputspec
+    wf.get_node('outputspec').inputs.std_template = get_reference(wf, 'brain')
+    wf.connect(reg, 'composite_transform', 'outputspec', 'xfm')
+    wf.connect(reg, 'inverse_composite_transform', 'outputspec', 'inv_xfm')
+    wf.connect(image_transform, 'output_image', 'outputspec', 'output_brain')
