@@ -1,9 +1,10 @@
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
 from nipype.interfaces import fsl
-from PUMI.utils import get_reference, get_config
+from PUMI.utils import get_reference, get_config, registration_ants_hardcoded
 from PUMI.pipelines.multimodal.utils import vol2png
 from nipype.interfaces.ants import Registration, ApplyTransforms
+from nipype.interfaces.utility import Function
 
 
 @QcPipeline(inputspec_fields=['in_file'],
@@ -120,3 +121,50 @@ def anat2mni_ants(wf, **kwargs):
     wf.connect(reg, 'composite_transform', 'outputspec', 'xfm')
     wf.connect(reg, 'inverse_composite_transform', 'outputspec', 'inv_xfm')
     wf.connect(image_transform, 'output_image', 'outputspec', 'output_brain')
+
+
+@AnatPipeline(inputspec_fields=['brain', 'head'],
+              outputspec_fields=['output_brain', 'linear_xfm', 'inv_linear_xfm', 'nonlinear_xfm', 'inv_nonlinear_xfm',
+                                 'std_template'])
+def anat2mni_ants_hardcoded(wf):
+    # Calculate linear transformation with FSL (has to be used segmentation with fast if priors are set).
+    linear_reg = Node(interface=fsl.FLIRT(), name='linear_reg')
+    linear_reg.inputs.cost = 'corratio'
+    linear_reg.inputs.reference = get_reference(wf, 'brain')
+    wf.connect('inputspec', 'brain', linear_reg, 'in_file')
+
+    # Calculate the inverse of the linear transformation
+    inv_linear_reg = Node(interface=fsl.utils.ConvertXFM(), name='inv_linear_reg')
+    inv_linear_reg.inputs.invert_xfm = True
+    wf.connect(linear_reg, 'out_matrix_file', inv_linear_reg, 'in_file')
+
+    # Multi-stage registration node with ANTS
+    ants_hardcoded = Node(interface=Function(input_names=['brain',
+                                                          'reference_brain',
+                                                          'head',
+                                                          'reference_head'],
+                                             output_names=['transform_composite',
+                                                           'transform_inverse_composite',
+                                                           'warped_image'],
+                                             function=registration_ants_hardcoded),
+                          name="ants_hardcoded")
+    ants_hardcoded.inputs.reference_head = get_reference(wf, 'head')
+    ants_hardcoded.inputs.reference_brain = get_reference(wf, 'brain')
+    wf.connect('inputspec', 'head', ants_hardcoded, 'head')
+    wf.connect('inputspec', 'brain', ants_hardcoded, 'brain')
+
+    # Create png images for quality check
+    anat2mni_ants_hardcoded_qc = qc(name='anat2mni_ants_hardcoded_qc', qc_dir=wf.qc_dir)
+    wf.connect(ants_hardcoded, 'warped_image', anat2mni_ants_hardcoded_qc, 'in_file')
+
+    # sinking
+    wf.connect(ants_hardcoded, 'warped_image', 'sinker', 'anat2mni')
+    wf.connect(ants_hardcoded, 'transform_composite', 'sinker', 'anat2mni_warpfield')
+
+    # outputs
+    wf.get_node('outputspec').inputs.std_template = get_reference(wf, 'brain')
+    wf.connect(linear_reg, 'out_matrix_file', 'outputspec', 'linear_xfm')
+    wf.connect(inv_linear_reg, 'out_file', 'outputspec', 'inv_linear_xfm')
+    wf.connect(ants_hardcoded, 'transform_composite', 'outputspec', 'nonlinear_xfm')
+    wf.connect(ants_hardcoded, 'transform_inverse_composite', 'outputspec', 'inv_nonlinear_xfm')
+    wf.connect(ants_hardcoded, 'warped_image', 'outputspec', 'output_brain')

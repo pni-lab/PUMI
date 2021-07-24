@@ -1,4 +1,5 @@
 from templateflow import api as tflow
+import subprocess
 import os
 
 
@@ -181,3 +182,72 @@ def vol_id(in_file, ref_vol='last', raise_exception=False):
         raise ValueError('''Can only provide the ID for the first, middle and last image.
                          %s is not a valid parameter for ref_vol''', ref_vol)
     return vol_id
+
+
+def registration_ants_hardcoded(brain, reference_brain, head, reference_head):
+    # parameters based on Satra's post: https://gist.github.com/satra/8439778
+    regcmd = ["antsRegistration",
+              "--collapse-output-transforms", "1",
+              "--dimensionality", "3",
+
+              "--initial-moving-transform",
+              "[{0},{1},1]".format(reference_brain, brain),
+              "--interpolation", "Linear",
+              "--output", "[transform,transform_Warped.nii.gz]",
+
+              "--transform", "Rigid[0.1]",
+              "--metric", "MI[{0},{1},1,32," \
+              "Regular,0.3]".format(reference_brain, brain),
+              "--convergence", "[1000x500x250,1e-08,20]",
+              "--smoothing-sigmas", "4.0x2.0x1.0",
+              "--shrink-factors", "3x2x1",
+              "--use-estimate-learning-rate-once", "1",
+              "--use-histogram-matching", "0",
+
+              "--transform", "Affine[0.1]",
+              "--metric", "MI[{0},{1},1,32," \
+              "Regular,0.3]".format(reference_brain, brain),
+              "--convergence", "[1000x500x250,1e-08,20]",
+              "--smoothing-sigmas", "4.0x2.0x1.0",
+              "--shrink-factors", "3x2x1",
+              "--use-estimate-learning-rate-once", "1",
+              "--use-histogram-matching", "0",
+
+              "--transform", "SyN[0.2,3.0,0.0]",
+              "--metric", "Mattes[{0},{1},0.5,32]".format(reference_head, head),
+              "--metric", "CC[{0},{1},0.5,4]".format(reference_head, head),
+              "--convergence", "[100x50x30,-0.01,5]",
+              "--smoothing-sigmas", "1.0x0.5x0.0",
+              "--shrink-factors", "4x2x1",
+              "--use-histogram-matching", "1",
+              "--winsorize-image-intensities", "[0.005,0.995]",
+              "--use-estimate-learning-rate-once", "1",
+              "--write-composite-transform", "1"]
+
+    try:
+        output = subprocess.check_output(regcmd)
+    except Exception as e:
+        raise Exception(
+            '[!] ANTS registration did not complete successfully!\n\nError details:\n{0}\n\n'.format(e)
+        )
+
+    transform_composite = None
+    transform_inverse_composite = None
+    warped_image = None
+
+    files = [f for f in os.listdir('.') if os.path.isfile(f)]
+
+    for f in files:
+        if ("transformComposite" in f) and ("Warped" not in f):
+            transform_composite = os.getcwd() + "/" + f
+        if ("transformInverseComposite" in f) and ("Warped" not in f):
+            transform_inverse_composite = os.getcwd() + "/" + f
+        if "Warped" in f:
+            warped_image = os.getcwd() + "/" + f
+
+    if not warped_image:
+        raise Exception(
+            '[!] No registration output file found. ANTS registration may not have completed successfully.\n\n'
+        )
+
+    return transform_composite, transform_inverse_composite, warped_image
