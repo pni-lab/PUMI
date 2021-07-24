@@ -1,5 +1,4 @@
 from templateflow import api as tflow
-import subprocess
 import os
 
 
@@ -185,6 +184,8 @@ def vol_id(in_file, ref_vol='last', raise_exception=False):
 
 
 def registration_ants_hardcoded(brain, reference_brain, head, reference_head):
+    import os
+    import subprocess
     # parameters based on Satra's post: https://gist.github.com/satra/8439778
     regcmd = ["antsRegistration",
               "--collapse-output-transforms", "1",
