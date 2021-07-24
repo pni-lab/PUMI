@@ -127,7 +127,7 @@ def anat2mni_ants(wf, **kwargs):
               outputspec_fields=['output_brain', 'linear_xfm', 'inv_linear_xfm', 'nonlinear_xfm', 'inv_nonlinear_xfm',
                                  'std_template'])
 def anat2mni_ants_hardcoded(wf):
-    # Calculate linear transformation with FSL (has to be used segmentation with fast if priors are set).
+    # Calculate linear transformation with FSL (necessary for segmentation with fsl fast if priors are set).
     linear_reg = Node(interface=fsl.FLIRT(), name='linear_reg')
     linear_reg.inputs.cost = 'corratio'
     linear_reg.inputs.reference = get_reference(wf, 'brain')
