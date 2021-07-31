@@ -2,7 +2,7 @@ from ...engine import AnatPipeline, QcPipeline, PumiPipeline
 from ...engine import NestedNode as Node
 from ...interfaces.HDBet import HDBet
 from ..multimodal.utils import get_vol
-from PUMI.utils import plot_roi, get_reference
+from PUMI.utils import plot_segmentation_qc
 from nipype import Function
 from nipype.interfaces import fsl
 from nipype.interfaces.utility import Split
@@ -17,7 +17,7 @@ import os
 def qc_bet(wf, **kwargs):
     """
 
-    Creates quality check images for brain extraction workflows
+    Create quality check images for brain extraction workflows
 
     Inputs
     ----------
@@ -33,12 +33,11 @@ def qc_bet(wf, **kwargs):
     - The quality check image
 
     """
-    plot = Node(Function(input_names=['roi_img', 'bg_img', 'cmap'],
+    plot = Node(Function(input_names=['overlay', 'bg_img', 'cmap'],
                          output_names=['out_file'],
-                         function=plot_roi),
+                         function=plot_segmentation_qc),
                 name='plot')
-    plot.inputs.cmap = 'winter'
-    wf.connect('inputspec', 'brain', plot, 'roi_img')
+    wf.connect('inputspec', 'brain', plot, 'overlay')
     wf.connect('inputspec', 'head', plot, 'bg_img')
 
     # sinking
@@ -55,7 +54,7 @@ def qc_bet(wf, **kwargs):
 def qc_tissue_segmentation(wf, **kwargs):
     """
 
-    Creates quality check images for tissue segmentation workflows
+    Create quality check images for tissue segmentation workflows
 
     Inputs
     ----------
@@ -70,13 +69,13 @@ def qc_tissue_segmentation(wf, **kwargs):
     - The quality check image
 
     """
-    plot = Node(Function(input_names=['roi_img', 'cmap'],
+    plot = Node(Function(input_names=['overlay', 'cmap'],
                          output_names=['out_file'],
-                         function=plot_roi),
+                         function=plot_segmentation_qc),
                 name='plot')
     colors = ['#00A859', '#FFCC29', '#3E4095']
     plot.inputs.cmap = LinearSegmentedColormap.from_list('tissue_segmentation_colors', colors, N=3)
-    wf.connect('inputspec', 'in_file', plot, 'roi_img')
+    wf.connect('inputspec', 'in_file', plot, 'overlay')
 
     # sinking
     wf.connect(plot, 'out_file', 'sinker', 'qc_tissue_segmentation')

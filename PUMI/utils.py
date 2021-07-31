@@ -186,18 +186,27 @@ def vol_id(in_file, ref_vol='last', raise_exception=False):
 def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode='mosaic', figure=None, axes=None,
              title=None, annotate=True, draw_cross=True, black_bg=True, threshold=0.5, alpha=0.7,
              cmap='tab10', dim='auto', vmin=None, vmax=None, resampling_interpolation='nearest', view_type='continuous',
-             linewidths=2.5, colorbar=False, **kwargs):
+             linewidths=2.5, colorbar=False, save_img=True, **kwargs):
     """
 
     Wrapper for nilearn's plot_roi method.
-    Can be used in a nipype function node. Attention: In this case NO output_file should be specified!
+
+    Can be used in a nipype function node.
+    Attention: In this case NO output_file should be specified (and save_img should stay True)!
 
     If no output_file is specified, the plot is stored as a png file in the current working directory.
     In case the function is executed within a nipype function node, the current working directory is the working
     directory of the respective node.
 
+    Attention: This method returns unlike e.g. plot_brain_extraction_qc the plot object and the filename!
+
     Parameters
     ----------
+    Only parameter that is not from nilearn's plot_roi method is save_img.
+    Set to False if you don't want to save the result and just need the plot object.
+    In this case the result is a tuple containing the plot object and None (otherwise it would be the plot
+    object and the path to the file).
+
     For more information about the parameters, see the documentation of nilearn.
     https://nilearn.github.io/modules/generated/nilearn.plotting.plot_roi.html
 
@@ -207,7 +216,8 @@ def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode=
 
     Returns
     ----------
-    output_file (str): path to the saved plot
+    plot (nilearn.plotting.displays.OrthoSlicer): Plot object.
+    output_file (str): Path to the saved plot.
 
     Acknowledgements
     ----------
@@ -218,17 +228,55 @@ def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode=
     from nilearn import plotting
     import os
 
-    if output_file is None:
-        roi_img_name = roi_img.split('/')[-1].split('.')[0]
-        output_file = os.path.join(os.getcwd(), roi_img_name + '_plot.png')
+    if save_img:
+        if output_file is None:
+            roi_img_name = roi_img.split('/')[-1].split('.')[0]
+            output_file = os.path.join(os.getcwd(), roi_img_name + '_plot.png')
+        else:
+            if not output_file.startswith('/'):
+                output_file = os.path.join(os.getcwd(), output_file)
     else:
-        if not output_file.startswith('/'):
-            output_file = os.path.join(os.getcwd(), output_file)
+        output_file = None  # make sure that no file is created when save_img=False
 
-    plotting.plot_roi(roi_img, bg_img=bg_img, cut_coords=cut_coords, output_file=output_file, display_mode=display_mode,
-                      figure=figure, axes=axes, title=title, annotate=annotate, draw_cross=draw_cross,
-                      black_bg=black_bg, threshold=threshold, alpha=alpha, cmap=cmap, dim=dim, vmin=vmin, vmax=vmax,
-                      resampling_interpolation=resampling_interpolation, view_type=view_type, linewidths=linewidths,
-                      colorbar=colorbar, **kwargs)
+    plot = plotting.plot_roi(roi_img, bg_img=bg_img, cut_coords=cut_coords, output_file=output_file,
+                             display_mode=display_mode, figure=figure, axes=axes, title=title, annotate=annotate,
+                             draw_cross=draw_cross,
+                             black_bg=black_bg, threshold=threshold, alpha=alpha, cmap=cmap, dim=dim, vmin=vmin,
+                             vmax=vmax, resampling_interpolation=resampling_interpolation, view_type=view_type,
+                             linewidths=linewidths, colorbar=colorbar, **kwargs)
 
+    return plot, output_file
+
+
+def plot_segmentation_qc(overlay, bg_img=None, output_file=None, cut_coords=5, cmap='winter', **kwargs):
+    from PUMI.utils import plot_roi
+    """
+
+    Create segmentation (e.g. brain extraction, tissue segmentation) quality check images.
+
+    Can be used in a nipype function node.
+    Attention: In this case NO output_file should be specified (and save_imgshould stay True)!
+
+    If no output_file is specified, the plot is stored as a png file in the current working directory.
+    In case the function is executed within a nipype function node, the current working directory is the working
+    directory of the respective node.
+
+    Parameters
+    ----------
+    overlay (str): Path to the overlay (e.g. in brain extraction workflows the extracted brain).
+    bg_img (str): Path to the background (e.g. in brain extraction workflows the head).
+    output_file (str): Filename of quality check image. Can be be an absolute path or a relative path.
+                       If it's set to None (default) and save_img is True, the filename is automatically generated.
+    cmap (matplotlib colormap): Colormap.
+    **kwargs: These parameters are passed to the plot_roi method.
+
+    Returns
+    ----------
+    output_file (str): Path to the saved plot.
+
+    """
+
+    plot, output_file = plot_roi(roi_img=overlay, bg_img=bg_img, output_file=output_file, cut_coords=cut_coords,
+                                 cmap=cmap, **kwargs)
     return output_file
+
