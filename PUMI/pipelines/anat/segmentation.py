@@ -33,12 +33,11 @@ def qc_bet(wf, **kwargs):
     - The quality check image
 
     """
-    plot = Node(Function(input_names=['roi_img', 'bg_img', 'cut_coords', 'cmap'],
+    plot = Node(Function(input_names=['roi_img', 'bg_img', 'cmap'],
                          output_names=['out_file'],
                          function=plot_roi),
                 name='plot')
     plot.inputs.cmap = 'winter'
-    plot.inputs.cut_coords = 5
     wf.connect('inputspec', 'brain', plot, 'roi_img')
     wf.connect('inputspec', 'head', plot, 'bg_img')
 
@@ -71,13 +70,12 @@ def qc_tissue_segmentation(wf, **kwargs):
     - The quality check image
 
     """
-    plot = Node(Function(input_names=['roi_img', 'cmap', 'cut_coords'],
+    plot = Node(Function(input_names=['roi_img', 'cmap'],
                          output_names=['out_file'],
                          function=plot_roi),
                 name='plot')
     colors = ['#00A859', '#FFCC29', '#3E4095']
     plot.inputs.cmap = LinearSegmentedColormap.from_list('tissue_segmentation_colors', colors, N=3)
-    plot.inputs.cut_coords = 5
     wf.connect('inputspec', 'in_file', plot, 'roi_img')
 
     # sinking
