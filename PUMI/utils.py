@@ -280,3 +280,54 @@ def plot_segmentation_qc(overlay, bg_img=None, output_file=None, cut_coords=5, c
                                  cmap=cmap, **kwargs)
     return output_file
 
+
+def create_coregistration_qc(registered_brain, template, output_file=None, levels=None, cmap='winter', **kwargs):
+    """
+
+        Create coregistration quality check images.
+
+        Can be used in a nipype function node.
+        Attention: In this case NO output_file should be specified (and save_imgshould stay True)!
+
+        If no output_file is specified, the plot is stored as a png file in the current working directory.
+        In case the function is executed within a nipype function node, the current working directory is the working
+        directory of the respective node.
+
+        Parameters
+        ----------
+        registered_brain (str): Path to the registered brain.
+        template (str): Path to the used template (reference) file.
+        save_img (bool): Set to False if you don't want to save the result and just need the plot object.
+                         In this case the result is a tuple containing the plot object and None (otherwise it would be
+                         the plot object and the path to the file).
+        output_file (str): Filename of quality check image. Can be be an absolute path or a relative path.
+                           If it's set to None (default) and save_img is True, the filename is automatically generated.
+        levels (list): Contour fillings levels. If set to None, [0.5] will be used.
+        cmap (matplotlib colormap): Colormap.
+        **kwargs: These parameters are passed to plot_roi method.
+
+        Returns
+        ----------
+        plot (nilearn.plotting.displays.OrthoSlicer): Plot object.
+        output_file (str): Path to the saved plot.
+
+        """
+    from PUMI.utils import plot_roi
+    import os
+
+    if levels is None:
+        levels = [0.5]
+
+    plot, _ = plot_roi(roi_img=registered_brain, bg_img=template, cmap=cmap, alpha=0, save_img=False, **kwargs)
+    plot.add_contours(registered_brain, levels=levels, colors='r')
+
+    if output_file is None:
+        registered_brain_filename = registered_brain.split('/')[-1].split('.')[0]
+        output_file = os.path.join(os.getcwd(), registered_brain_filename + '_plot.png')
+    else:
+        if not output_file.startswith('/'):
+            output_file = os.path.join(os.getcwd(), output_file)
+    plot.savefig(output_file)
+
+    return output_file
+
