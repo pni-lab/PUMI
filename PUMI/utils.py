@@ -248,7 +248,7 @@ def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode=
     return plot, output_file
 
 
-def plot_segmentation_qc(overlay, bg_img=None, output_file=None, cut_coords=5, cmap='winter', **kwargs):
+def create_segmentation_qc(overlay, bg_img=None, output_file=None, cut_coords=5, cmap='winter', **kwargs):
     from PUMI.utils import plot_roi
     """
 

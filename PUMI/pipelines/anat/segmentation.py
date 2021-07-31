@@ -2,7 +2,7 @@ from ...engine import AnatPipeline, QcPipeline, PumiPipeline
 from ...engine import NestedNode as Node
 from ...interfaces.HDBet import HDBet
 from ..multimodal.utils import get_vol
-from PUMI.utils import plot_segmentation_qc
+from PUMI.utils import create_segmentation_qc
 from nipype import Function
 from nipype.interfaces import fsl
 from nipype.interfaces.utility import Split
@@ -35,7 +35,7 @@ def qc_bet(wf, **kwargs):
     """
     plot = Node(Function(input_names=['overlay', 'bg_img', 'cmap'],
                          output_names=['out_file'],
-                         function=plot_segmentation_qc),
+                         function=create_segmentation_qc),
                 name='plot')
     wf.connect('inputspec', 'brain', plot, 'overlay')
     wf.connect('inputspec', 'head', plot, 'bg_img')
@@ -71,7 +71,7 @@ def qc_tissue_segmentation(wf, **kwargs):
     """
     plot = Node(Function(input_names=['overlay', 'cmap'],
                          output_names=['out_file'],
-                         function=plot_segmentation_qc),
+                         function=create_segmentation_qc),
                 name='plot')
     colors = ['#00A859', '#FFCC29', '#3E4095']
     plot.inputs.cmap = LinearSegmentedColormap.from_list('tissue_segmentation_colors', colors, N=3)
