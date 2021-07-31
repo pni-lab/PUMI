@@ -10,9 +10,7 @@ import os
 
 
 @QcPipeline(inputspec_fields=['brain', 'head'],
-            outputspec_fields=['out_file'],
-            default_regexp_sub=False,
-            regexp_sub=[(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<2>.png'), ('_subject_', 'sub-')])
+            outputspec_fields=['out_file'])
 def qc_bet(wf, **kwargs):
     """
 
@@ -47,9 +45,7 @@ def qc_bet(wf, **kwargs):
 
 
 @QcPipeline(inputspec_fields=['in_file'],
-            outputspec_fields=['out_file'],
-            default_regexp_sub=False,
-            regexp_sub=[(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<2>.png'), ('_subject_', 'sub-')])
+            outputspec_fields=['out_file'])
 def qc_tissue_segmentation(wf, **kwargs):
     """
 

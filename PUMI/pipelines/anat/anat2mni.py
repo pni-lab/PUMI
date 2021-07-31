@@ -6,9 +6,7 @@ from nipype.interfaces import fsl
 
 
 @QcPipeline(inputspec_fields=['in_file'],
-            outputspec_fields=['out_file'],
-            default_regexp_sub=False,
-            regexp_sub=[(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<2>.png'), ('_subject_', 'sub-')])
+            outputspec_fields=['out_file'])
 def qc(wf, **kwargs):
     """
 

@@ -240,7 +240,7 @@ class QcPipeline(PumiPipeline):
         substitutions = []
 
         if default_regexp_sub:
-            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)\/([^\/]+)$', r'\g<1>\g<4>/\g<3>.png'),
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<2>.png'),
                              ('_subject_', 'sub-')]
 
         substitutions.extend(regexp_sub)
