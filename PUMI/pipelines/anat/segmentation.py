@@ -10,29 +10,43 @@ from matplotlib.colors import LinearSegmentedColormap
 import os
 
 
-@QcPipeline(inputspec_fields=['background', 'overlay'],
-            outputspec_fields=['qc_image'])
-def qc(wf):
+@QcPipeline(inputspec_fields=['brain', 'head'],
+            outputspec_fields=['out_file'],
+            default_regexp_sub=False,
+            regexp_sub=[(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<2>.png'), ('_subject_', 'sub-')])
+def qc_bet(wf, **kwargs):
+    """
 
-    ex_vol_background = get_vol(name="ex_vol_background", qc_dir=wf.qc_dir)
-    wf.connect('inputspec', 'background', ex_vol_background, 'in_file')
+    Creates quality check images for brain extraction workflows
 
-    ex_vol_overlay = get_vol(name="ex_vol_overlay", qc_dir=wf.qc_dir)
-    wf.connect('inputspec', 'overlay', ex_vol_overlay, 'in_file')
+    Inputs
+    ----------
+    brain (str): Path to the extracted brain.
+    head (str): Path to the head.
 
-    slicer = Node(interface=fsl.Slicer(), name='slicer')
-    slicer.inputs.image_width = 2000
-    slicer.inputs.out_file = wf.name
-    # set output all axial slices into one picture
-    slicer.inputs.sample_axial = 5
-    wf.connect(ex_vol_background, 'out_file', slicer, 'in_file')
-    wf.connect(ex_vol_overlay, 'out_file', slicer, 'image_edges')
+    Ouputs
+    ----------
+    out_file (str): Path to the quality check image
 
-    # Sink QC image
-    wf.connect(slicer, 'out_file', 'sinker', 'bet')
+    Sinking
+    ----------
+    - The quality check image
 
-    # return
-    wf.connect(slicer, 'out_file', 'outputspec', 'qc_image')
+    """
+    plot = Node(Function(input_names=['roi_img', 'bg_img', 'cut_coords', 'cmap'],
+                         output_names=['out_file'],
+                         function=plot_roi),
+                name='plot')
+    plot.inputs.cmap = 'winter'
+    plot.inputs.cut_coords = 5
+    wf.connect('inputspec', 'brain', plot, 'roi_img')
+    wf.connect('inputspec', 'head', plot, 'bg_img')
+
+    # sinking
+    wf.connect(plot, 'out_file', 'sinker', 'qc_bet')
+
+    # output
+    wf.connect(plot, 'out_file', 'outputspec', 'out_file')
 
 
 @QcPipeline(inputspec_fields=['in_file'],
@@ -87,10 +101,10 @@ def bet_fsl(wf, **kwargs):
     wf.connect(bet, 'out_file', 'sinker', 'out_file')
     wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
 
-    #qc
-    qc_bet = qc(name='qc_bet', qc_dir=wf.qc_dir)
-    wf.connect('inputspec', 'in_file', qc_bet, 'background')
-    wf.connect(bet, 'out_file', qc_bet, 'overlay')
+    # quality check
+    qc = qc_bet(name='qc_bet', qc_dir=wf.qc_dir)
+    wf.connect('inputspec', 'in_file', qc, 'head')
+    wf.connect(bet, 'out_file', qc, 'brain')
 
     # return
     wf.connect(bet, 'out_file', 'outputspec', 'out_file')
@@ -116,12 +130,12 @@ def bet_hd(wf, **kwargs):
                                                wf.cfg_parser.getint('HD-Bet', 'overwrite_existing', fallback=1))
     wf.connect('inputspec', 'in_file', bet, 'in_file')
 
-    #qc
-    qc_bet = qc(name='qc_bet', qc_dir=wf.qc_dir)
-    wf.connect('inputspec', 'in_file', qc_bet, 'background')
-    wf.connect(bet, 'out_file', qc_bet, 'overlay')
+    # quality check
+    qc = qc_bet(name='qc_bet', qc_dir=wf.qc_dir)
+    wf.connect('inputspec', 'in_file', qc, 'head')
+    wf.connect(bet, 'out_file', qc, 'brain')
 
-    #sinking
+    # sinking
     wf.connect(bet, 'out_file', 'sinker', 'out_file')
     wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
 
