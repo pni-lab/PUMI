@@ -156,33 +156,6 @@ def get_ref_locally(wf, ref):
         return os.path.join(os.environ['FSLDIR'], path)
 
 
-def vol_id(in_file, ref_vol='last', raise_exception=False):
-    # todo: really just for func??
-    import nibabel
-    image = nibabel.load(in_file)
-    header = image.get_header()
-    shape = header.get_data_shape()
-
-    if len(shape) != 4 and raise_exception:
-        raise TypeError('Input nifti file: %s is not a 4D file' % in_file)
-    elif len(shape) != 4:
-        print('''Input nifti file %s is not a 4D file, but raise_exception=False.
-                 Return last slice of the func run''' % in_file)
-        return 0
-
-    numb_of_volumes = int(header.get_data_shape()[3])
-    if ref_vol == 'first':
-        vol_id = numb_of_volumes - 1
-    elif ref_vol == 'middle':
-        vol_id = int(round(numb_of_volumes/2))
-    elif ref_vol == 'last':
-        vol_id = 0  # todo: why is 0 the last slice??
-    else:
-        raise ValueError('''Can only provide the ID for the first, middle and last image.
-                         %s is not a valid parameter for ref_vol''', ref_vol)
-    return vol_id
-
-
 def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode='mosaic', figure=None, axes=None,
              title=None, annotate=True, draw_cross=True, black_bg=True, threshold=0.5, alpha=0.7,
              cmap='tab10', dim='auto', vmin=None, vmax=None, resampling_interpolation='nearest', view_type='continuous',
