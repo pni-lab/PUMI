@@ -162,25 +162,21 @@ def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode=
              linewidths=2.5, colorbar=False, save_img=True, **kwargs):
     """
 
-    Wrapper for nilearn's plot_roi method.
+    Wrapper for nilearn's plot_roi method (with small modifications).
 
-    Can be used in a nipype function node.
-    Attention: In this case NO output_file should be specified (and save_img should stay True)!
-
-    If no output_file is specified, the plot is stored as a png file in the current working directory.
-    In case the function is executed within a nipype function node, the current working directory is the working
-    directory of the respective node.
-
-    Attention: This method returns unlike e.g. plot_brain_extraction_qc the plot object and the filename!
+    Can be used in a nipype function node. In this case output_file should stay None and save_img should stay True!
 
     Parameters
     ----------
-    Only parameter that is not from nilearn's plot_roi method is save_img.
+    Only parameter that does not occur in nilearn's plot_roi method is save_img.
     Set to False if you don't want to save the result and just need the plot object.
-    In this case the result is a tuple containing the plot object and None (otherwise it would be the plot
-    object and the path to the file).
+    This parameter is necessary because we substitute output_file by the current working directory and a suitable
+    filename if output_file is set to None (default).
+    In case the function is executed within a nipype function node, the current working directory is the working
+    directory of the respective node.
+    We introduced this modifications in order to be able to use this method easily in nipype function nodes.
 
-    For more information about the parameters, see the documentation of nilearn.
+    For more information about the other parameters, see the documentation of nilearn.
     https://nilearn.github.io/modules/generated/nilearn.plotting.plot_roi.html
 
     Only a few changes have been made to the default parameters.
@@ -190,7 +186,7 @@ def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode=
     Returns
     ----------
     plot (nilearn.plotting.displays.OrthoSlicer): Plot object.
-    output_file (str): Path to the saved plot.
+    output_file (str): Path to the saved plot (if save_img is False, None is returned).
 
     Acknowledgements
     ----------
@@ -222,24 +218,18 @@ def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode=
 
 
 def create_segmentation_qc(overlay, bg_img=None, output_file=None, cut_coords=5, cmap='winter', **kwargs):
-    from PUMI.utils import plot_roi
     """
 
     Create segmentation (e.g. brain extraction, tissue segmentation) quality check images.
 
-    Can be used in a nipype function node.
-    Attention: In this case NO output_file should be specified (and save_imgshould stay True)!
-
-    If no output_file is specified, the plot is stored as a png file in the current working directory.
-    In case the function is executed within a nipype function node, the current working directory is the working
-    directory of the respective node.
+    Can be used in a nipype function node. In this case output_file should stay None!
 
     Parameters
     ----------
     overlay (str): Path to the overlay (e.g. in brain extraction workflows the extracted brain).
     bg_img (str): Path to the background (e.g. in brain extraction workflows the head).
     output_file (str): Filename of quality check image. Can be be an absolute path or a relative path.
-                       If it's set to None (default) and save_img is True, the filename is automatically generated.
+                       If it's set to None (default), the filename is automatically generated.
     cmap (matplotlib colormap): Colormap.
     **kwargs: These parameters are passed to the plot_roi method.
 
@@ -248,6 +238,7 @@ def create_segmentation_qc(overlay, bg_img=None, output_file=None, cut_coords=5,
     output_file (str): Path to the saved plot.
 
     """
+    from PUMI.utils import plot_roi
 
     plot, output_file = plot_roi(roi_img=overlay, bg_img=bg_img, output_file=output_file, cut_coords=cut_coords,
                                  cmap=cmap, **kwargs)
@@ -257,34 +248,25 @@ def create_segmentation_qc(overlay, bg_img=None, output_file=None, cut_coords=5,
 def create_coregistration_qc(registered_brain, template, output_file=None, levels=None, cmap='winter', **kwargs):
     """
 
-        Create coregistration quality check images.
+    Create coregistration quality check images.
 
-        Can be used in a nipype function node.
-        Attention: In this case NO output_file should be specified (and save_imgshould stay True)!
+    Can be used in a nipype function node. In this case output_file should stay None!
 
-        If no output_file is specified, the plot is stored as a png file in the current working directory.
-        In case the function is executed within a nipype function node, the current working directory is the working
-        directory of the respective node.
+    Parameters
+    ----------
+    registered_brain (str): Path to the registered brain.
+    template (str): Path to the used template (reference) file.
+    output_file (str): Filename of quality check image. Can be be an absolute path or a relative path.
+                       If it's set to None (default), the path and filename is automatically generated.
+    levels (list): Contour fillings levels. If set to None, [0.5] will be used.
+    cmap (matplotlib colormap): Colormap.
+    **kwargs: These parameters are passed to plot_roi method.
 
-        Parameters
-        ----------
-        registered_brain (str): Path to the registered brain.
-        template (str): Path to the used template (reference) file.
-        save_img (bool): Set to False if you don't want to save the result and just need the plot object.
-                         In this case the result is a tuple containing the plot object and None (otherwise it would be
-                         the plot object and the path to the file).
-        output_file (str): Filename of quality check image. Can be be an absolute path or a relative path.
-                           If it's set to None (default) and save_img is True, the filename is automatically generated.
-        levels (list): Contour fillings levels. If set to None, [0.5] will be used.
-        cmap (matplotlib colormap): Colormap.
-        **kwargs: These parameters are passed to plot_roi method.
+    Returns
+    ----------
+    output_file (str): Path to the saved plot.
 
-        Returns
-        ----------
-        plot (nilearn.plotting.displays.OrthoSlicer): Plot object.
-        output_file (str): Path to the saved plot.
-
-        """
+    """
     from PUMI.utils import plot_roi
     import os
 
