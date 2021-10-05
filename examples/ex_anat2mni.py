@@ -2,7 +2,7 @@ from nipype import IdentityInterface, Function
 from nipype.interfaces.fsl import Reorient2Std
 from PUMI.engine import NestedWorkflow as Workflow
 from PUMI.engine import NestedNode as Node
-from nipype.interfaces import BIDSDataGrabber, fsl
+from nipype.interfaces import BIDSDataGrabber
 from nipype.utils.filemanip import list_to_filename
 from PUMI.pipelines.anat.segmentation import bet_fsl
 from PUMI.pipelines.anat.anat2mni import anat2mni_fsl
