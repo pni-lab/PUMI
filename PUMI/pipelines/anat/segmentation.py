@@ -32,7 +32,7 @@ def qc(wf):
     wf.connect(slicer, 'out_file', 'outputspec', 'qc_image')
 
 
-@AnatPipeline(inputspec_fields=['in_file', 'opt_R', 'fract_int_thr', 'vertical_gradient'],
+@AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file', 'brain_mask'])
 def bet_fsl(wf, **kwargs):
 
