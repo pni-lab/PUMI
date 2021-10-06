@@ -1,20 +1,44 @@
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
+from PUMI.utils import get_reference, get_config, create_coregistration_qc, registration_ants_hardcoded
+from nipype import Function
 from nipype.interfaces import fsl
-from PUMI.utils import get_reference, get_config, registration_ants_hardcoded
-from PUMI.pipelines.multimodal.utils import vol2png
 from nipype.interfaces.ants import Registration, ApplyTransforms
 from nipype.interfaces.utility import Function
 
 
 @QcPipeline(inputspec_fields=['in_file'],
-            outputspec_fields=[])
-def qc(wf, image_width=500, threshold_edges=0.1):
-    qc_wf = vol2png(name='qc_anat2mni', qc_dir=wf.qc_dir, overlay_iterated=False)
-    qc_wf.inputs.inputspec.overlay_image = get_reference(wf, 'brain')
-    qc_wf.inputs.slicer.image_width = image_width
-    qc_wf.inputs.slicer.threshold_edges = threshold_edges
-    wf.connect('inputspec', 'in_file', qc_wf, 'bg_image')
+            outputspec_fields=['out_file'])
+def qc(wf, **kwargs):
+    """
+
+    Create quality check images for brain coregistration.
+
+    Inputs
+    ----------
+    in_file (str): Path to the registered brain.
+
+    Ouputs
+    ----------
+    out_file (str): Path to the quality check image
+
+    Sinking
+    ----------
+    - The quality check image
+
+    """
+    plot = Node(Function(input_names=['registered_brain', 'template'],
+                         output_names=['out_file'],
+                         function=create_coregistration_qc),
+                name='plot')
+    wf.connect('inputspec', 'in_file', plot, 'registered_brain')
+    plot.inputs.template = get_reference(wf, 'brain')
+
+    # sinking
+    wf.connect(plot, 'out_file', 'sinker', 'qc_anat2mni')
+
+    # output
+    wf.connect(plot, 'out_file', 'outputspec', 'out_file')
 
 
 @AnatPipeline(inputspec_fields=['brain', 'head'],
