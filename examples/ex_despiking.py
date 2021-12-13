@@ -17,8 +17,8 @@ working_dir = 'data_out'
 subjects = ['001', '002', '003']
 
 
-wf = Workflow("despiking_workflow")
-wf.base_dir = os.path.abspath(working_dir)
+despiking_wf = Workflow("despiking_wf")
+despiking_wf.base_dir = os.path.abspath(working_dir)
 
 inputspec = Node(interface=IdentityInterface(fields=['subject']), name='inputspec')
 inputspec.iterables = [('subject', subjects)]
@@ -35,7 +35,7 @@ bids_grabber.inputs.output_query = {
     )
 }
 
-wf.connect(inputspec, 'subject', bids_grabber, 'subject')
+despiking_wf.connect(inputspec, 'subject', bids_grabber, 'subject')
 
 path_extractor = Node(
     Function(
@@ -47,11 +47,11 @@ path_extractor = Node(
 )
 
 
-wf.connect(bids_grabber, 'T1w', path_extractor, 'filelist')
+despiking_wf.connect(bids_grabber, 'T1w', path_extractor, 'filelist')
 
 
 despike = despiking_afni('despiker')
-wf.connect(path_extractor, 'out_file', despike, 'in_file')
+despiking_wf.connect(path_extractor, 'out_file', despike, 'in_file')
 
-wf.run(plugin='MultiProc')
-wf.write_graph('graph.png')
+despiking_wf.run(plugin='MultiProc')
+despiking_wf.write_graph('graph.png')
