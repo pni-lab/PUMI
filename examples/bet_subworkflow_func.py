@@ -62,7 +62,7 @@ wf.connect(bids_grabber, 'bold', path_extractor, 'filelist')
 
 
 img_extraction_wf = ImgExtraction.img_extraction_workflow(wf_name="img_extraction_wf",
-                                                          sink_tag='Sub-00333', volume='mean')
+                                                          sink_tag='Sub-00333', volume='first')
 
 wf.connect(path_extractor, 'out_file', img_extraction_wf, 'inputspec.func')
 

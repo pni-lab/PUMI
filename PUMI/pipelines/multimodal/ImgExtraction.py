@@ -1,33 +1,12 @@
+from nipype import Function
+
 """
     to extract voxels 10 to 12 inclusive you would specify 10 and 3 (not 10 and 12).
 """
-import os
-
-from nipype.interfaces.fsl import ImageMaths, ExtractROI
-
-from PUMI.engine import Node
-from nipype import IdentityInterface, Function, Workflow
-
-'''
-    Sub-Workflow that extract deals with extracting a 3D-slice choosen by the user from a functional 4D-Sequence  
-    
-    Parameters
-    ----------
-    wf_name : string (nifti file)
-       Path to input functional run
-    sink_tag :
-        Name of the Folder, where sinked data will be stored.
-    volume : string
-        The slice specified by the user
-        Possible Values : (first / middle / last / mean / arbitrary number)
-    Returns
-    -------
-    The sub-workflow it self
-
-'''
 
 
 def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='first'):
+
     """
         Sub-Workflow that extract deals with extracting a 3D-slice choosen by the user from a functional 4D-Sequence
 
@@ -47,6 +26,9 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
             The sub-workflow itself.
     """
 
+    from nipype.interfaces.fsl import ImageMaths
+    from PUMI.engine import Node
+    from nipype import Workflow
     import os
     import nipype.pipeline as pe
     import nipype.interfaces.utility as utility
@@ -71,7 +53,6 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
     img_mean = None
     if volume == 'mean':
         img_mean = Node(ImageMaths(), op_string='-fmean', name='img_mean_node', out_file='foo_maths.nii')
-        print(img_mean.outputs)
         mean = True
     else:
         fslroi = Node(fsl.ExtractROI(),
@@ -126,7 +107,7 @@ def get_info(in_file, volume='first'):
     # Init variables
     img = load(in_file)
     shape = img.shape
-    start_idx = int(0)
+    start_idx = 0
 
     # Check to make sure the input file is 4-dimensional
     if len(shape) != 4:
