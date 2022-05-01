@@ -8,9 +8,11 @@ import os
 
 # experiment specific parameters:
 # paths relative to PUMI directory not PUMI/scripts
-input_dir = 'data_in/example-bids'  # place where the bids data is located
+input_dir = 'data_in/bids'  # place where the bids data is located
 output_dir = 'data_out'  # place where the folder 'BET' will be created for the results of this script
 working_dir = 'data_out'  # place where the folder 'bet_iter_wf' will be created for the workflow
+
+os.chdir("..")
 
 subjects = ['001']  # subjects for which a brain extraction should be performed
 # ---
@@ -50,6 +52,7 @@ wf.connect(bids_grabber, 'T1w', path_extractor, 'filelist')
 # Step 4: Do the brain extraction
 # All PUMI subworkflows take care sinking and qc-ing the most important results
 bet_wf = bet_hd('brain_extraction')
+print(path_extractor.outputs)
 wf.connect(path_extractor, 'out_file', bet_wf, 'in_file')
 
 wf.run(plugin='MultiProc')

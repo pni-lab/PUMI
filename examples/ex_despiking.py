@@ -1,4 +1,6 @@
 from nipype import IdentityInterface, Function
+
+import definitions
 from PUMI.engine import NestedWorkflow as Workflow
 from PUMI.engine import NestedNode as Node
 from nipype.interfaces import BIDSDataGrabber
@@ -8,10 +10,9 @@ from PUMI.pipelines.func.deconfound import despiking_afni
 
 
 
-
-input_dir = 'data_in/bids'
-output_dir = 'data_out'  # End Results of the workflow
-working_dir = 'data_out'  # Workflow-specific Data
+input_dir = definitions.BIDS_DIR # Path to the bids
+output_dir = definitions.DATA_OUT_DIR  # End Results of the workflow
+working_dir = definitions.DATA_OUT_DIR # Path, where Workflow Data will be stored
 
 
 subjects = ['001', '002', '003']
@@ -53,7 +54,7 @@ path_extractor = Node(
 )
 
 
-despiking_wf.connect(bids_grabber, 'T1w', path_extractor, 'filelist')
+despiking_wf.connect(bids_grabber, 'bold', path_extractor, 'filelist')
 
 
 despike = despiking_afni('despike')
