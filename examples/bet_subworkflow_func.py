@@ -57,17 +57,15 @@ wf.connect(bids_grabber, 'bold', path_extractor, 'filelist')
 
 
 
-
-# Step 4 : Extract 3D Images from 4D Images
-
-
+# Notice that we are using a sub-wf, and that's why we use (inputspec/outputspec) to (enter/get) data
+# Extract 3D Images from 4D Images
 img_extraction_wf = ImgExtraction.img_extraction_workflow(wf_name="img_extraction_wf",
-                                                          sink_tag='Sub-00333', volume='first')
-
+                                                          sink_tag='Sub-003', volume='middle')
 wf.connect(path_extractor, 'out_file', img_extraction_wf, 'inputspec.func')
 
-# Step 5: Do the brain extraction
-# All PUMI subworkflows take care sinking and qc-ing the most important results
+
+
+# Do the brain extraction
 bet_wf = bet_fsl('brain_extraction')
 wf.connect(img_extraction_wf, 'outputspec.func_slice', bet_wf, 'in_file')
 

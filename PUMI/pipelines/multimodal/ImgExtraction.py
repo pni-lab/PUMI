@@ -6,7 +6,6 @@ from nipype import Function
 
 
 def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='first'):
-
     """
         Sub-Workflow that extract deals with extracting a 3D-slice choosen by the user from a functional 4D-Sequence
 
@@ -44,15 +43,21 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
     inputspec = pe.Node(utility.IdentityInterface(fields=['func']),
                         name='inputspec')
 
-    img_4d_info = Node(interface=getImgInfo,
-                       name='img_4d_info')
+
+
+    # Basic interface which get the start index, from which the slicing begins
+    img_4d_info = Node(Function(input_names=['in_file', 'volume'],
+                                output_names=['start_idx'],
+                                function=get_info), name='img_4d_info')
     img_4d_info.inputs.volume = volume
+
+
 
     mean = False
     fslroi = None
     img_mean = None
     if volume == 'mean':
-        img_mean = Node(ImageMaths(), op_string='-fmean', name='img_mean_node', out_file='foo_maths.nii')
+        img_mean = Node(ImageMaths(op_string='-Tmean'), name='img_mean_node')
         mean = True
     else:
         fslroi = Node(fsl.ExtractROI(),
@@ -70,16 +75,16 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
     ds.inputs.regexp_substitutions = [("(\/)[^\/]*$", ".nii.gz")]
 
     wf_name = Workflow('{}'.format(wf_name))
-    wf_name.connect(inputspec, 'func', img_4d_info, 'in_file')
-    if not mean:
+    if mean:
+        wf_name.connect(inputspec, 'func', img_mean, 'in_file')
+        wf_name.connect(img_mean, 'out_file', ds, 'in_file')
+        wf_name.connect(img_mean, 'out_file', outputspec, 'func_slice')
+    else:
+        wf_name.connect(inputspec, 'func', img_4d_info, 'in_file')
         wf_name.connect(inputspec, 'func', fslroi, 'in_file')
         wf_name.connect(img_4d_info, 'start_idx', fslroi, 't_min')
         wf_name.connect(fslroi, 'roi_file', ds, 'in_file')
         wf_name.connect(fslroi, 'roi_file', outputspec, 'func_slice')
-    else:
-        wf_name.connect(inputspec, 'func', img_mean, 'in_file')
-        wf_name.connect(img_mean, 'out_file', ds, 'in_file')
-        wf_name.connect(img_mean, 'out_file', outputspec, 'func_slice')
 
     return wf_name
 
@@ -89,6 +94,8 @@ def get_info(in_file, volume='first'):
     Adapted from C-PAC (https://github.com/FCP-INDI/C-PAC)
     Method to get the right index, from which the slicing requested by the user, occure.
     If the values are not valid, it calculates and returns the very first slice
+
+    Will be called only if the volume != 'mean'
 
     Parameters
     ----------
@@ -113,29 +120,17 @@ def get_info(in_file, volume='first'):
     if len(shape) != 4:
         print('Not 4-dim')
         return -1
-    # Grab the number of volumes
-    vol_count = int(img.shape[3])
+    # Grab the maximum number of volumes in the 4d-img
+    vol_count = img.shape[3]
     # check which slice the user want
+    if volume == 'middle':
+        print('Middle')
+        start_idx = round(vol_count / 2)
+    elif volume == 'last':
+        print('Last')
+        start_idx = vol_count - 1
+    # User wants a specific slice
+    elif volume.isdigit() and vol_count > int(volume) > 0:
+        start_idx = int(volume) - 1
 
-    if volume != 'mean':
-        if volume == 'first':
-            start_idx = 0
-        elif volume == 'middle':
-            print('middle')
-            print('-------------------------------------------')
-            start_idx = round(vol_count / 2)
-        elif volume == 'last':
-            print('Last')
-            print('-------------------------------------------')
-            start_idx = vol_count - 1
-        # User wants a specific slice
-        elif volume.isdigit() and vol_count > int(volume) > 0:
-            start_idx = int(volume) - 1
-    else:
-        return 0
-    return start_idx
-
-
-getImgInfo = Function(input_names=['in_file', 'volume'],
-                      output_names=['start_idx', 'volume'],
-                      function=get_info)
+    return int(start_idx)
