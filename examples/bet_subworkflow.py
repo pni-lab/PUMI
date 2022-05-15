@@ -8,11 +8,16 @@ import os
 
 # experiment specific parameters:
 # paths relative to PUMI directory not PUMI/scripts
-input_dir = 'data_in/bids'  # place where the bids data is located
-output_dir = 'data_out'  # place where the folder 'BET' will be created for the results of this script
-working_dir = 'data_out'  # place where the folder 'bet_iter_wf' will be created for the workflow
+ROOT_DIR = os.path.dirname(os.getcwd())
+input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # place where the bids data is located
+output_dir = os.path.join(ROOT_DIR, 'data_out')  # place where the folder 'BET' will be created for the results of this script
+working_dir = os.path.join(ROOT_DIR, 'data_out')  # place where the folder 'bet_iter_wf' will be created for the workflow
 
-os.chdir("..")
+ROOT_DIR = os.path.dirname(os.getcwd())
+
+
+
+
 
 subjects = ['001']  # subjects for which a brain extraction should be performed
 # ---

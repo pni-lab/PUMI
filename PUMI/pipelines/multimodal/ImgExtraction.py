@@ -5,9 +5,9 @@ from nipype import Function
 """
 
 
-def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='first'):
+def img_extraction_workflow(wf_name='img_wf', sink_dir='', sink_tag='Sinked_Data', volume='first'):
     """
-        Sub-Workflow that extract deals with extracting a 3D-slice choosen by the user from a functional 4D-Sequence
+        Sub-Workflow that extract deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence
 
         Parameters
         ----------
@@ -15,10 +15,12 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
            Name of the workflow.
         sink_tag :
             Name of the Folder, where sinked data will be stored.
+        sink_dir :
+            Directory of sinked data
         volume : string
-            The slice specified by the user.
+            The volume specified by the user.
             Possible Values : (first / middle / last / mean / arbitrary number)
-            In case of a non-valid value, the first slice will be returned.
+            In case of a non-valid value, the first volume will be returned.
         Returns
         --------
         wf_name:
@@ -32,10 +34,9 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
     import nipype.pipeline as pe
     import nipype.interfaces.utility as utility
     import nipype.interfaces.fsl as fsl
-    import definitions
     import nipype.interfaces.io as io
 
-    SinkDir = os.path.abspath(definitions.DATA_OUT_DIR + "/" + sink_tag)
+    SinkDir = os.path.abspath(sink_dir + "/" + sink_tag)
     if not os.path.exists(SinkDir):
         os.makedirs(SinkDir)
 
@@ -43,15 +44,11 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
     inputspec = pe.Node(utility.IdentityInterface(fields=['func']),
                         name='inputspec')
 
-
-
     # Basic interface which get the start index, from which the slicing begins
     img_4d_info = Node(Function(input_names=['in_file', 'volume'],
                                 output_names=['start_idx'],
                                 function=get_info), name='img_4d_info')
     img_4d_info.inputs.volume = volume
-
-
 
     mean = False
     fslroi = None
@@ -65,7 +62,7 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
         fslroi.inputs.t_size = 1
 
     # Basic interface class generates identity mappings
-    outputspec = pe.Node(utility.IdentityInterface(fields=['func_slice']),
+    outputspec = pe.Node(utility.IdentityInterface(fields=['func_volume']),
                          name='outputspec')
 
     # Generic datasink module to store structured outputs
@@ -78,13 +75,13 @@ def img_extraction_workflow(wf_name='img_wf', sink_tag='Sinked_Data', volume='fi
     if mean:
         wf_name.connect(inputspec, 'func', img_mean, 'in_file')
         wf_name.connect(img_mean, 'out_file', ds, 'in_file')
-        wf_name.connect(img_mean, 'out_file', outputspec, 'func_slice')
+        wf_name.connect(img_mean, 'out_file', outputspec, 'func_volume')
     else:
         wf_name.connect(inputspec, 'func', img_4d_info, 'in_file')
         wf_name.connect(inputspec, 'func', fslroi, 'in_file')
         wf_name.connect(img_4d_info, 'start_idx', fslroi, 't_min')
         wf_name.connect(fslroi, 'roi_file', ds, 'in_file')
-        wf_name.connect(fslroi, 'roi_file', outputspec, 'func_slice')
+        wf_name.connect(fslroi, 'roi_file', outputspec, 'func_volume')
 
     return wf_name
 
@@ -93,7 +90,7 @@ def get_info(in_file, volume='first'):
     """
     Adapted from C-PAC (https://github.com/FCP-INDI/C-PAC)
     Method to get the right index, from which the slicing requested by the user, occure.
-    If the values are not valid, it calculates and returns the very first slice
+    If the values are not valid, it calculates and returns the very first volume
 
     Will be called only if the volume != 'mean'
 
@@ -102,7 +99,7 @@ def get_info(in_file, volume='first'):
     in_file : string (nifti file)
        Path to input functional run
     volume : string
-        The slice specified by the user
+        The volume specified by the user
         Possible Values : (first / middle / last / mean / arbitrary number)
     Returns
     -------
@@ -122,14 +119,14 @@ def get_info(in_file, volume='first'):
         return -1
     # Grab the maximum number of volumes in the 4d-img
     vol_count = img.shape[3]
-    # check which slice the user want
+    # check which volume the user want
     if volume == 'middle':
         print('Middle')
         start_idx = round(vol_count / 2)
     elif volume == 'last':
         print('Last')
         start_idx = vol_count - 1
-    # User wants a specific slice
+    # User wants a specific volume
     elif volume.isdigit() and vol_count > int(volume) > 0:
         start_idx = int(volume) - 1
 

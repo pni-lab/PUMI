@@ -1,19 +1,29 @@
+import sys
 from nipype import IdentityInterface, Function
 from PUMI.engine import NestedWorkflow as Workflow
 from PUMI.engine import NestedNode as Node
 from nipype.interfaces import BIDSDataGrabber
 from nipype.utils.filemanip import list_to_filename
 from PUMI.pipelines.anat.segmentation import bet_fsl
-from PUMI.pipelines.multimodal.ImgExtraction import img_extraction_workflow
-import definitions
-import os
-
-# experiment specific parameters:
 from pipelines.multimodal import ImgExtraction
 
-input_dir = definitions.BIDS_DIR  # Path to the bids
-output_dir = definitions.DATA_OUT_DIR  # End Results of the workflow
-working_dir = definitions.DATA_OUT_DIR  # Path, where Workflow Data will be stored
+import os
+
+
+
+
+'''
+Using command line arguments, one can set the paths to the input/output/working directory of the workflow.
+If nothing the arguments were not entered, the program will terminate.
+
+** Make sure to enter the full path.
+'''
+if len(sys.argv) == 4:
+    input_dir = sys.argv[1]  # Path to the bids
+    output_dir = sys.argv[2]  # End Results of the workflow
+    working_dir = sys.argv[3]  # Path, where Workflow Data will be stored
+else:
+    sys.exit("No cmd arguments were given ")
 
 # subjects for which a brain extraction should be performed
 # It needs to be done one after another since images need to be extracted at run time
@@ -54,20 +64,15 @@ path_extractor = Node(
 )
 wf.connect(bids_grabber, 'bold', path_extractor, 'filelist')
 
-
-
-
 # Notice that we are using a sub-wf, and that's why we use (inputspec/outputspec) to (enter/get) data
 # Extract 3D Images from 4D Images
 img_extraction_wf = ImgExtraction.img_extraction_workflow(wf_name="img_extraction_wf",
-                                                          sink_tag='Sub-003', volume='middle')
+                                                          sink_tag='sub-003', sink_dir=output_dir, volume='middle')
 wf.connect(path_extractor, 'out_file', img_extraction_wf, 'inputspec.func')
-
-
 
 # Do the brain extraction
 bet_wf = bet_fsl('brain_extraction')
-wf.connect(img_extraction_wf, 'outputspec.func_slice', bet_wf, 'in_file')
+wf.connect(img_extraction_wf, 'outputspec.func_volume', bet_wf, 'in_file')
 
 wf.run()
 wf.write_graph('graph.png')

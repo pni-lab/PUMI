@@ -8,11 +8,10 @@ from nipype.utils.filemanip import list_to_filename
 import os
 from PUMI.pipelines.func.deconfound import despiking_afni
 
-
-
-input_dir = definitions.BIDS_DIR # Path to the bids
-output_dir = definitions.DATA_OUT_DIR  # End Results of the workflow
-working_dir = definitions.DATA_OUT_DIR # Path, where Workflow Data will be stored
+ROOT_DIR = os.path.dirname(os.getcwd())
+input_dir = os.path.join(ROOT_DIR, 'data_in/bids')
+output_dir = os.path.join(ROOT_DIR, 'data_out')
+working_dir = os.path.join(ROOT_DIR, 'data_out')
 
 
 subjects = ['001', '002', '003']
