@@ -19,8 +19,12 @@ def img_extraction_workflow(wf_name='img_wf', sink_dir='', sink_tag='Sinked_Data
             Directory of sinked data
         volume : string
             The volume specified by the user.
+
             Possible Values : (first / middle / last / mean / arbitrary number)
-            In case of a non-valid value, the first volume will be returned.
+
+            In case no value was given, the first volume will be returned.
+
+            In case of a non-valid value, a ValueException will be thrown.
         Returns
         --------
         wf_name:
@@ -36,7 +40,7 @@ def img_extraction_workflow(wf_name='img_wf', sink_dir='', sink_tag='Sinked_Data
     import nipype.interfaces.fsl as fsl
     import nipype.interfaces.io as io
 
-    SinkDir = os.path.abspath(sink_dir + "/" + sink_tag)
+    SinkDir = os.path.abspath(os.path.join(sink_dir, sink_tag))
     if not os.path.exists(SinkDir):
         os.makedirs(SinkDir)
 
@@ -89,10 +93,13 @@ def img_extraction_workflow(wf_name='img_wf', sink_dir='', sink_tag='Sinked_Data
 def get_info(in_file, volume='first'):
     """
     Adapted from C-PAC (https://github.com/FCP-INDI/C-PAC)
-    Method to get the right index, from which the slicing requested by the user, occure.
-    If the values are not valid, it calculates and returns the very first volume
+    Method to get the right index, from which the slicing requested by the user, starts.
 
-    Will be called only if the volume != 'mean'
+    In case no value was given, the first volume will be returned.
+
+    In case of a non-valid value, a ValueException will be thrown.
+
+    Beaware : Will be called only if the volume != 'mean'
 
     Parameters
     ----------
@@ -129,5 +136,8 @@ def get_info(in_file, volume='first'):
     # User wants a specific volume
     elif volume.isdigit() and vol_count > int(volume) > 0:
         start_idx = int(volume) - 1
+    else :
+        raise ValueError('{} is a non-valid value for the Parameter volume \nPossible values : first / middle / last '
+                         '/ mean / arbitrary number'.format(volume))
 
     return int(start_idx)
