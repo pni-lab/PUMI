@@ -79,7 +79,7 @@ wf.connect(bids_grabber, 'bold', path_extractor, 'filelist')
 
 # Notice that we are using a sub-wf, and that's why we use (inputspec/outputspec) to (enter/get) data
 # Extract 3D Images from 4D Images
-img_extraction_wf = ImgExtraction.pick_volume(name="img_extraction_wf", volume='middle')
+img_extraction_wf = image_manipulation.pick_volume(name="img_extraction_wf", volume='middle')
 
 wf.connect(path_extractor, 'out_file', img_extraction_wf, 'img_4d')
 
