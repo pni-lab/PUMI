@@ -1,22 +1,22 @@
 from nipype import Function
 
+from engine import FuncPipeline
+
 """
     to extract voxels 10 to 12 inclusive you would specify 10 and 3 (not 10 and 12).
 """
 
 
-def img_extraction_workflow(wf_name='img_wf', sink_dir='', sink_tag='Sinked_Data', volume='first'):
+@FuncPipeline(inputspec_fields=['img_4d'],
+              outputspec_fields=['img_3d'])
+def pick_volume(wf, volume='first', **kwargs):
     """
         Sub-Workflow that extract deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence
 
         Parameters
         ----------
-        wf_name : string (nifti file)
+        sub_wf : string (nifti file)
            Name of the workflow.
-        sink_tag :
-            Name of the Folder, where sinked data will be stored.
-        sink_dir :
-            Directory of sinked data
         volume : string
             The volume specified by the user.
 
@@ -27,9 +27,15 @@ def img_extraction_workflow(wf_name='img_wf', sink_dir='', sink_tag='Sinked_Data
             In case of a non-valid value, a ValueException will be thrown.
         Returns
         --------
-        wf_name:
+        wf:
             The sub-workflow itself.
     """
+
+    '''
+        SinkDir = os.path.abspath(os.path.join(sink_dir, sink_tag))
+        if not os.path.exists(SinkDir):
+            os.makedirs(SinkDir)
+    '''
 
     from nipype.interfaces.fsl import ImageMaths
     from PUMI.engine import Node
@@ -40,13 +46,7 @@ def img_extraction_workflow(wf_name='img_wf', sink_dir='', sink_tag='Sinked_Data
     import nipype.interfaces.fsl as fsl
     import nipype.interfaces.io as io
 
-    SinkDir = os.path.abspath(os.path.join(sink_dir, sink_tag))
-    if not os.path.exists(SinkDir):
-        os.makedirs(SinkDir)
 
-    # Basic interface class generates identity mappings
-    inputspec = pe.Node(utility.IdentityInterface(fields=['func']),
-                        name='inputspec')
 
     # Basic interface which get the start index, from which the slicing begins
     img_4d_info = Node(Function(input_names=['in_file', 'volume'],
@@ -65,29 +65,23 @@ def img_extraction_workflow(wf_name='img_wf', sink_dir='', sink_tag='Sinked_Data
                       name='fslroi')
         fslroi.inputs.t_size = 1
 
-    # Basic interface class generates identity mappings
-    outputspec = pe.Node(utility.IdentityInterface(fields=['func_volume']),
-                         name='outputspec')
 
-    # Generic datasink module to store structured outputs
-    ds = pe.Node(interface=io.DataSink(),
-                 name='ds')
-    ds.inputs.base_directory = SinkDir
-    ds.inputs.regexp_substitutions = [("(\/)[^\/]*$", ".nii.gz")]
 
-    wf_name = Workflow('{}'.format(wf_name))
+    sub_wf = Workflow('{}'.format(wf))
     if mean:
-        wf_name.connect(inputspec, 'func', img_mean, 'in_file')
-        wf_name.connect(img_mean, 'out_file', ds, 'in_file')
-        wf_name.connect(img_mean, 'out_file', outputspec, 'func_volume')
+        sub_wf.connect('inputspec', 'img_4d', img_mean, 'in_file')
+        sub_wf.connect(img_mean, 'out_file', 'sinker', 'out_file')
+        sub_wf.connect(img_mean, 'out_file', 'outputspec', 'img_3d')
     else:
-        wf_name.connect(inputspec, 'func', img_4d_info, 'in_file')
-        wf_name.connect(inputspec, 'func', fslroi, 'in_file')
-        wf_name.connect(img_4d_info, 'start_idx', fslroi, 't_min')
-        wf_name.connect(fslroi, 'roi_file', ds, 'in_file')
-        wf_name.connect(fslroi, 'roi_file', outputspec, 'func_volume')
 
-    return wf_name
+        sub_wf.connect('inputspec', 'img_4d', img_4d_info, 'in_file')
+        sub_wf.connect('inputspec', 'img_4d', fslroi, 'in_file')
+        sub_wf.connect(img_4d_info, 'start_idx', fslroi, 't_min')
+        sub_wf.connect(fslroi, 'roi_file', 'sinker', 'out_file')
+        sub_wf.connect(fslroi, 'roi_file', 'outputspec', 'img_3d')
+
+    return sub_wf
+
 
 
 def get_info(in_file, volume='first'):

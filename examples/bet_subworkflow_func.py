@@ -5,7 +5,7 @@ from PUMI.engine import NestedNode as Node
 from nipype.interfaces import BIDSDataGrabber
 from nipype.utils.filemanip import list_to_filename
 from PUMI.pipelines.anat.segmentation import bet_fsl
-from pipelines.multimodal import ImgExtraction
+from pipelines.multimodal import image_manipulation
 import argparse
 import os
 
@@ -79,13 +79,13 @@ wf.connect(bids_grabber, 'bold', path_extractor, 'filelist')
 
 # Notice that we are using a sub-wf, and that's why we use (inputspec/outputspec) to (enter/get) data
 # Extract 3D Images from 4D Images
-img_extraction_wf = ImgExtraction.img_extraction_workflow(wf_name="img_extraction_wf",
-                                                          sink_tag='sub-003', sink_dir=args.output_dir, volume='middle')
-wf.connect(path_extractor, 'out_file', img_extraction_wf, 'inputspec.func')
+img_extraction_wf = ImgExtraction.pick_volume(name="img_extraction_wf", volume='middle')
+
+wf.connect(path_extractor, 'out_file', img_extraction_wf, 'img_4d')
 
 # Do the brain extraction
 bet_wf = bet_fsl('brain_extraction')
-wf.connect(img_extraction_wf, 'outputspec.func_volume', bet_wf, 'in_file')
+wf.connect(img_extraction_wf, 'img_3d', bet_wf, 'in_file')
 
 wf.run()
 wf.write_graph('graph.png')
