@@ -108,7 +108,7 @@ RUN export PATH="/opt/miniconda-latest/bin:$PATH" \
     && conda config --system --set show_channel_urls true \
     && sync && conda clean -y --all && sync \
     && conda install -y -q --name base \
-           "python=3.6" \
+           "python=3.8" \
            "pytest" \
            "sphinx" \
            "sphinxcontrib-napoleon" \
@@ -188,3 +188,5 @@ RUN echo '{ \
     \n    ] \
     \n  ] \
     \n}' > /neurodocker/neurodocker_specs.json
+
+COPY  "." /home/neuro/pumi

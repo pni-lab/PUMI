@@ -1,6 +1,38 @@
-# PUMI
+```# PUMI
 Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 
+# Cite
+- Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. https://doi.org/10.1002/hbm.24750
+
+# First steps for developers
+
+## Clone this repo locally
+```
+git clone git@github.com:pni-lab/PUMI.git
+```
+
+## Set up dependencies
+### Option A: Docker
+```
+docker build - < Dockerfile
+```
+
+### Option B: Install dependencies locally
+- FSL
+- AFNI
+- ANTs
+- Freesurfer
+
+## Get test dataset
+```
+cd data_in
+export WEBDAV_USERNAME=XXXX
+export WEBDAV_PASSWORD=XXXX-XXXX-XXXX-XXXX
+datalad install -s git@github.com:pni-data/pumi_test_data.git pumi_test_data
+datalad siblings -d pumi_test_data enable -s sciebo.sfb289
+datalad get pumi_test_data/*
+```
+Contact the [developers](mailto:tamas.spisak@uk-essen.de) for webdab credentials.
 
 # Coding Conventions
 
@@ -20,6 +52,3 @@ Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 
 
 - @PumiPipeline funcions' are minimalistic and do NO "housekeeping".
-
-# cite
-- Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. https://doi.org/10.1002/hbm.24750
