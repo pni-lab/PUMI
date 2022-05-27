@@ -7,15 +7,15 @@ from engine import FuncPipeline
 """
 
 
-@FuncPipeline(inputspec_fields=['img_4d'],
-              outputspec_fields=['img_3d'])
+@FuncPipeline(inputspec_fields=['in_file'],
+              outputspec_fields=['out_file'])
 def pick_volume(wf, volume='first', **kwargs):
     """
-        Sub-Workflow that extract deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence
+        Sub-Workflow that deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence
 
         Parameters
         ----------
-        sub_wf : string (nifti file)
+        wf :
            Name of the workflow.
         volume : string
             The volume specified by the user.
@@ -31,20 +31,9 @@ def pick_volume(wf, volume='first', **kwargs):
             The sub-workflow itself.
     """
 
-    '''
-        SinkDir = os.path.abspath(os.path.join(sink_dir, sink_tag))
-        if not os.path.exists(SinkDir):
-            os.makedirs(SinkDir)
-    '''
-
     from nipype.interfaces.fsl import ImageMaths
     from PUMI.engine import Node
-    from nipype import Workflow
-    import os
-    import nipype.pipeline as pe
-    import nipype.interfaces.utility as utility
     import nipype.interfaces.fsl as fsl
-    import nipype.interfaces.io as io
 
 
 
@@ -66,21 +55,18 @@ def pick_volume(wf, volume='first', **kwargs):
         fslroi.inputs.t_size = 1
 
 
-
-    sub_wf = Workflow('{}'.format(wf))
     if mean:
-        sub_wf.connect('inputspec', 'img_4d', img_mean, 'in_file')
-        sub_wf.connect(img_mean, 'out_file', 'sinker', 'out_file')
-        sub_wf.connect(img_mean, 'out_file', 'outputspec', 'img_3d')
+        wf.connect('inputspec', 'in_file', img_mean, 'in_file')
+        wf.connect(img_mean, 'out_file', 'sinker', 'out_file')
+        wf.connect(img_mean, 'out_file', 'outputspec', 'out_file')
     else:
 
-        sub_wf.connect('inputspec', 'img_4d', img_4d_info, 'in_file')
-        sub_wf.connect('inputspec', 'img_4d', fslroi, 'in_file')
-        sub_wf.connect(img_4d_info, 'start_idx', fslroi, 't_min')
-        sub_wf.connect(fslroi, 'roi_file', 'sinker', 'out_file')
-        sub_wf.connect(fslroi, 'roi_file', 'outputspec', 'img_3d')
+        wf.connect('inputspec', 'in_file', img_4d_info, 'in_file')
+        wf.connect('inputspec', 'in_file', fslroi, 'in_file')
+        wf.connect(img_4d_info, 'start_idx', fslroi, 't_min')
+        wf.connect(fslroi, 'roi_file', 'sinker', 'out_file')
+        wf.connect(fslroi, 'roi_file', 'outputspec', 'out_file')
 
-    return sub_wf
 
 
 
@@ -102,17 +88,16 @@ def get_info(in_file, volume='first'):
     volume : string
         The volume specified by the user
         Possible Values : (first / middle / last / mean / arbitrary number)
+
     Returns
     -------
-    start_idx :
-        The index of an Image, from which we start slicing
+        The index in the 4d-sequence, from which we start slicing
     """
     from nibabel import load
 
     # Init variables
     img = load(in_file)
     shape = img.shape
-    start_idx = 0
 
     # Check to make sure the input file is 4-dimensional
     if len(shape) != 4:
@@ -121,17 +106,16 @@ def get_info(in_file, volume='first'):
     # Grab the maximum number of volumes in the 4d-img
     vol_count = img.shape[3]
     # check which volume the user want
-    if volume == 'middle':
-        print('Middle')
-        start_idx = round(vol_count / 2)
+    if volume == 'first':
+        return 0
+    elif volume == 'middle':
+        return round(vol_count / 2)
     elif volume == 'last':
-        print('Last')
-        start_idx = vol_count - 1
+        return vol_count - 1
     # User wants a specific volume
     elif volume.isdigit() and vol_count > int(volume) > 0:
-        start_idx = int(volume) - 1
-    else :
+        return int(volume) - 1
+    else:
         raise ValueError('{} is a non-valid value for the Parameter volume \nPossible values : first / middle / last '
                          '/ mean / arbitrary number'.format(volume))
 
-    return int(start_idx)
