@@ -12,31 +12,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-    
-      - name: Check free space
-        run: |
-          echo "Free space:"
-          df -h
-    
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 512
-          swap-size-mb: 1024
-          remove-dotnet: 'true'
-
-      - name: Check free space
-        run: |
-          echo "Free space:"
-          df -h
           
       - name: Check out PUMI
         uses: actions/checkout@v3
-      
-      - name: Check free space
-        run: |
-          echo "Free space:"
-          df -h
       
       - name: Patch Docker Daemon data-root to take use of free-space
         run: |
@@ -48,13 +26,7 @@ jobs:
           sudo systemctl restart docker
           
       - name: Build and minify the Docker image
-        run: pip install --user neurodocker[minify]; ./deploy.sh
-        
-      
-      - name: Check free space
-        run: |
-          echo "Free space:"
-          df -h
+        run: pip install --user neurodocker[minify]; ./deploy_slim.sh
         
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -63,7 +35,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           
       - name: Docker Push
-        run: docker push $DOCKER_USER/pumi:latest; docker push $DOCKER_USER/pumi-slim:latest
+        run: docker push $DOCKER_USER/pumi-slim:latest
         
         
       
