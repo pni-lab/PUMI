@@ -25,6 +25,14 @@ jobs:
           echo "Free space:"
           df -h
           
+      - name: Check out PUMI
+        uses: actions/checkout@v3
+      
+      - name: Check free space
+        run: |
+          echo "Free space:"
+          df -h
+      
       - name: Patch Docker Daemon data-root to take use of free-space
         run: |
           DOCKER_DATA_ROOT='/home/runner/work/PUMI/PUMI/docker'
@@ -34,7 +42,6 @@ jobs:
           sudo mv "/tmp/docker.json.tmp" "${DOCKER_DAEMON_JSON}"
           sudo systemctl restart docker
           
-      - uses: actions/checkout@v3
       - name: Build and minify the Docker image
         run: pip install --user neurodocker[minify]; ./deploy.sh
         
