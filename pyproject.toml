@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "PUMI"
+version = "0.0.1"
+description = "Pipelines and Utilities based on a Modulare Inventory"
+authors = ["Tamas Spisak <tamas.spisak@uni-due.de>"] #todo all devs here
+packages = [
+    { include = "PUMI" }
+    ]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/pni-lab/PUMI"
+homepage = "https://pumi.readthedocs.io"
+documentation = "https://pumi.readthedocs.io"
+readme = 'README.md'
+keywords = [
+    "neuroimaging",
+    "pipeline",
+    "nipype",
+    "RPN"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Development Status :: 3 - Alpha",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: OS Independent"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.10"
+numpy = ">=1.21.1"
+scipy = ">=1.7.1"
+pytest = ">=7.1.2"
+nipype = ">=1.8.1"
+neurodocker = ">=0.8.0"
+nilearn = ">=0.9.1"
+pybids = ">=0.15.1"
+templateflow = ">=0.8.1"
+matplotlib = ">=3.5.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry.core.masonry.api"
+

@@ -1,10 +1,15 @@
 import os
+from glob import glob
+import warnings
 from configparser import SafeConfigParser
 
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
 import nipype.interfaces.utility as utility
+from nipype.interfaces import BIDSDataGrabber
 from nipype.interfaces.io import DataSink
+from nipype import IdentityInterface, Function
+from nipype.utils.filemanip import list_to_filename
 from hashlib import sha1
 import re
 
@@ -264,3 +269,146 @@ class FuncPipeline(PumiPipeline):
 
     def __call__(self, func_fun):
         return super().__call__(func_fun)
+
+
+class BidsPipeline(PumiPipeline):
+    # decorator for top-level pipelines, with BIDS input
+    def __init__(self, output_query=None):
+        #regexp_sub = [] if regexp_sub is None else regexp_sub
+        #substitutions = []
+        #if default_regexp_sub:
+        #    substitutions = []  # not needed here probably?
+        #substitutions.extend(regexp_sub)
+
+        if output_query is None:
+            self.output_query = {
+                'T1w': dict(
+                    datatype='anat',
+                    extension=['nii', 'nii.gz']
+                ),
+                #'rest': dict(   # todo: how to get rests only
+                #    datatype='func',
+                #    suffix='bold',
+                #    extension=['nii', 'nii.gz']
+                #),
+                'bold': dict(  # this should get all task, only
+                    datatype='func',
+                    suffix='bold',
+                    extension=['nii', 'nii.gz']
+                ),
+                #'fmap': dict(
+                #    modality='fmap',
+                #    extension=['nii', 'nii.gz']
+                #)
+                #'dwi': dict(
+                #    modality='dwi',
+                #    extension=['nii', 'nii.gz']
+                #)
+            }
+        else:
+            self.output_query = output_query
+
+        super().__init__(None, None, None)
+
+    def __call__(self, pipeline_fun):
+        def wrapper(name, bids_dir, subjects=None, base_dir='.', sink_dir=None, qc_dir=None, run_args=None, **kwargs):
+
+            # default: multiproc
+            if run_args is None:
+                run_args = {'plugin':'MultiProc'}
+
+            cfg_parser = SafeConfigParser()
+            cfg_parser.read(os.path.join(os.path.dirname(__file__), 'settings.ini'))
+
+            if sink_dir is None:
+                default_sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
+                if default_sink_dir.startswith('/'):
+                    sink_dir = default_sink_dir
+                else:
+                    sink_dir = os.path.abspath(os.path.join(base_dir, default_sink_dir))
+            else:
+                # Set default sink dir globally
+                # todo: implement override in configparser?
+                warnings.warn('Setting global sink_dir: Not yet implemented!\nModify settings.ini instead.')
+
+            if qc_dir is None:
+                default_qc_dir = cfg_parser.get('SINKING', 'qc_dir', fallback='derivatives/qc')
+                if default_qc_dir.startswith('/'):
+                    qc_dir = default_qc_dir
+                else:
+                    qc_dir = os.path.abspath(default_qc_dir)
+            else:
+                # Set default qc dir globally
+                # todo: implement override in configparser?
+                warnings.warn('Setting global qc_dir: Not yet implemented!\nModify settings.ini instead.')
+
+            # main workflow
+            wf = NestedWorkflow(name, base_dir)
+            wf.sink_dir = sink_dir
+            wf.qc_dir = qc_dir
+            wf.cfg_parser = cfg_parser
+
+            # instead of inputspec, we need a bidsgrabber
+
+            if subjects is None:
+                # parse all subjects
+                subjects = []
+                for sub in glob(bids_dir + '/sub-*'):
+                    subjects.append(sub.split('sub-')[-1])
+
+            # Create a subroutine (subgraph) for every subject
+            subject_iterator = Node(interface=utility.IdentityInterface(fields=['subject']), name='subject_iterator')
+            subject_iterator.iterables = [('subject', subjects)]
+
+            # create a BIDS-node
+            bids_grabber = Node(BIDSDataGrabber(), name='bids_grabber')
+            bids_grabber.inputs.base_dir = os.path.abspath(bids_dir)
+            bids_grabber.inputs.output_query = self.output_query
+
+            wf.connect(subject_iterator, 'subject', bids_grabber, 'subject')
+
+            inputspec = NestedNode(
+                utility.IdentityInterface(
+                    fields=[*self.output_query]
+                ),
+                name='inputspec'
+            )
+
+            # 'Unpack' list from bids_grabber
+            # bids_grabber returns a list with a string (path to the anat image of a subject),
+            # but most other nodes do not take a list as input file
+            for bids_modality in [*self.output_query]:
+                print(bids_modality)
+                path_extractor = Node(
+                    Function(
+                        input_names=["filelist"],
+                        output_names=[bids_modality],
+                        function=list_to_filename
+                    ),
+                    name="path_extractor_" + bids_modality
+                )
+                wf.connect(bids_grabber, bids_modality, path_extractor, 'filelist')
+                wf.connect(path_extractor, bids_modality, inputspec, bids_modality)
+
+            # there is no outputspec, this pipeline should not be nested!
+
+            # in case it's needed:
+            sinker = NestedNode(
+                DataSink(),
+                name='sinker'
+            )
+            sinker.inputs.base_directory = wf.qc_dir if isinstance(self, QcPipeline) else wf.sink_dir
+            sinker.inputs.regexp_substitutions = self.regexp_sub
+            wf.add_nodes([sinker])
+
+            pipeline_fun(wf=wf, bids_dir=bids_dir, **kwargs)
+
+            # todo: should we do any post workflow checks
+            # e.g. is outputspec connected
+            # or unconnected nodes
+
+            print('MultiProc!!')
+            wf.run() #**run_args)
+            return wf
+
+        return wrapper

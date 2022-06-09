@@ -1,33 +1,36 @@
-#docker run --rm repronim/neurodocker:0.7.0 generate docker \
-#--base debian:stretch --pkg-manager apt \
-#--install git nano graphviz \
-#--fsl version=6.0.3 \
-#--miniconda conda_install="python=3.8 pytest sphinx sphinxcontrib-napoleon" \
-#pip_install="nipype pybids sphinx-rtd-theme dicom pydicom versioneer" \
-#use_env="base" \
-#activate=true \
-#--run-bash "source activate base" \
-#--user=neuro \
-#--workdir /home/neuro > Dockerfile
-
-# todo:
-# - make it slimmer
-# - add templateflow and nilearn
-
-#docker run --rm repronim/neurodocker:latest generate docker \
-#    --pkg-manager apt \
-#    --base-image debian:buster-slim \
-#    --fsl version=6.0.4 \
-#    --afni method=binaries version=latest \
-#    --ants version=2.3.4 \
-#    > fsl604.Dockerfile
-
-# create AFNI minified docker container
-docker run --rm repronim/neurodocker:latest generate docker \
+echo "* Creating docker container with ALL dependencies.."
+neurodocker generate docker \
     --pkg-manager apt \
     --base-image debian:buster-slim \
+    --install git \
     --afni method=binaries version=latest \
-    > afni.Dockerfile
+    --fsl version=6.0.4 \
+    --ants version=2.3.4 \
+    --copy data_in/pumi-minitest /PUMI/data_in/pumi-minitest \
+    --copy data_in/std /PUMI/data_in/std \
+    --copy PUMI /PUMI/PUMI \
+    --copy tests /PUMI/tests \
+    --copy pipelines /PUMI/pipelines \
+    --copy pyproject.toml /PUMI/. \
+    --copy requirements.txt /PUMI/. \
+    --copy MANIFEST.in /PUMI/. \
+    --copy README.md /PUMI/. \
+    --run "mkdir /PUMI/data_out" \
+    --miniconda version=latest pip_install='/PUMI/. git+https://github.com/MIC-DKFZ/HD-BET' \
+    --yes \
+    > pumi.Dockerfile
 
-docker run --rm -itd --name afni-container ants:latest
-# run all AFNI tests to minify
+docker build --tag pumi:latest --file pumi.Dockerfile .
+
+echo "* Run container..."
+docker run --rm -itd --name pumi-container pumi:latest
+
+echo "* Minify container by running all tests..."
+cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; python3 /PUMI/tests/test_ants.py, ls /data/"
+neurodocker minify \
+    --container pumi-container \
+    --yes \
+    --dir /opt \
+    "$cmd"
+# create a new Docker image using the pruned container.
+docker export pumi-container | docker import - pumi-slim:latest

@@ -44,11 +44,23 @@ def qc(wf, **kwargs):
 @AnatPipeline(inputspec_fields=['brain', 'head'],
               outputspec_fields=['output_brain', 'linear_xfm', 'inv_linear_xfm', 'nonlinear_xfm', 'inv_nonlinear_xfm',
                                  'std_template'])
-def anat2mni_fsl(wf, **kwargs):
+def anat2mni_fsl(wf,
+                 ref_head=None,
+                 ref_brain=None,
+                 ref_brain_mask=None,
+                 **kwargs):
+    # Todo: re-think template handling
+    if ref_head is None:
+        ref_head = get_reference(wf, 'head')
+    if ref_brain is None:
+        ref_brain = get_reference(wf, 'brain')
+    if ref_brain_mask is None:
+        ref_brain_mask = get_reference(wf, 'brain_mask')
+
     # linear registration
     linear_reg = Node(interface=fsl.FLIRT(), name='linear_reg')
     linear_reg.inputs.cost = 'corratio'
-    linear_reg.inputs.reference = get_reference(wf, 'brain')
+    linear_reg.inputs.reference = ref_brain
     wf.connect('inputspec', 'brain', linear_reg, 'in_file')
 
     # calculate inverse of the flirt transformation matrix
@@ -57,9 +69,9 @@ def anat2mni_fsl(wf, **kwargs):
     wf.connect(linear_reg, 'out_matrix_file', inv_linear_reg, 'in_file')
 
     # non-linear registration
-    nonlinear_reg = Node(interface=fsl.FNIRT(), name='nonlinear_reg')
-    nonlinear_reg.inputs.ref_file = get_reference(wf, 'head')
-    nonlinear_reg.inputs.refmask_file = get_reference(wf, 'brain_mask')
+    nonlinear_reg = Node(interface=fsl.FNIRT(**kwargs), name='nonlinear_reg')
+    nonlinear_reg.inputs.ref_file = ref_head
+    nonlinear_reg.inputs.refmask_file = ref_brain_mask
     nonlinear_reg.inputs.fieldcoeff_file = True
     nonlinear_reg.inputs.jacobian_file = True
     nonlinear_reg.config_file = get_config(wf, 'FSL', 'fnirt_config')
@@ -73,9 +85,9 @@ def anat2mni_fsl(wf, **kwargs):
 
     # apply the results of FNIRT registration
     brain_warp = Node(interface=fsl.ApplyWarp(), name='brain_warp')
-    brain_warp.inputs.ref_file = get_reference(wf, 'brain')
-    wf.connect('inputspec', 'brain', brain_warp, 'in_file')
+    brain_warp.inputs.ref_file = ref_brain
     wf.connect(nonlinear_reg, 'fieldcoeff_file', brain_warp, 'field_file')
+    wf.connect('inputspec', 'brain', brain_warp, 'in_file')
 
     # QC
     anat2mni_qc = qc(name='anat2mni_fsl_qc', qc_dir=wf.qc_dir)
@@ -86,7 +98,7 @@ def anat2mni_fsl(wf, **kwargs):
     wf.connect(nonlinear_reg, 'fieldcoeff_file', 'sinker', 'anat2mni_warpfield')
 
     # outputs
-    wf.get_node('outputspec').inputs.std_template = get_reference(wf, 'brain')
+    wf.get_node('outputspec').inputs.std_template = ref_brain
     wf.connect(linear_reg, 'out_matrix_file', 'outputspec', 'linear_xfm')
     wf.connect(inv_linear_reg, 'out_file', 'outputspec', 'inv_linear_xfm')
     wf.connect(nonlinear_reg, 'fieldcoeff_file', 'outputspec', 'nonlinear_xfm')
@@ -97,9 +109,19 @@ def anat2mni_fsl(wf, **kwargs):
 
 @AnatPipeline(inputspec_fields=['brain', 'head'],
               outputspec_fields=['output_brain', 'xfm', 'inv_xfm', 'std_template'])
-def anat2mni_ants(wf, **kwargs):
+def anat2mni_ants(wf,
+                  ref_head=None,
+                  ref_brain=None,
+                  **kwargs):
+
+    # Todo: re-think template handling
+    if ref_head is None:
+        ref_head = get_reference(wf, 'head')
+    if ref_brain is None:
+        ref_brain = get_reference(wf, 'brain')
+
     reg = Node(interface=Registration(), name="reg")
-    reg.inputs.fixed_image = get_reference(wf, 'head')
+    reg.inputs.fixed_image = ref_head
     reg.inputs.output_warped_image = True
     # parameters based on: https://gist.github.com/satra/8439778
     reg.inputs.transforms = ['Rigid', 'Affine', 'SyN']
@@ -128,7 +150,7 @@ def anat2mni_ants(wf, **kwargs):
     wf.connect('inputspec', 'head', reg, 'moving_image')
 
     image_transform = Node(interface=ApplyTransforms(), name='image_transform')
-    image_transform.inputs.reference_image = get_reference(wf, 'brain')
+    image_transform.inputs.reference_image = ref_brain
     wf.connect('inputspec', 'brain', image_transform, 'input_image')
     wf.connect(reg, 'composite_transform', image_transform, 'transforms')
 
@@ -141,7 +163,7 @@ def anat2mni_ants(wf, **kwargs):
     wf.connect(image_transform, 'output_image', 'sinker', 'warped_brain')
 
     # outputspec
-    wf.get_node('outputspec').inputs.std_template = get_reference(wf, 'brain')
+    wf.get_node('outputspec').inputs.std_template = ref_brain
     wf.connect(reg, 'composite_transform', 'outputspec', 'xfm')
     wf.connect(reg, 'inverse_composite_transform', 'outputspec', 'inv_xfm')
     wf.connect(image_transform, 'output_image', 'outputspec', 'output_brain')
@@ -150,11 +172,21 @@ def anat2mni_ants(wf, **kwargs):
 @AnatPipeline(inputspec_fields=['brain', 'head'],
               outputspec_fields=['output_brain', 'linear_xfm', 'inv_linear_xfm', 'nonlinear_xfm', 'inv_nonlinear_xfm',
                                  'std_template'])
-def anat2mni_ants_hardcoded(wf):
+def anat2mni_ants_hardcoded(wf,
+                            ref_head=None,
+                            ref_brain=None,
+                            **kwargs
+                            ):
+    # Todo: re-think template handling
+    if ref_head is None:
+        ref_head = get_reference(wf, 'head')
+    if ref_brain is None:
+        ref_brain = get_reference(wf, 'brain')
+
     # Calculate linear transformation with FSL (necessary for segmentation with fsl fast if priors are set).
     linear_reg = Node(interface=fsl.FLIRT(), name='linear_reg')
     linear_reg.inputs.cost = 'corratio'
-    linear_reg.inputs.reference = get_reference(wf, 'brain')
+    linear_reg.inputs.reference = ref_brain
     wf.connect('inputspec', 'brain', linear_reg, 'in_file')
 
     # Calculate the inverse of the linear transformation
@@ -172,8 +204,8 @@ def anat2mni_ants_hardcoded(wf):
                                                            'warped_image'],
                                              function=registration_ants_hardcoded),
                           name="ants_hardcoded")
-    ants_hardcoded.inputs.reference_head = get_reference(wf, 'head')
-    ants_hardcoded.inputs.reference_brain = get_reference(wf, 'brain')
+    ants_hardcoded.inputs.reference_head = ref_head
+    ants_hardcoded.inputs.reference_brain = ref_brain
     wf.connect('inputspec', 'head', ants_hardcoded, 'head')
     wf.connect('inputspec', 'brain', ants_hardcoded, 'brain')
 
@@ -186,9 +218,10 @@ def anat2mni_ants_hardcoded(wf):
     wf.connect(ants_hardcoded, 'transform_composite', 'sinker', 'anat2mni_warpfield')
 
     # outputs
-    wf.get_node('outputspec').inputs.std_template = get_reference(wf, 'brain')
+    wf.get_node('outputspec').inputs.std_template = ref_brain
     wf.connect(linear_reg, 'out_matrix_file', 'outputspec', 'linear_xfm')
     wf.connect(inv_linear_reg, 'out_file', 'outputspec', 'inv_linear_xfm')
     wf.connect(ants_hardcoded, 'transform_composite', 'outputspec', 'nonlinear_xfm')
     wf.connect(ants_hardcoded, 'transform_inverse_composite', 'outputspec', 'inv_nonlinear_xfm')
     wf.connect(ants_hardcoded, 'warped_image', 'outputspec', 'output_brain')
+

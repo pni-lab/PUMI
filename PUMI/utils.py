@@ -37,12 +37,12 @@ def get_config(wf, section, config):
         return os.path.join(os.getcwd(), path)
 
 
-def get_reference(wf, ref):
+def get_reference(wf, type, ref=None):
     """
     Returns the absolute path to the desired reference.
-    Possible values for the ref parameter are 'head', 'brain' or 'brain_mask'.
+    Possible values for the type parameter are 'head', 'brain' or 'brain_mask'.
 
-    The method looks in the settings.ini for specified paths (and source specifications) for the desired reference in
+    If ref = None, the method looks in the settings.ini for specified paths (and source specifications) for the desired reference in
     the TEMPLATES section.
 
     If no path was specified, the respective 2mm reference from FSL's standard repertoire is returned.
@@ -68,19 +68,22 @@ def get_reference(wf, ref):
 
     Be aware that 'head', 'brain' and 'brain_mask' must also be lowercased in the settings.ini!
     """
-    if ref not in ['head', 'brain', 'brain_mask']:
+    if type not in ['head', 'brain', 'brain_mask']:
         raise ValueError('Can only provide references for \'head\', \'brain\', \'brain_mask\'')
 
-    query = wf.cfg_parser.get('TEMPLATES', ref, fallback='')
-    query = query.replace(' ', '')
+    if ref is None:
+        query = wf.cfg_parser.get('TEMPLATES', type, fallback='')
+        query = query.replace(' ', '')
+    else:
+        query = ref
 
     div = len(query.split(';source='))
     if div == 1:  # no occurrence of ';source=' (no source specification) -> search locally
-        return get_ref_locally(wf, ref)
+        return get_ref_locally(wf, type)
     elif div == 2:  # one occurrence of ';source=' (source was specified) -> look at the specification
         path, source = query.split(';source=')
         if source == 'local':
-            return get_ref_locally(wf, ref)
+            return get_ref_locally(wf, type)
         elif source == 'templateflow' or source == 'tf':
             return get_ref_from_templateflow(path)
         else:  # No valid source was provided

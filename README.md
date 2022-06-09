@@ -13,9 +13,10 @@ git clone git@github.com:pni-lab/PUMI.git
 
 ## Set up dependencies
 ### Option A: Docker
-```
-docker build - < Dockerfile
-```
+- pull the docker image:
+   - `pnilab/pumi-slim:latest`: for a slim image containing only what the current version needs
+   - `pnilab/pumi:latest`: for the full image, containing everything (useful when integrating new tools, but takes long to download)
+- set up your ide to work within the container
 
 ### Option B: Install dependencies locally
 - FSL
@@ -23,7 +24,7 @@ docker build - < Dockerfile
 - ANTs
 - Freesurfer
 
-## Get test dataset
+## Get test dataset (optional)
 ```
 cd data_in
 export WEBDAV_USERNAME=XXXX
