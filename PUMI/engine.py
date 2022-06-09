@@ -407,8 +407,7 @@ class BidsPipeline(PumiPipeline):
             # e.g. is outputspec connected
             # or unconnected nodes
 
-            print('MultiProc!!')
-            wf.run() #**run_args)
+            wf.run(**run_args)
             return wf
 
         return wrapper
