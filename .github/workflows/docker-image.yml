@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     
+      - name: Check free space
+        run: |
+          echo "Free space:"
+          df -h
+    
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
@@ -35,7 +40,7 @@ jobs:
       
       - name: Patch Docker Daemon data-root to take use of free-space
         run: |
-          DOCKER_DATA_ROOT='/home/runner/work/PUMI/PUMI/docker'
+          DOCKER_DATA_ROOT='/home/runner/work/docker'
           DOCKER_DAEMON_JSON='/etc/docker/daemon.json'
           sudo mkdir -p "${DOCKER_DATA_ROOT}"
           jq --arg dataroot "${DOCKER_DATA_ROOT}" '. + {"data-root": $dataroot}' "${DOCKER_DAEMON_JSON}" > "/tmp/docker.json.tmp"
