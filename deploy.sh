@@ -26,7 +26,8 @@ echo "* Run container..."
 docker run --rm -itd --name pumi-container pumi:latest
 
 echo "* Minify container by running all tests..."
-cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; python3 /PUMI/tests/test_ants.py, ls /data/"
+# cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; python3 /PUMI/tests/test_ants.py, ls  /opt/fsl-*/data/standard/"
+cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; ls  /opt/fsl-*/data/standard/"
 neurodocker minify \
     --container pumi-container \
     --yes \

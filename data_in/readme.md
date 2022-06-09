@@ -1,6 +1,13 @@
 # Directory for PUMI test dataset for development purposes
 
-The test dataset(s) is(are) not part of this git repository.
+PUMI is shipped with two datasets:
+### pumi-minitest
+A lightweight test dataset (9M) with down-sampled data of one example subject.
+This dataset is part of the repository and serves for unit testing.
+
+### pumi_test_data
+This is a larger test dataset, for more elaborated testing during development.
+This dataset is not part of this git repository.
 Get them with datalad, by running the following commands in this directory.
 
 ```
