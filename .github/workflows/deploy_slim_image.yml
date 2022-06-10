@@ -25,8 +25,15 @@ jobs:
           sudo mv "/tmp/docker.json.tmp" "${DOCKER_DAEMON_JSON}"
           sudo systemctl restart docker
           
-      - name: Build and minify the Docker image
-        run: pip install --user neurodocker[minify]; ./deploy_slim.sh
+      - name: Set up neurodocker
+        run: |
+          pip install --user neurodocker[minify]
+          wget -P /home/runner/.local/lib/python3.8/site-packages/neurodocker/cli/minify/ https://raw.githubusercontent.com/ReproNim/neurodocker/master/neurodocker/cli/minify/_trace.sh
+          
+      - name: Minify the Docker image
+        run:  ./deploy_slim.sh
+        
+        
         
       - name: Login to DockerHub
         uses: docker/login-action@v1
