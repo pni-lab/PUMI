@@ -6,7 +6,7 @@ scipy>=1.7.1
 numpydoc>=1.1.0
 nbsphinx>=0.8.6
 pytest==7.1.2
-nipype==1.8.1
+nipype>=1.8.1
 neurodocker==0.8.0
 nilearn==0.9.1
 pybids>=0.15.1
