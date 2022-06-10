@@ -34,9 +34,9 @@ class TestAnts(unittest.TestCase):
             wf.connect(brain_extraction_fsl, 'out_file', anat2mni_ants, 'brain')
             wf.connect(reorient, 'out_file', anat2mni_ants, 'head')
 
-        wf = ants('ants',
+        wf = ants('unittest_ants',
                   base_dir=os.path.join(project_root, '../data_out'),
-                  bids_dir=os.path.join(project_root, '../data_in/pumi-minitest'))
+                  bids_dir=os.path.join(project_root, '../data_in/pumi-unittest'))
         self.assertIsInstance(wf, NestedWorkflow)
 
 

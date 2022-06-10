@@ -92,7 +92,7 @@ def anat2mni_fsl(wf,
     # QC
     anat2mni_qc = qc(name='anat2mni_fsl_qc', qc_dir=wf.qc_dir)
     wf.connect(brain_warp, 'out_file', anat2mni_qc, 'in_file')
-    anat2mni_qc.inputs.ref_brain = ref_brain
+    anat2mni_qc.inputs.inputspec.ref_brain = ref_brain
 
     # sinking
     wf.connect(brain_warp, 'out_file', 'sinker', 'anat2mni_std')
