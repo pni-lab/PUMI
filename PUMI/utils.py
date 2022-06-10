@@ -40,7 +40,7 @@ def get_config(wf, section, config):
 def get_reference(wf, type, ref=None):
     """
     Returns the absolute path to the desired reference.
-    Possible values for the type parameter are 'head', 'brain' or 'brain_mask'.
+    Possible values for the type parameter are 'head', 'brain', 'brain_mask' or 'ventricle_mask'.
 
     If ref = None, the method looks in the settings.ini for specified paths (and source specifications) for the desired reference in
     the TEMPLATES section.
@@ -68,8 +68,8 @@ def get_reference(wf, type, ref=None):
 
     Be aware that 'head', 'brain' and 'brain_mask' must also be lowercased in the settings.ini!
     """
-    if type not in ['head', 'brain', 'brain_mask']:
-        raise ValueError('Can only provide references for \'head\', \'brain\', \'brain_mask\'')
+    if type not in ['head', 'brain', 'brain_mask', 'ventricle_mask']:
+        raise ValueError('Can only provide references for \'head\', \'brain\', \'brain_mask\', \'ventricle_mask\'')
 
     if ref is None:
         query = wf.cfg_parser.get('TEMPLATES', type, fallback='')
@@ -132,7 +132,7 @@ def get_ref_from_templateflow(query):
 def get_ref_locally(wf, ref):
     """
     Try to get the reference locally and return the absolute path to the file
-    Possible values for the ref parameter are 'head', 'brain' or 'brain_mask'.
+    Possible values for the ref parameter are 'head', 'brain', 'brain_mask' or 'ventricle_mask'.
 
     The method looks in the settings.ini for specified paths for the desired reference in the TEMPLATES section.
 
@@ -140,8 +140,8 @@ def get_ref_locally(wf, ref):
     If a path was specified, it is checked if the path starts with a '/'. If so, this path is considered as
     an absolute path, otherwise the path is considered relative to the FSL-Dir (NOT the current working directory)!
     """
-    if ref not in ['head', 'brain', 'brain_mask']:
-        raise ValueError('Can only provide references for \'head\', \'brain\', \'brain_mask\'')
+    if ref not in ['head', 'brain', 'brain_mask', 'ventricle_mask']:
+        raise ValueError('Can only provide references for \'head\', \'brain\', \'brain_mask\', \'ventricle_mask\'')
 
     path = wf.cfg_parser.get('TEMPLATES', ref, fallback='')
 
