@@ -1,6 +1,7 @@
 from nipype import Function
-
-from engine import FuncPipeline
+from PUMI.engine import NestedNode as Node, QcPipeline
+from nipype.interfaces import fsl
+from PUMI.engine import FuncPipeline
 
 """
     to extract voxels 10 to 12 inclusive you would specify 10 and 3 (not 10 and 12).
@@ -35,8 +36,6 @@ def pick_volume(wf, volume='first', **kwargs):
     from PUMI.engine import Node
     import nipype.interfaces.fsl as fsl
 
-
-
     # Basic interface which get the start index, from which the slicing begins
     img_4d_info = Node(Function(input_names=['in_file', 'volume'],
                                 output_names=['start_idx'],
@@ -60,7 +59,6 @@ def pick_volume(wf, volume='first', **kwargs):
         wf.connect(img_mean, 'out_file', 'sinker', 'out_file')
         wf.connect(img_mean, 'out_file', 'outputspec', 'out_file')
     else:
-
         wf.connect('inputspec', 'in_file', img_4d_info, 'in_file')
         wf.connect('inputspec', 'in_file', fslroi, 'in_file')
         wf.connect(img_4d_info, 'start_idx', fslroi, 't_min')
@@ -101,8 +99,8 @@ def get_info(in_file, volume='first'):
 
     # Check to make sure the input file is 4-dimensional
     if len(shape) != 4:
-        print('Not 4-dim')
-        return -1
+        print('Warning: NOT A 3D VOLUME!')
+        return 0
     # Grab the maximum number of volumes in the 4d-img
     vol_count = img.shape[3]
     # check which volume the user want
@@ -119,3 +117,15 @@ def get_info(in_file, volume='first'):
         raise ValueError('{} is a non-valid value for the Parameter volume \nPossible values : first / middle / last '
                          '/ mean / arbitrary number'.format(volume))
 
+
+@QcPipeline(inputspec_fields=['bg_image', 'overlay_image'],
+            outputspec_fields=['out_file'])
+def vol2png(wf, overlay=True, **kwargs):
+    slicer = Node(interface=fsl.Slicer(), name='slicer')
+    slicer.inputs.image_width = 2000
+    slicer.inputs.sample_axial = 5  # set output all axial slices into one picture
+
+    wf.connect('inputspec', 'bg_image', slicer, 'in_file')
+    if overlay:
+        wf.connect('inputspec', 'overlay_image', slicer, 'image_edges')
+    wf.connect(slicer, 'out_file', 'sinker', 'out_file')
