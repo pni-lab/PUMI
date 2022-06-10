@@ -1,9 +1,14 @@
 # Directory for PUMI test dataset for development purposes
 
-PUMI is shipped with two datasets:
+PUMI is shipped with three datasets:
+
 ### pumi-minitest
 A lightweight test dataset (9M) with down-sampled data of one example subject.
 This dataset is part of the repository and serves for unit testing.
+
+### std
+Downsampled standard space images for unit testing. Part of this repository.
+
 
 ### pumi_test_data
 This is a larger test dataset, for more elaborated testing during development.
