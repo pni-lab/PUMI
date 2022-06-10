@@ -7,7 +7,7 @@ from nipype.interfaces.ants import Registration, ApplyTransforms
 from nipype.interfaces.utility import Function
 
 
-@QcPipeline(inputspec_fields=['in_file'],
+@QcPipeline(inputspec_fields=['in_file', 'ref_brain'],
             outputspec_fields=['out_file'])
 def qc(wf, **kwargs):
     """
@@ -32,7 +32,7 @@ def qc(wf, **kwargs):
                          function=create_coregistration_qc),
                 name='plot')
     wf.connect('inputspec', 'in_file', plot, 'registered_brain')
-    plot.inputs.template = get_reference(wf, 'brain')
+    wf.connect('inputspec', 'ref_brain', plot, 'template')
 
     # sinking
     wf.connect(plot, 'out_file', 'sinker', 'qc_anat2mni')
@@ -92,6 +92,7 @@ def anat2mni_fsl(wf,
     # QC
     anat2mni_qc = qc(name='anat2mni_fsl_qc', qc_dir=wf.qc_dir)
     wf.connect(brain_warp, 'out_file', anat2mni_qc, 'in_file')
+    anat2mni_qc.inputs.ref_brain = ref_brain
 
     # sinking
     wf.connect(brain_warp, 'out_file', 'sinker', 'anat2mni_std')
@@ -156,6 +157,7 @@ def anat2mni_ants(wf,
 
     # Create png images for quality check
     anat2mni_ants_qc = qc(name='anat2mni_ants_qc', qc_dir=wf.qc_dir)
+    anat2mni_ants_qc.inputs.ref_brain = ref_brain
     wf.connect(image_transform, 'output_image', anat2mni_ants_qc, 'in_file')
 
     # sinking
@@ -211,6 +213,7 @@ def anat2mni_ants_hardcoded(wf,
 
     # Create png images for quality check
     anat2mni_ants_hardcoded_qc = qc(name='anat2mni_ants_hardcoded_qc', qc_dir=wf.qc_dir)
+    anat2mni_ants_hardcoded_qc.inputs.ref_brain = ref_brain
     wf.connect(ants_hardcoded, 'warped_image', anat2mni_ants_hardcoded_qc, 'in_file')
 
     # sinking

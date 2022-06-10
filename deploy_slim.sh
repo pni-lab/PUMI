@@ -7,7 +7,7 @@ echo "* Minify container by running all tests..."
 # back up fsldata
 docker exec pumi-container mv /opt/fsl-6.0.4/data/standard /tmp/standard
 
-cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; for f in \`ls /opt/fsl-*/data/standard/*.nii.gz\`; do md5sum \$f; done"
+cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py done"
 neurodocker minify \
     --container pumi-container \
     --yes \
