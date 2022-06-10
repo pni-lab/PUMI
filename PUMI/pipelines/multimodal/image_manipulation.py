@@ -1,5 +1,4 @@
 from nipype import Function
-
 from engine import FuncPipeline
 
 """
