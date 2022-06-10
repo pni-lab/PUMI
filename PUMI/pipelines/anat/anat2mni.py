@@ -213,7 +213,7 @@ def anat2mni_ants_hardcoded(wf,
 
     # Create png images for quality check
     anat2mni_ants_hardcoded_qc = qc(name='anat2mni_ants_hardcoded_qc', qc_dir=wf.qc_dir)
-    anat2mni_ants_hardcoded_qc.inputs.ref_brain = ref_brain
+    anat2mni_ants_hardcoded_qc.get_node('inputspec').inputs.ref_brain = ref_brain
     wf.connect(ants_hardcoded, 'warped_image', anat2mni_ants_hardcoded_qc, 'in_file')
 
     # sinking
