@@ -16,7 +16,7 @@ neurodocker generate docker \
     --copy MANIFEST.in /PUMI/. \
     --copy README.md /PUMI/. \
     --run "mkdir /PUMI/data_out" \
-    --miniconda version=latest pip_install='/PUMI/. git+https://github.com/MIC-DKFZ/HD-BET' \
+    --miniconda version=latest pip_install='git+https://github.com/MIC-DKFZ/HD-BET' \
     --yes \
     > pumi.Dockerfile
 
