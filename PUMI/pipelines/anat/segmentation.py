@@ -200,10 +200,12 @@ def tissue_segmentation_fsl(wf, priormap=True, **kwargs):
 
     split_probability_maps = Node(interface=Split(), name='split_probability_maps')
     split_probability_maps.inputs.splits = [1, 1, 1]
+    split_probability_maps.inputs.squeeze = True
     wf.connect(fast, 'probability_maps', split_probability_maps, 'inlist')
 
     split_partial_volume_files = Node(interface=Split(), name='split_partial_volume_files')
     split_partial_volume_files.inputs.splits = [1, 1, 1]
+    split_partial_volume_files.inputs.squeeze = True
     wf.connect(fast, 'partial_volume_files', split_partial_volume_files, 'inlist')
 
     qc = qc_tissue_segmentation(name='qc', qc_dir=wf.qc_dir)
