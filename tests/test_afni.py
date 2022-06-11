@@ -8,6 +8,7 @@ from PUMI.pipelines.func.deconfound import despiking_afni
 
 project_root = os.path.dirname(os.path.abspath(__file__))
 
+
 class TestDespike(unittest.TestCase):
 
     def test_despike(self):

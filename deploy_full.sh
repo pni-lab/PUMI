@@ -18,20 +18,10 @@ neurodocker generate docker \
     --run "mkdir -p /PUMI/data_out" \
     --miniconda version=latest pip_install='graphviz numpydoc nbsphinx dot2tex git+https://github.com/MIC-DKFZ/HD-BET' \
     --yes \
-    > pumi.Dockerfile
+    > Dockerfile
 
 docker build --tag pumi:latest --file pumi.Dockerfile .
 
-echo "* Run container..."
-docker run --rm -itd --name pumi-container pumi:latest
+echo "* Deploy slim container..."
+./deploy_slim.py
 
-echo "* Minify container by running all tests..."
-# cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; python3 /PUMI/tests/test_ants.py, ls  /opt/fsl-*/data/standard/"
-cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; ls  /opt/fsl-*/data/standard/"
-neurodocker minify \
-    --container pumi-container \
-    --yes \
-    --dir /opt \
-    "$cmd"
-# create a new Docker image using the pruned container.
-docker export pumi-container | docker import - pumi-slim:latest

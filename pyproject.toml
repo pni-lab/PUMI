@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "PUMI"
-version = "0.0.1"
+version = "0.0.0.post132.dev0+2fe40cd" # managed by poetry-dynamic-versioning
 description = "Pipelines and Utilities based on a Modulare Inventory"
 authors = ["Tamas Spisak <tamas.spisak@uni-due.de>"] #todo all devs here
 packages = [
@@ -39,7 +39,12 @@ matplotlib = ">=3.5.2"
 
 [tool.poetry.dev-dependencies]
 
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+
 [build-system]
 requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
 build-backend = "poetry.core.masonry.api"
+
 
