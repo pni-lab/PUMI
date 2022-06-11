@@ -7,12 +7,11 @@ from nipype.interfaces.fsl import Reorient2Std
 from PUMI.pipelines.anat.segmentation import bet_fsl, bet_hd
 from PUMI.pipelines.anat.anat2mni import anat2mni_fsl, anat2mni_ants, anat2mni_ants_hardcoded
 
-project_root = os.path.dirname(os.path.abspath(__file__))
-
 
 class TestFsl(unittest.TestCase):
 
     def test_fsl(self):
+        project_root = os.path.dirname(os.path.abspath(__file__))
         @BidsPipeline(output_query=None)
         def fsl(wf, **kwargs):
             # reorient images

@@ -1,7 +1,7 @@
 import os
 from nipype.interfaces import BIDSDataGrabber
 from nipype.utils.filemanip import list_to_filename
-from pipelines.anat.segmentation import defacing
+from PUMI.pipelines.anat.segmentation import defacing
 from nipype import IdentityInterface, Function
 from PUMI.engine import NestedWorkflow as Workflow
 from PUMI.engine import NestedNode as Node
