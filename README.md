@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/github/license/pni-lab/pumi.svg)](https://github.com/pni-lab/PUMI/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/pni-lab/pumi)](https://github.com/pni-lab/PUMI/blob/main/LICENSE)
 ![GitHub](https://img.shields.io/github/license/pni-lab/pumi)
 
 
