@@ -32,7 +32,7 @@ jobs:
           
       - name: Get tag
         id: tag
-        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        uses: oprypin/find-latest-tag@v1
           
       - name: Minify the Docker image
         run:  ./deploy_slim.sh ${{steps.tag.outputs.tag}}
