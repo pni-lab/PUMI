@@ -97,5 +97,8 @@ Reverse compatibility will not be garnateed until the major version reaches 1
 ## HD-BET
 - Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. https://doi.org/10.1002/hbm.24750
 
+## pydeface
+- Omer Faruk Gulban, Dylan Nielson, Russ Poldrack, john lee, Chris Gorgolewski, Vanessasaurus, & Satrajit Ghosh. (2019). poldracklab/pydeface: v2.0.0 (v2.0.0). Zenodo. https://doi.org/10.5281/zenodo.3524401
+
 ## Templateflow
 - TemplateFlow: a community archive of imaging templates and atlases for improved consistency in neuroimaging R Ciric, R Lorenz, WH Thompson, M Goncalves, E MacNicol, CJ Markiewicz, YO Halchenko, SS Ghosh, KJ Gorgolewski, RA Poldrack, O Esteban bioRxiv 2021.02.10.430678; doi:  10.1101/2021.02.10.430678 
