@@ -67,20 +67,29 @@ Contact the [developers](mailto:tamas.spisak@uk-essen.de) for webdab credentials
    - bugfixes
    - typically after merging a pull request
 
+## Caution:
+Reverse compatibility will not be guaranteed until the major version reaches 1
+
+
 ## Incrementing major or minor version:
+- commit the changes
+- tag the commit, deploy the new full docker image locally, push the tag:
 ```
 git tag <MAJOR>.<MINOR>.<PATCH>
 ./deploy_full.sh # creates the new full docker image
 git push --tag
 ```
-Github action automatically creates the new slim docker image.
+- push to your branch
+- open PR 
+A github action automatically creates the new slim docker image.
 
 ## Incrementing patch version:
+- commit the changes
+- tag the commit, push the tag
 ```
 git tag <MAJOR>.<MINOR>.<PATCH>
 git push --tag
 ```
-Github action automatically creates the new slim docker image.
-
-# Caution:
-Reverse compatibility will not be guaranteed until the major version reaches 1
+- push to your branch
+- open PR 
+A github action automatically creates the new slim docker image.
