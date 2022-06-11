@@ -30,10 +30,12 @@ jobs:
           pip install --user neurodocker[minify]
           wget -P /home/runner/.local/lib/python3.8/site-packages/neurodocker/cli/minify/ https://raw.githubusercontent.com/ReproNim/neurodocker/master/neurodocker/cli/minify/_trace.sh
           
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+          
       - name: Minify the Docker image
-        run:  ./deploy_slim.sh
-        
-        
+        run:  ./deploy_slim.sh ${{steps.tag.outputs.tag}}
         
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -42,7 +44,10 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           
       - name: Docker Push
-        run: docker push $DOCKER_USER/pumi-slim:latest
+        run: |
+          VER=`echo ${{steps.tag.outputs.tag}} | awk -F'[.-]' '{print $1 "." $2 "." $3}'` #major.minor.patch
+          docker push $DOCKER_USER/pumi-slim:latest
+          docker push $DOCKER_USER/pumi-slim:$VER
         
         
       
