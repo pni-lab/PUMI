@@ -1,8 +1,8 @@
 import sys
 
 from PUMI.engine import AnatPipeline, QcPipeline
-from engine import NestedNode as Node
-from interfaces.HDBet import HDBet
+from PUMI.engine import NestedNode as Node
+from PUMI.interfaces.HDBet import HDBet
 from PUMI.utils import create_segmentation_qc
 from nipype import Function
 from nipype.interfaces import fsl
