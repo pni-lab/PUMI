@@ -58,8 +58,8 @@ jobs:
       - name: Docker Push
         run: |
           VER=`echo ${{steps.tag.outputs.tag}} | awk -F'[.-]' '{print $1 "." $2 "." $3}'` #major.minor.patch
-          docker push $DOCKER_USER/pumi-slim:latest
-          docker push $DOCKER_USER/pumi-slim:$VER
+          docker push pnilab/pumi-slim:latest
+          docker push pnilab/pumi-slim:$VER
         
         
       
