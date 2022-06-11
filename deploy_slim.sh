@@ -19,7 +19,7 @@ docker exec pumi-container pip install PUMI
 # back up fsldata
 docker exec pumi-container mv /opt/fsl-6.0.4/data/standard /tmp/standard
 
-cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py done"
+cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py"
 neurodocker minify \
     --container pumi-container \
     --yes \
