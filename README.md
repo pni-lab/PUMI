@@ -1,4 +1,4 @@
-```# PUMI
+# PUMI
 Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 
 # Cite
@@ -18,7 +18,7 @@ git clone git@github.com:pni-lab/PUMI.git
    - `pnilab/pumi:latest`: for the full image, containing everything (useful when integrating new tools, but takes long to download)
 - set up your ide to work within the container
 
-### Option B: Install dependencies locally
+### Option B: Install all non-python dependencies locally
 - FSL
 - AFNI
 - ANTs
