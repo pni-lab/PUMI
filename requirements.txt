@@ -12,6 +12,7 @@ nilearn==0.9.1
 pybids>=0.15.1
 poetry>=1.1.13
 poetry-dynamic-versioning>=0.17.1
+pydeface>=2.0.0
 templateflow>=1.4.1
 
 

@@ -56,15 +56,31 @@ Contact the [developers](mailto:tamas.spisak@uk-essen.de) for webdab credentials
 
 # Version incrementing rules
 
-- update major if:
+- increment major if:
   - reverse-compatibility is broken
   - a substantial set of new features are added or a grand milestone is reached in the development
-- update minor if:
+- increment minor if:
    - the running environment must be changed, i.e. when the docker image pnilab/pumi has been changed
    - new feature is added (e.g. a new preprocessing step is integrated)
-- update patch for smaller patches, e.g.:  
+- increment patch for smaller patches, e.g.:  
    - changes in existing behavior (new parameter, params renamed)
    - bugfixes
+   - typically after merging a pull request
+
+## Incrementing major or minor version:
+```
+git tag <MAJOR>.<MINOR>.<PATCH>
+./deploy_full.sh # creates the new full docker image
+git push --tag
+```
+Github action automatically creates the new slim docker image.
+
+## Incrementing patch version:
+```
+git tag <MAJOR>.<MINOR>.<PATCH>
+git push --tag
+```
+Github action automatically creates the new slim docker image.
 
 # Caution:
-Reverse compatibility will not be garnateed until the major version reaches 1
+Reverse compatibility will not be guaranteed until the major version reaches 1
