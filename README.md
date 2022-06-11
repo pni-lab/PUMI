@@ -1,11 +1,23 @@
 # PUMI
 Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 
+#### Status
+![GitHub](https://img.shields.io/github/license/pni-lab/pumi?color=green&logo=%23F68212)
+![GitHub repo size](https://img.shields.io/github/repo-size/pni-lab/pumi)
+![Lines of code](https://img.shields.io/tokei/lines/github/pni-lab/pumi)
+![GitHub last commit](https://img.shields.io/github/last-commit/pni-lab/pumi)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/pni-lab/pumi/test_and_dockerize?logo=%232088FF)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/pni-lab/pumi?label=latest%20tag)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/pni-lab/pumi)
+
+#### Docker
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/pnilab/pumi?color=blue&label=pnilab%2Fpumi%3A&logo=docker&sort=semver)](https://hub.docker.com/repository/docker/pnilab/pumi)
 ![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/pnilab/pumi?label=%20pnilab%2Fpumi&logo=docker&sort=semver)
+
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/pnilab/pumi-slim?color=blue&label=pnilab%2Fpumi-slim%3A&logo=docker&sort=semver)](https://hub.docker.com/repository/docker/pnilab/pumi-slim)
 ![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/pnilab/pumi-slim?label=%20pnilab%2Fpumi-slim&logo=docker&sort=semver)
+
+#### Issues
 [![GitHub issues](https://img.shields.io/github/issues-raw/pni-lab/pumi?color=red&logo=github)](https://GitHub.com/pni-lab/PUMI/issues/)
 [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/pni-lab/pumi?color=green&logo=github)](https://GitHub.com/pni-lab/PUMI/issues?q=is%3Aissue+is%3Aclosed)
 
