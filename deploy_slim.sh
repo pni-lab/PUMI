@@ -16,13 +16,14 @@ echo "* Minify container by running all tests..."
 # put fresh pumi code into the container
 docker cp . pumi-container:/PUMI/.
 docker exec pumi-container pip install poetry
-docker exec -w /PUMI pumi-container poetry install
+docker exec -w /PUMI pumi-container pip install .
+#docker exec -w /PUMI pumi-container poetry install
 
 # back up fsldata
 docker exec pumi-container mv /opt/fsl-6.0.4/data/standard /tmp/standard
 
 # cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; python3 /PUMI/tests/test_ants.py"
-cmd="cd /PUMI; python3 tests/test_afni.py; python3 tests/test_fsl.py"
+cmd="python3 tests/test_afni.py; python3 tests/test_fsl.py"
 neurodocker minify \
     --container pumi-container \
     --yes \
