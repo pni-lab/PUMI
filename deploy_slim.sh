@@ -14,9 +14,8 @@ docker run --rm -itd --name pumi-container pnilab/pumi:$V
 echo "* Minify container by running all tests..."
 
 # put fresh pumi code into the container
-docker exec mkdir /PUMI/data_in
 docker cp . pumi-container:/PUMI/.
-docker exec pumi-container cd PUMI; poetry install
+docker exec -w /PUMI pumi-container poetry install
 
 # back up fsldata
 docker exec pumi-container mv /opt/fsl-6.0.4/data/standard /tmp/standard
