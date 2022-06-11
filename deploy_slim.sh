@@ -15,6 +15,7 @@ echo "* Minify container by running all tests..."
 
 # put fresh pumi code into the container
 docker cp . pumi-container:/PUMI/.
+docker exec pip install poetry
 docker exec -w /PUMI pumi-container poetry install
 
 # back up fsldata

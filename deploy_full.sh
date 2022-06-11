@@ -16,7 +16,7 @@ neurodocker generate docker \
     --fsl version=6.0.4 \
     --ants version=2.3.4 \
     --run "mkdir -p /PUMI/data_out" \
-    --miniconda version=latest pip_install='tensorflow graphviz numpydoc nbsphinx dot2tex git+https://github.com/MIC-DKFZ/HD-BET' \
+    --miniconda version=latest pip_install='poetry tensorflow graphviz numpydoc nbsphinx dot2tex git+https://github.com/MIC-DKFZ/HD-BET' \
     --yes \
     > Dockerfile
 
