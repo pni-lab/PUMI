@@ -36,9 +36,9 @@ class TestFsl(unittest.TestCase):
             wf.connect(brain_extraction_fsl, 'out_file', anat2mni_fsl_node, 'brain')
             wf.connect(reorient, 'out_file', anat2mni_fsl_node, 'head')
 
-        wf = fsl('fsl',
+        wf = fsl('unittest_fsl',
                  base_dir=os.path.join(project_root, '../data_out'),
-                 bids_dir=os.path.join(project_root, '../data_in/pumi-minitest'))
+                 bids_dir=os.path.join(project_root, '../data_in/pumi-unittest'))
         self.assertIsInstance(wf, NestedWorkflow)
 
 

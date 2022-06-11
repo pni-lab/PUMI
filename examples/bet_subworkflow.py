@@ -18,8 +18,7 @@ ROOT_DIR = os.path.dirname(os.getcwd())
 
 
 
-
-subjects = ['001']  # subjects for which a brain extraction should be performed
+subjects = ['001', '002', '003']  # subjects for which a brain extraction should be performed
 # ---
 
 wf = Workflow(name='workflow')

@@ -1,25 +1,30 @@
-from ...engine import AnatPipeline, QcPipeline
-from ...engine import NestedNode as Node
-from ...interfaces.HDBet import HDBet
+import sys
+
+from PUMI.engine import AnatPipeline, QcPipeline
+from engine import NestedNode as Node
+from interfaces.HDBet import HDBet
 from PUMI.utils import create_segmentation_qc
 from nipype import Function
 from nipype.interfaces import fsl
 from nipype.interfaces.utility import Split
 from matplotlib.colors import LinearSegmentedColormap
+from nipype import Function
+from PUMI.engine import AnatPipeline
+from PUMI.engine import NestedNode as Node
 import os
 
 
-@QcPipeline(inputspec_fields=['brain', 'head'],
+@QcPipeline(inputspec_fields=['background', 'overlay'],
             outputspec_fields=['out_file'])
-def qc_bet(wf, **kwargs):
+def qc_segmentation(wf, **kwargs):
     """
 
-    Create quality check images for brain extraction workflows
+    Create quality check images for background extraction workflows
 
     Inputs
     ----------
-    brain (str): Path to the extracted brain.
-    head (str): Path to the head.
+    background (str): Path to the extracted brain.
+    overlay (str): Path to the overlay.
 
     Ouputs
     ----------
@@ -34,11 +39,11 @@ def qc_bet(wf, **kwargs):
                          output_names=['out_file'],
                          function=create_segmentation_qc),
                 name='plot')
-    wf.connect('inputspec', 'brain', plot, 'overlay')
-    wf.connect('inputspec', 'head', plot, 'bg_img')
+    wf.connect('inputspec', 'background', plot, 'overlay')
+    wf.connect('inputspec', 'overlay', plot, 'bg_img')
 
     # sinking
-    wf.connect(plot, 'out_file', 'sinker', 'qc_bet')
+    wf.connect(plot, 'out_file', 'sinker', 'qc_segmentation')
 
     # output
     wf.connect(plot, 'out_file', 'outputspec', 'out_file')
@@ -82,8 +87,7 @@ def qc_tissue_segmentation(wf, **kwargs):
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file', 'brain_mask'])
 def bet_fsl(wf, **kwargs):
-
-    #bet
+    # bet
     bet = Node(interface=fsl.BET(), name='bet')
     bet.inputs.mask = True
     bet.inputs.robust = True
@@ -94,9 +98,9 @@ def bet_fsl(wf, **kwargs):
     wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
 
     # quality check
-    qc = qc_bet(name='qc_bet', qc_dir=wf.qc_dir)
-    wf.connect('inputspec', 'in_file', qc, 'head')
-    wf.connect(bet, 'out_file', qc, 'brain')
+    qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
+    wf.connect('inputspec', 'in_file', qc, 'background')
+    wf.connect(bet, 'out_file', qc, 'overlay')
 
     # return
     wf.connect(bet, 'out_file', 'outputspec', 'out_file')
@@ -110,7 +114,7 @@ def bet_hd(wf, **kwargs):
     Does brain extraction with HD-Bet.
     """
 
-    #bet
+    # bet
     bet = Node(interface=HDBet(), name='bet')
     bet.inputs.mode = kwargs.get('mode', wf.cfg_parser.get('HD-Bet', 'mode', fallback='accurate'))
     bet.inputs.device = kwargs.get('device', wf.cfg_parser.get('HD-Bet', 'device', fallback='0'))
@@ -123,9 +127,9 @@ def bet_hd(wf, **kwargs):
     wf.connect('inputspec', 'in_file', bet, 'in_file')
 
     # quality check
-    qc = qc_bet(name='qc_bet', qc_dir=wf.qc_dir)
-    wf.connect('inputspec', 'in_file', qc, 'head')
-    wf.connect(bet, 'out_file', qc, 'brain')
+    qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
+    wf.connect('inputspec', 'in_file', qc, 'background')
+    wf.connect(bet, 'out_file', qc, 'overlay')
 
     # sinking
     wf.connect(bet, 'out_file', 'sinker', 'out_file')
@@ -224,3 +228,67 @@ def tissue_segmentation_fsl(wf, priormap=True, **kwargs):
     wf.connect(split_partial_volume_files, 'out1', 'outputspec', 'parvol_csf')
     wf.connect(split_partial_volume_files, 'out2', 'outputspec', 'parvol_gm')
     wf.connect(split_partial_volume_files, 'out3', 'outputspec', 'parvol_wm')
+
+
+
+
+
+def pydeface_wrapper(infile, force):
+    """
+    Workaround to store the defaced image in the correct place with useful name
+    """
+    from pydeface import utils
+
+
+    outfile = os.path.join(os.getcwd(), 'defaced_' + os.path.basename(infile))
+    warped_mask_img, warped_mask, template_reg, template_reg_mat = utils.deface_image(infile=infile,
+                                                                                      outfile=outfile,
+                                                                                      force=force)
+    return outfile, warped_mask
+
+
+'''
+Pipline for defacing anatomical images
+
+in_file : String
+    Path to anat image
+
+outfile : String
+    Path to anat image
+    If not specified, the output will be stored in the folder of the input.
+
+deface_mask : String
+    Path to defacing mask
+
+'''
+
+
+@AnatPipeline(inputspec_fields=['in_file'],
+              outputspec_fields=['out_file', 'deface_mask'])
+def defacing(wf, **kwargs):
+    deface_node = Node(Function(input_names=['infile', 'force'],
+                                output_names=['warped_mask_img', 'warped_mask'],
+                                function=pydeface_wrapper,
+                                imports=[
+                                    'import sys', 'import shutil', 'from nipype.interfaces import fsl',
+                                    'from pydeface.utils import initial_checks, output_checks, generate_tmpfiles',
+                                    'from pydeface.utils import cleanup_files, get_outfile_type, generate_tmpfiles',
+                                    'from nibabel import load, Nifti1Image', 'import os']
+                                ),
+                       name='deface_node')
+
+    # If set to True, the previous defaced img will be overwritten
+    deface_node.inputs.force = True
+
+    wf.connect('inputspec', 'in_file', deface_node, 'infile')
+
+    # Quality Check
+    defacing_qc = qc_segmentation(name='defacing_qc', qc_dir=wf.qc_dir)
+    wf.connect('inputspec', 'in_file', defacing_qc, 'background')
+    wf.connect(deface_node, 'warped_mask', defacing_qc, 'overlay')
+
+    # Sink defaced image
+    wf.connect('deface_node', 'warped_mask_img', 'sinker', 'defaced')
+
+    wf.connect('deface_node', 'warped_mask_img', 'outputspec', 'out_file')
+    wf.connect('deface_node', 'warped_mask', 'outputspec', 'deface_mask')

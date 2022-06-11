@@ -15,9 +15,9 @@ class TestDespike(unittest.TestCase):
         def despike(wf, **kwargs):
             despike = despiking_afni('despike')
             wf.connect('inputspec', "bold", despike, "in_file")
-        wf = despike('despike_test',
+        wf = despike('unuttest_afni_despike',
                      base_dir=os.path.join(project_root, '../data_out'),
-                     bids_dir=os.path.join(project_root, '../data_in/pumi-minitest'))
+                     bids_dir=os.path.join(project_root, '../data_in/pumi-unittest'))
         self.assertIsInstance(wf, NestedWorkflow)
 
 

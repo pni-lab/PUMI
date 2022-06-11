@@ -41,9 +41,7 @@ args = parser.parse_args()
 # subjects for which a brain extraction should be performed
 # It needs to be done one after another since images need to be extracted at run time
 
-subjects = ['001']
-# subjects = ['002']
-# subjects = ['003']
+subjects = ['001', '002', '003']
 
 wf = Workflow(name='bet_func_wf')
 wf.base_dir = os.path.abspath(args.working_dir)
@@ -87,5 +85,5 @@ wf.connect(path_extractor, 'out_file', img_extraction_wf, 'in_file')
 bet_wf = bet_fsl('brain_extraction', )
 wf.connect(img_extraction_wf, 'out_file', bet_wf, 'in_file')
 
-wf.run()
+wf.run(plugin='MultiProc')
 wf.write_graph('graph.png')
