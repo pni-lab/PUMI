@@ -23,7 +23,7 @@ docker exec -w /PUMI pumi-container pip install .
 docker exec pumi-container mv /opt/fsl-6.0.4/data/standard /tmp/standard
 
 # cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py; python3 /PUMI/tests/test_ants.py"
-cmd="python3 tests/test_afni.py; python3 tests/test_fsl.py"
+cmd="python3 /PUMI/tests/test_afni.py; python3 /PUMI/tests/test_fsl.py"
 neurodocker minify \
     --container pumi-container \
     --yes \
