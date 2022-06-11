@@ -50,7 +50,7 @@ datalad install -s git@github.com:pni-data/pumi_test_data.git pumi_test_data
 datalad siblings -d pumi_test_data enable -s sciebo.sfb289
 datalad get pumi_test_data/*
 ```
-Contact the [developers](mailto:tamas.spisak@uk-essen.de) for webdab credentials.
+Contact the [developers](mailto:tamas.spisak@uk-essen.de) for webdav credentials.
 
 # Coding Conventions
 
