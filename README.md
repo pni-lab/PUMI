@@ -1,11 +1,9 @@
 [![GitHub license](https://img.shields.io/github/license/pni-lab/PUMI.svg)](https://github.com/pni-lab/PUMI/blob/master/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/pni-lab/PUMI.svg)](https://github.com/pni-lab/PUMI/releases/)
 ![Docker Pulls](https://img.shields.io/docker/pulls/pnilab/pumi.svg)
-[![GitHub license](https://img.shields.io/github/license/pni-lab/pumi.svg)](https://github.com/pni-lab/pumi/blob/master/LICENSE)
-[![GitHub release](https://img.shields.io/github/release/pni-lab/pumi.svg)](https://github.com/pni-lab/pumi/releases/)
-[![GitHub CI](https://github.com/pni-lab/pumi/actions/workflows/tast_and_deploy_slim.yml/badge.svg)
-[![GitHub issues](https://img.shields.io/github/issues/pni-lab/pumi.svg)](https://GitHub.com/pni-lab/pumi/issues/)
-[![GitHub issues-closed](https://img.shields.io/github/issues-closed/pni-lab/pumi.svg)](https://GitHub.com/pni-lab/pumi/issues?q=is%3Aissue+is%3Aclosed)
+![GitHub CI](https://github.com/pni-lab/pumi/actions/workflows/tast_and_deploy_slim.yml/badge.svg)
+[![GitHub issues](https://img.shields.io/github/issues/pni-lab/PUMI.svg)](https://GitHub.com/pni-lab/PUMI/issues/)
+[![GitHub issues-closed](https://img.shields.io/github/issues-closed/pni-lab/PUMI.svg)](https://GitHub.com/pni-lab/PUMI/issues?q=is%3Aissue+is%3Aclosed)
 
 # PUMI
 Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
