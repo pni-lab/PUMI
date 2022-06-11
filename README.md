@@ -53,18 +53,44 @@ Contact the [developers](mailto:tamas.spisak@uk-essen.de) for webdab credentials
 
 # Version incrementing rules
 
-- update major if:
+- increment major if:
   - reverse-compatibility is broken
   - a substantial set of new features are added or a grand milestone is reached in the development
-- update minor if:
+- increment minor if:
    - the running environment must be changed, i.e. when the docker image pnilab/pumi has been changed
    - new feature is added (e.g. a new preprocessing step is integrated)
-- update patch for smaller patches, e.g.:  
+- increment patch for smaller patches, e.g.:  
    - changes in existing behavior (new parameter, params renamed)
    - bugfixes
+   - typically after merging a pull request
 
-# Caution:
-Reverse compatibility will not be garnateed until the major version reaches 1
+
+## Caution:
+Reverse compatibility will not be guaranteed until the major version reaches 1
+
+
+## Incrementing major or minor version:
+- commit the changes
+- tag the commit, deploy the new full docker image locally, push the tag:
+```
+git tag <MAJOR>.<MINOR>.<PATCH>
+./deploy_full.sh # creates the new full docker image
+git push --tag
+```
+- push to your branch
+- open PR 
+A github action automatically creates the new slim docker image.
+
+## Incrementing patch version:
+- commit the changes
+- tag the commit, push the tag
+```
+git tag <MAJOR>.<MINOR>.<PATCH>
+git push --tag
+```
+- push to your branch
+- open PR 
+A github action automatically creates the new slim docker image.
 
 # Cite
 
@@ -102,3 +128,4 @@ Reverse compatibility will not be garnateed until the major version reaches 1
 
 ## Templateflow
 - TemplateFlow: a community archive of imaging templates and atlases for improved consistency in neuroimaging R Ciric, R Lorenz, WH Thompson, M Goncalves, E MacNicol, CJ Markiewicz, YO Halchenko, SS Ghosh, KJ Gorgolewski, RA Poldrack, O Esteban bioRxiv 2021.02.10.430678; doi:  10.1101/2021.02.10.430678 
+=======
