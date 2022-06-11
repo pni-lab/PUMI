@@ -1,4 +1,7 @@
-[![GitHub license](https://img.shields.io/github/license/pni-lab/PUMI.svg)](https://github.com/pni-lab/PUMI/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/pni-lab/pumi.svg)](https://github.com/pni-lab/PUMI/blob/main/LICENSE)
+![GitHub](https://img.shields.io/github/license/pni-lab/pumi)
+
+
 [![GitHub release](https://img.shields.io/github/release/pni-lab/PUMI.svg)](https://github.com/pni-lab/PUMI/releases/)
 ![Docker Pulls](https://img.shields.io/docker/pulls/pnilab/pumi.svg)
 ![GitHub CI](https://github.com/pni-lab/pumi/actions/workflows/tast_and_deploy_slim.yml/badge.svg)
