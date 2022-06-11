@@ -33,6 +33,8 @@ jobs:
       - name: Get tag
         id: tag
         uses: oprypin/find-latest-tag@v1
+        with:
+          repository: pni-lab/PUMI  # The repository to scan.
           
       - name: Minify the Docker image
         run:  ./deploy_slim.sh ${{steps.tag.outputs.tag}}
