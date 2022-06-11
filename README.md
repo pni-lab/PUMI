@@ -1,9 +1,6 @@
 # PUMI
 Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 
-# Cite
-- Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. https://doi.org/10.1002/hbm.24750
-
 # First steps for developers
 
 ## Clone this repo locally
@@ -68,3 +65,37 @@ Contact the [developers](mailto:tamas.spisak@uk-essen.de) for webdab credentials
 
 # Caution:
 Reverse compatibility will not be garnateed until the major version reaches 1
+
+# Cite
+
+## Nipype
+- Gorgolewski K, Burns CD, Madison C, Clark D, Halchenko YO, Waskom ML, Ghosh SS. (2011). Nipype: a flexible, lightweight and extensible neuroimaging data processing framework in Python. Front. Neuroinform. 5:13.
+
+## FSL
+- M.W. Woolrich, S. Jbabdi, B. Patenaude, M. Chappell, S. Makni, T. Behrens, C. Beckmann, M. Jenkinson, S.M. Smith. Bayesian analysis of neuroimaging data in FSL. NeuroImage, 45:S173-86, 2009
+
+- S.M. Smith, M. Jenkinson, M.W. Woolrich, C.F. Beckmann, T.E.J. Behrens, H. Johansen-Berg, P.R. Bannister, M. De Luca, I. Drobnjak, D.E. Flitney, R. Niazy, J. Saunders, J. Vickers, Y. Zhang, N. De Stefano, J.M. Brady, and P.M. Matthews. Advances in functional and structural MR image analysis and implementation as FSL. NeuroImage, 23(S1):208-19, 2004 
+
+- M. Jenkinson, C.F. Beckmann, T.E. Behrens, M.W. Woolrich, S.M. Smith. FSL. NeuroImage, 62:782-90, 2012
+
+## ANTs
+- Tustison NJ, Cook PA, Klein A, Song G, Das SR, Duda JT, Kandel BM, van Strien N, Stone JR, Gee JC, Avants BB. Large-scale evaluation of ANTs and FreeSurfer cortical thickness measurements. Neuroimage. 2014 Oct 1;99:166-79. doi: 10.1016/j.neuroimage.2014.05.044. Epub 2014 May 29. PMID: 24879923.
+
+- Avants BB, Tustison NJ, Stauffer M, Song G, Wu B, Gee JC. The Insight ToolKit image registration framework. Front Neuroinform. 2014 Apr 28;8:44. doi: 10.3389/fninf.2014.00044. PMID: 24817849; PMCID: PMC4009425.
+
+- Avants BB, Tustison NJ, Wu J, Cook PA, Gee JC. An open source multivariate framework for n-tissue segmentation with evaluation on public data. Neuroinformatics. 2011 Dec;9(4):381-400. doi: 10.1007/s12021-011-9109-y. PMID: 21373993; PMCID: PMC3297199.
+
+## AFNI
+- Cox RW, Jesmanowicz A (1999). Real-time 3D image registration for functional MRI.  Magnetic Resonance in Medicine, 42: 1014-1018.
+
+- Glen DR, Taylor PA, Buchsbaum BR, Cox RW, Reynolds RC (2020). Beware (Surprisingly Common) Left-Right Flips in Your MRI Data: An Efficient and Robust Method to Check MRI Dataset Consistency Using AFNI. Front. Neuroinformatics 14. doi.org/10.3389/fninf.2020.00018
+
+- Taylor PA, Chen G, Glen DR, Rajendra JK, Reynolds RC, Cox RW (2018).  FMRI processing with AFNI: Some comments and corrections on ‘Exploring the Impact of Analysis Software on Task fMRI Results’. bioRxiv 308643; doi:10.1101/308643
+
+- Jo HJ, Saad ZS, Simmons WK, Milbury LA, Cox RW. Mapping sources of correlation in resting state FMRI, with artifact detection and removal. Neuroimage. 2010;52(2):571-582. doi:10.1016/j.neuroimage.2010.04.246
+
+## HD-BET
+- Isensee F, Schell M, Tursunova I, Brugnara G, Bonekamp D, Neuberger U, Wick A, Schlemmer HP, Heiland S, Wick W, Bendszus M, Maier-Hein KH, Kickingereder P. Automated brain extraction of multi-sequence MRI using artificial neural networks. Hum Brain Mapp. 2019; 1–13. https://doi.org/10.1002/hbm.24750
+
+## Templateflow
+- TemplateFlow: a community archive of imaging templates and atlases for improved consistency in neuroimaging R Ciric, R Lorenz, WH Thompson, M Goncalves, E MacNicol, CJ Markiewicz, YO Halchenko, SS Ghosh, KJ Gorgolewski, RA Poldrack, O Esteban bioRxiv 2021.02.10.430678; doi:  10.1101/2021.02.10.430678 
