@@ -21,8 +21,6 @@ Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 [![GitHub issues](https://img.shields.io/github/issues-raw/pni-lab/pumi?color=red&logo=github)](https://GitHub.com/pni-lab/PUMI/issues/)
 [![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/pni-lab/pumi?color=green&logo=github)](https://GitHub.com/pni-lab/PUMI/issues?q=is%3Aissue+is%3Aclosed)
 
-----------------
-
 # First steps for developers
 
 ## Clone this repo locally
