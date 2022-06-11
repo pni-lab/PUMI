@@ -53,3 +53,18 @@ Contact the [developers](mailto:tamas.spisak@uk-essen.de) for webdab credentials
 
 
 - @PumiPipeline funcions' are minimalistic and do NO "housekeeping".
+
+# Version incrementing rules
+
+- update major if:
+  - reverse-compatibility is broken
+  - a substantial set of new features are added or a grand milestone is reached in the development
+- update minor if:
+   - the running environment must be changed, i.e. when the docker image pnilab/pumi has been changed
+   - new feature is added (e.g. a new preprocessing step is integrated)
+- update patch for smaller patches, e.g.:  
+   - changes in existing behavior (new parameter, params renamed)
+   - bugfixes
+
+# Caution:
+Reverse compatibility will not be garnateed until the major version reaches 1
