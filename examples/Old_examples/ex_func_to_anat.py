@@ -10,7 +10,7 @@ import os
 
 # experiment specific parameters:
 # paths relative to PUMI directory not PUMI/scripts
-ROOT_DIR = os.getcwd()
+ROOT_DIR = os.path.dirname(os.getcwd())
 input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # place where the bids data is located
 output_dir = os.path.join(ROOT_DIR, 'data_out')  # place where the folder will be created for the results of this script
 working_dir = os.path.join(ROOT_DIR, 'data_out')  # place where the folder will be created for the workflow
@@ -19,15 +19,15 @@ subjects = ['001']  # subjects for which a brain extraction should be performed
 # ---
 
 wf = Workflow(name='workflow')
-wf.base_dir = os.path.abspath(working_dir)
+wf.base_dir = working_dir
 
 # create a subroutine (subgraph) for every subject
 inputspec = Node(IdentityInterface(fields=['subject']), name='input_node')
 inputspec.iterables = [('subject', subjects)]
 
-# get anatomical images
+# get anatomical and functional images
 bids_grabber = Node(BIDSDataGrabber(), name='bids_grabber')
-bids_grabber.inputs.base_dir = os.path.abspath(input_dir)
+bids_grabber.inputs.base_dir = input_dir
 bids_grabber.inputs.output_query = {
     'T1w': dict(
         subject=subjects,
