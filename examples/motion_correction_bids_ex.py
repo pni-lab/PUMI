@@ -1,6 +1,7 @@
 import os
 from nipype.interfaces.fsl import Reorient2Std
-from PUMI.engine import BidsPipeline, Node
+from PUMI.engine import BidsPipeline
+from PUMI.engine import NestedNode as Node
 from PUMI.pipelines.func.deconfound import motion_correction_mcflirt
 
 ROOT_DIR = os.getcwd()
