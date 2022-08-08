@@ -41,11 +41,11 @@ def nuisance_removal(wf, **kwargs):
 
     Outputs
     ----------
-    probmap_csf (str): Path to csf probability map.
+    - Path to the filtered data
 
     Sinking
     ----------
-    - The probability maps for csf, gm and wm.
+    - Filtered data
 
     Acknowledgements
     ----------
@@ -59,11 +59,11 @@ def nuisance_removal(wf, **kwargs):
     wf.connect('inputspec', 'in_file', nuisance_regression, 'in_file')
     wf.connect('inputspec', 'design_file', nuisance_regression, 'design_file')
 
-    nuisance_removal_qc = timecourse2png('nuisance_removal_qc', sink=True)
+    nuisance_removal_qc = timecourse2png('nuisance_removal_qc', sink=True)  # todo: check if correctly sinked
     wf.connect(nuisance_regression, 'out_file', nuisance_removal_qc, 'func')
 
     # sinking
-    wf.connect(nuisance_regression, 'out_file', 'sinker', 'func_nuis_corrected')
+    wf.connect(nuisance_regression, 'out_file', 'sinker', 'func_nuis_corrected')  # todo: check if correctly sinked
 
     # output
     wf.connect(nuisance_regression, 'out_file', 'outputspec', 'out_file')
