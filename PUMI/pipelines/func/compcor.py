@@ -1,4 +1,4 @@
-from PUMI.engine import FuncPipeline, Node
+from PUMI.engine import FuncPipeline, NestedNode as Node
 
 
 @FuncPipeline(inputspec_fields=['wm_mask', 'ventricle_mask'],
