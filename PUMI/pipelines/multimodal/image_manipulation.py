@@ -129,4 +129,5 @@ def vol2png(wf, overlay=True, **kwargs):
     wf.connect('inputspec', 'bg_image', slicer, 'in_file')
     if overlay:
         wf.connect('inputspec', 'overlay_image', slicer, 'image_edges')
-    wf.connect(slicer, 'out_file', 'sinker', 'out_file')
+    wf.connect(slicer, 'out_file', 'outputspec', 'out_file')
+

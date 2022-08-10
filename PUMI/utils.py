@@ -359,3 +359,35 @@ def registration_ants_hardcoded(brain, reference_brain, head, reference_head):
         )
 
     return transform_composite, transform_inverse_composite, warped_image
+
+
+def scale_vol(in_file):
+    import nibabel as nb
+    import numpy as np
+    import os
+
+    img = nb.load(in_file)
+    data = img.get_data()
+    std = np.std(data, axis=3)
+    std[std == 0] = 1  # divide with 1
+    mean = np.mean(data, axis=3)
+
+    for i in range(data.shape[3]):
+        data[:, :, :, i] = (data[:, :, :, i] - mean) / std
+
+    ret = nb.Nifti1Image(data, img.affine, img.header)
+    out_file = "scaled_func.nii.gz"
+    nb.save(ret, out_file)
+    return os.path.join(os.getcwd(), out_file)
+
+
+def drop_first_line(in_file):
+    import os
+
+    with open(in_file, 'r') as fin:
+        data = fin.read().splitlines(True)
+
+    fname = os.path.split(in_file)[-1]
+    with open(fname, 'w') as fout:
+        fout.writelines(data[1:])  # don't write the first line into the new file
+        return os.path.join(os.getcwd(), fname)
