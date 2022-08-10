@@ -217,5 +217,81 @@ def motion_correction_mcflirt(wf, reference_vol='middle', FD_mode='Power', **kwa
     wf.connect(calc_friston, 'out_file', 'outputspec', 'friston24_file')
 
 
+@QcPipeline(inputspec_fields=['in_file'],
+            outputspec_fields=['out_file'])
+def qc_nuisance_removal(wf, **kwargs):
+    """
+
+    Create quality check images for nuisance removal.
+
+    Inputs
+    ----------
+    in_file (str): Filtered data
+
+    Ouputs
+    ----------
+    out_file (str): Path to quality check image
+
+    Sinking
+    ----------
+    - The quality check image
+
+    """
+
+    nuisance_removal_qc = timecourse2png('nuisance_removal_qc')
+    wf.connect('inputspec', 'in_file', nuisance_removal_qc, 'func')
+
+    # outputspec
+    wf.connect(nuisance_removal_qc, 'out_file', 'outputspec', 'out_file')
+
+    # sinking
+    wf.connect(nuisance_removal_qc, 'out_file', 'sinker', 'qc_nuisance_removal')
 
 
+@FuncPipeline(inputspec_fields=['in_file', 'design_file'],
+              outputspec_fields=['out_file'])
+def nuisance_removal(wf, **kwargs):
+    """
+
+    Perform nuisance removal.
+
+    CAUTION: Name in the old PUMI was nuissremov_workflow
+
+    Parameters
+    ----------
+
+    Inputs
+    ----------
+    in_file (str): Path to reoriented motion corrected functional data.
+    design_file (str): Path to matrix which contains all the nuissance regressors (motion + compcor noise + ...).
+
+    Outputs
+    ----------
+    - Path to the filtered data
+
+    Sinking
+    ----------
+    - Filtered data
+
+    Acknowledgements
+    ----------
+    Adapted from Balint Kincses (2018)
+
+    """
+    import nipype.interfaces.fsl as fsl
+
+    nuisance_regression = Node(interface=fsl.FilterRegressor(filter_all=True), name='nuisance_regression')
+    wf.connect('inputspec', 'in_file', nuisance_regression, 'in_file')
+    wf.connect('inputspec', 'design_file', nuisance_regression, 'design_file')
+
+    # qc
+    qc = qc_nuisance_removal('qc')
+    wf.connect(nuisance_regression, 'out_file', qc, 'in_file')
+
+    # sinking
+    wf.connect(nuisance_regression, 'out_file', 'sinker', 'func_nuis_corrected')
+
+    # output
+    wf.connect(nuisance_regression, 'out_file', 'outputspec', 'out_file')
+
+    # TODO: test nuisance removal wf
