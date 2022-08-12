@@ -103,7 +103,6 @@ def plot_carpet(img, mask=None, cmap='gray', detrend=True):
     voxels_count = data_2d.shape[0]
 
     # Check if a mask was given as parameter
-    threshhold = 0
     if type(mask) == np.ndarray:
         if len(mask.shape) != 3:
             raise ValueError('Mask has to be 3 dimensional')
@@ -145,7 +144,7 @@ def plot_carpet(img, mask=None, cmap='gray', detrend=True):
     ax1 = plt.subplot(gs[1])
     print('There are {} Voxels and {} timeframes(Volumes).'.format(voxels_count, ntsteps))
     ax1.imshow(data_2d[:, ...], aspect='auto', cmap=cmap, interpolation='nearest',
-               vmin=v[0], vmax=v[1])  # voxels will start from <threshhold> because of mask
+               vmin=v[0], vmax=v[1])
     ax1.annotate(
         'intensity range: ' + str(myrange), xy=(0.0, 1.02), xytext=(0, 0), xycoords='axes fraction',
         textcoords='offset points', va='center', ha='left',
@@ -172,7 +171,7 @@ if __name__ == '__main__':
     input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # path where the bids data is located
     plot_carpet(os.path.join(ROOT_DIR, input_dir, 'sub-001/func/sub-001_task-rest_bold.nii.gz'), mask=arr)
     '''
-    # Test no mask (default mask = 0.1)
+    # Test default mask (default mask = 0.1)
     arr = random.randint(2, size=(94, 94, 38))
     ROOT_DIR = os.path.dirname(os.getcwd())
     input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # path where the bids data is located
