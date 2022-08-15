@@ -1,5 +1,4 @@
 import sys
-
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
 from PUMI.interfaces.HDBet import HDBet
@@ -12,6 +11,9 @@ from nipype import Function
 from PUMI.engine import AnatPipeline
 from PUMI.engine import NestedNode as Node
 import os
+from nibabel import load
+
+from pipelines.multimodal.image_manipulation import pick_volume
 
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
@@ -93,13 +95,21 @@ def bet_fsl(wf, **kwargs):
     bet.inputs.robust = True
     bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac', fallback=0.5)
     bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=0)
-    wf.connect('inputspec', 'in_file', bet, 'in_file')
+
+
+    # extract 3D-volume choosen by the user from a functional 4D-Sequence
+    img_extraction_wf = pick_volume('img_extraction_wf', volume='mean')
+    wf.connect('inputspec', 'in_file', img_extraction_wf, 'in_file')
+    wf.connect(img_extraction_wf, 'out_file', bet, 'in_file')
+
+    '''
     wf.connect(bet, 'out_file', 'sinker', 'out_file')
     wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
+    '''
 
     # quality check
     qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
-    wf.connect('inputspec', 'in_file', qc, 'background')
+    wf.connect(img_extraction_wf, 'out_file', qc, 'background')
     wf.connect(bet, 'out_file', qc, 'overlay')
 
     # return
@@ -124,6 +134,7 @@ def bet_hd(wf, **kwargs):
     bet.inputs.save_mask = kwargs.get('save_mask', wf.cfg_parser.getint('HD-Bet', 'save_mask', fallback=1))
     bet.inputs.overwrite_existing = kwargs.get('overwrite_existing',
                                                wf.cfg_parser.getint('HD-Bet', 'overwrite_existing', fallback=1))
+
     wf.connect('inputspec', 'in_file', bet, 'in_file')
 
     # quality check
@@ -131,9 +142,14 @@ def bet_hd(wf, **kwargs):
     wf.connect('inputspec', 'in_file', qc, 'background')
     wf.connect(bet, 'out_file', qc, 'overlay')
 
+
+
+    '''
     # sinking
     wf.connect(bet, 'out_file', 'sinker', 'out_file')
     wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
+    '''
+
 
     # return
     wf.connect(bet, 'out_file', 'outputspec', 'out_file')
