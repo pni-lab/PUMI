@@ -91,11 +91,12 @@ def bet_fsl(wf, fmri=False, **kwargs):
     # bet
     bet = Node(interface=fsl.BET(), name='bet')
     bet.inputs.mask = True
-    bet.inputs.robust = True
     bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=-0.3)
+    wf.connect('inputspec', 'in_file', bet, 'in_file')
     if fmri:
         bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_func', fallback=0.3)
         bet.inputs.functional = True
+
         bet_vol = pick_volume('bet_vol')
         wf.connect(bet, 'mask_file', bet_vol, 'in_file')
 
@@ -104,14 +105,19 @@ def bet_fsl(wf, fmri=False, **kwargs):
         wf.connect('inputspec', 'in_file', apply_mask, 'in_file')
     else:
         bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_anat', fallback=0.3)
-    wf.connect('inputspec', 'in_file', bet, 'in_file')
-    wf.connect(bet, 'out_file', 'sinker', 'out_file')
-    wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
+        bet.inputs.robust = True
 
     # quality check
     qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
+    if fmri:
+        wf.connect(apply_mask, 'out_file', qc, 'overlay')
+    else:
+        wf.connect(bet, 'out_file', qc, 'overlay')
     wf.connect('inputspec', 'in_file', qc, 'background')
-    wf.connect(bet, 'out_file', qc, 'overlay')
+
+    # sinking
+    wf.connect(bet, 'out_file', 'sinker', 'out_file')
+    wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
 
     # output
     wf.connect(bet, 'mask_file', 'outputspec', 'brain_mask')
