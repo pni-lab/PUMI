@@ -110,10 +110,16 @@ def bet_fsl(wf, fmri=False, **kwargs):
     # quality check
     qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
     if fmri:
-        wf.connect(apply_mask, 'out_file', qc, 'overlay')
+        qc_overlay = pick_volume('qc_overlay')
+        wf.connect(apply_mask, 'out_file', qc_overlay, 'in_file')
+        wf.connect(qc_overlay, 'out_file', qc, 'background')
+
+        qc_background = pick_volume('qc_background')
+        wf.connect('inputspec', 'in_file', qc_background, 'in_file')
+        wf.connect(qc_background, 'out_file', qc, 'overlay')
     else:
         wf.connect(bet, 'out_file', qc, 'overlay')
-    wf.connect('inputspec', 'in_file', qc, 'background')
+        wf.connect('inputspec', 'in_file', qc, 'background')
 
     # sinking
     wf.connect(bet, 'out_file', 'sinker', 'out_file')
