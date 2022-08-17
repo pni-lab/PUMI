@@ -86,4 +86,4 @@ def temporal_filtering(wf, **kwargs):
     wf.connect(tmpfilt, 'out_file', 'sinker', 'tmpfilt')
 
     # output
-    wf.connect(tmpfilt, 'out_file', 'outputspec', 'func_tmplfilt')
+    wf.connect(tmpfilt, 'out_file', 'outputspec', 'out_file')
