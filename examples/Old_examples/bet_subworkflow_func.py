@@ -10,6 +10,7 @@ import argparse
 import os
 
 
+
 '''
 Using command line arguments, one can set the paths to the input/output/working directory of the workflow.
 Remember to enter a full path.
@@ -21,9 +22,9 @@ If nothing was given, default paths will be used.(Might cause Exception)
 ROOT_DIR = os.path.dirname(os.getcwd())
 input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # path where the bids data is located
 output_dir = os.path.join(ROOT_DIR,
-                          'data_out')  # path where the folder 'BET' will be created for the results of this script
+                          '../data_out')  # path where the folder 'BET' will be created for the results of this script
 working_dir = os.path.join(ROOT_DIR,
-                           'data_out')  # path where the folder 'bet_iter_wf' will be created for the workflow
+                           '../data_out')  # path where the folder 'bet_iter_wf' will be created for the workflow
 
 
 # Create command line parser in case user wanted to specify the paths.
@@ -82,7 +83,7 @@ img_extraction_wf = pick_volume('img_extraction_wf', volume='mean')
 wf.connect(path_extractor, 'out_file', img_extraction_wf, 'in_file')
 
 # Do the brain extraction
-bet_wf = bet_fsl('brain_extraction', )
+bet_wf = bet_fsl('brain_extraction')
 wf.connect(img_extraction_wf, 'out_file', bet_wf, 'in_file')
 
 wf.run(plugin='MultiProc')
