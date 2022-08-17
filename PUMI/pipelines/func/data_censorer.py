@@ -10,6 +10,7 @@ from PUMI.utils import get_indx, scrub_image, above_threshold
 def qc_datacens(wf, **kwargs):
     censored_timeseries = timecourse2png('censored_timeseries')
     wf.connect('inputspec', 'scrubbed_image', censored_timeseries, 'func')
+    wf.connect(censored_timeseries, 'out_file', 'sinker', 'qc_censored_timeseries')
 
 
 @FuncPipeline(inputspec_fields=['func', 'FD', 'threshold'],
