@@ -553,3 +553,122 @@ def max_from_txt(in_file, axis=None, header=False, out_file='max.txt'):
     else:
         new_file = os.path.join(os.getcwd(), out_file)  # need to add '/' manually?
     return new_file
+
+
+def get_indx(scrub_input, frames_in_1D_file):
+    """
+
+    Method to get the list of time
+    frames that are to be included
+
+    Parameters
+    ----------
+    in_file (str): path to file containing the valid time frames
+
+    Returns
+    -------
+    scrub_input_string (str): input string for 3dCalc in scrubbing workflow,
+                              looks something like " 4dfile.nii.gz[0,1,2,..100] "
+    """
+
+    frames_in_idx_str = '[' + ','.join(str(x) for x in frames_in_1D_file) + ']'
+    scrub_input_string = scrub_input + frames_in_idx_str
+
+    return scrub_input_string
+
+
+def scrub_image(scrub_input):
+    """
+
+    Method to run 3dcalc in order to scrub the image. This is used instead of
+    the Nipype interface for 3dcalc because functionality is needed for
+    specifying an input file with specifically-selected volumes. For example:
+        input.nii.gz[2,3,4,..98], etc.
+
+    Parameters
+    ----------
+
+    scrub_input (str): path to 4D file to be scrubbed, plus with selected volumes to be included
+
+    Returns
+    -------
+    scrubbed_image (str): path to the scrubbed 4D file
+    """
+
+    import os
+
+    os.system("3dcalc -a %s -expr 'a' -prefix scrubbed_preprocessed.nii.gz" % scrub_input)
+
+    scrubbed_image = os.path.join(os.getcwd(), "scrubbed_preprocessed.nii.gz")
+
+    return scrubbed_image
+
+
+def above_threshold(in_file, threshold=0.2, frames_before=1, frames_after=2):
+    import os
+    import numpy as np
+    from numpy import loadtxt, savetxt
+
+    powersFD_data = loadtxt(in_file, skiprows=1)
+    np.insert(powersFD_data, 0, 0)  # TODO_ready: why do we need this: see output of nipype.algorithms.confounds.FramewiseDisplacement
+    frames_in_idx = np.argwhere(powersFD_data < threshold)[:, 0]
+    frames_out = np.argwhere(powersFD_data >= threshold)[:, 0]
+
+    extra_indices = []
+    for i in frames_out:
+
+        # remove preceding frames
+        if i > 0:
+            count = 1
+            while count <= frames_before:
+                extra_indices.append(i - count)
+                count += 1
+
+        # remove following frames
+        count = 1
+        while count <= frames_after:
+            if i+count < len(powersFD_data):  # do not censor unexistent data
+                extra_indices.append(i + count)
+            count += 1
+    indices_out = list(set(frames_out) | set(extra_indices))
+    indices_out.sort()
+
+    frames_out_idx = indices_out
+    frames_in_idx = np.setdiff1d(frames_in_idx, indices_out)
+
+    FD_scrubbed = powersFD_data[frames_in_idx]
+    fd_scrubbed_file = os.path.join(os.getcwd(), 'FD_scrubbed.csv')
+    savetxt(fd_scrubbed_file, FD_scrubbed, delimiter=",")
+
+    frames_in_idx_str = ','.join(str(x) for x in frames_in_idx)
+    frames_in_idx = frames_in_idx_str.split()
+
+    percentFD = (len(frames_out_idx) * 100 / (len(powersFD_data) + 1)) # % of frames censored
+    percent_scrubbed_file = os.path.join(os.getcwd(), 'percent_scrubbed.txt')
+    f = open(percent_scrubbed_file, 'w')
+    f.write("%.3f" % (percentFD))
+    f.close()
+
+    nvol = len(powersFD_data)
+
+    return frames_in_idx, frames_out_idx, percentFD, percent_scrubbed_file, fd_scrubbed_file, nvol
+
+
+def concatenate(fname='parfiles.txt', **pars):
+    import os
+    import numpy as np
+
+    par_files = list(pars.values())
+
+    totpar = np.loadtxt(par_files[0])
+    for idx in range(1, len(par_files)):
+        if par_files[idx] is None:
+            continue
+        tmp = np.loadtxt(par_files[idx])
+        totpar = np.concatenate((totpar, tmp), axis=1)
+        if fname.startswith('/'):
+            path = fname
+        else:
+            path = os.path.join(os.getcwd(), fname)
+    np.savetxt(path, totpar)
+    return path
