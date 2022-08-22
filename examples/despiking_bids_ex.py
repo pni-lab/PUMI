@@ -1,8 +1,5 @@
 import os
-from PUMI.pipelines.anat.segmentation import defacing
-from nipype import IdentityInterface, Function
-from PUMI.engine import NestedWorkflow as Workflow, BidsPipeline
-from PUMI.engine import NestedNode as Node
+from PUMI.engine import BidsPipeline
 from pipelines.func.deconfound import despiking_afni
 
 ROOT_DIR = os.path.dirname(os.getcwd())
