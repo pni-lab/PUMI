@@ -17,7 +17,6 @@ def despiking_afni(wf, **kwargs):
     wf.connect('inputspec', 'in_file', despike, 'in_file')
     wf.connect(despike, 'out_file', 'outputspec', 'out_file')
 
-    # todo: qc
     qc_wf = qc('qc_wf')
     wf.connect(despike, 'out_file', qc_wf, 'in_file')
 
