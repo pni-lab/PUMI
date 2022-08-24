@@ -2,6 +2,7 @@ import sys
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
 from PUMI.interfaces.HDBet import HDBet
+from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 from PUMI.utils import create_segmentation_qc
 from nipype import Function
 from nipype.interfaces import fsl
@@ -88,33 +89,50 @@ def qc_tissue_segmentation(wf, **kwargs):
 
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file', 'brain_mask'])
-def bet_fsl(wf, **kwargs):
+def bet_fsl(wf, fmri=False, **kwargs):
     # bet
     bet = Node(interface=fsl.BET(), name='bet')
     bet.inputs.mask = True
-    bet.inputs.robust = True
-    bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac', fallback=0.5)
-    bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=0)
+    bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=-0.3)
+    wf.connect('inputspec', 'in_file', bet, 'in_file')
+    if fmri:
+        bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_func', fallback=0.3)
+        bet.inputs.functional = True
 
+        bet_vol = pick_volume('bet_vol')
+        wf.connect(bet, 'mask_file', bet_vol, 'in_file')
 
-    # extract 3D-volume choosen by the user from a functional 4D-Sequence
-    img_extraction_wf = pick_volume('img_extraction_wf', volume='mean')
-    wf.connect('inputspec', 'in_file', img_extraction_wf, 'in_file')
-    wf.connect(img_extraction_wf, 'out_file', bet, 'in_file')
-
-    '''
-    wf.connect(bet, 'out_file', 'sinker', 'out_file')
-    wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
-    '''
+        apply_mask = Node(fsl.ApplyMask(), name="apply_mask")
+        wf.connect(bet_vol, 'out_file', apply_mask, 'mask_file')
+        wf.connect('inputspec', 'in_file', apply_mask, 'in_file')
+    else:
+        bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_anat', fallback=0.3)
+        bet.inputs.robust = True
 
     # quality check
     qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
-    wf.connect(img_extraction_wf, 'out_file', qc, 'background')
-    wf.connect(bet, 'out_file', qc, 'overlay')
+    if fmri:
+        qc_overlay = pick_volume('qc_overlay')
+        wf.connect(apply_mask, 'out_file', qc_overlay, 'in_file')
+        wf.connect(qc_overlay, 'out_file', qc, 'background')
 
-    # return
-    wf.connect(bet, 'out_file', 'outputspec', 'out_file')
+        qc_background = pick_volume('qc_background')
+        wf.connect('inputspec', 'in_file', qc_background, 'in_file')
+        wf.connect(qc_background, 'out_file', qc, 'overlay')
+    else:
+        wf.connect(bet, 'out_file', qc, 'overlay')
+        wf.connect('inputspec', 'in_file', qc, 'background')
+
+    # sinking
+    wf.connect(bet, 'out_file', 'sinker', 'out_file')
+    wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
+
+    # output
     wf.connect(bet, 'mask_file', 'outputspec', 'brain_mask')
+    if fmri:
+        wf.connect(apply_mask, 'out_file', 'outputspec', 'out_file')
+    else:
+        wf.connect(bet, 'out_file', 'outputspec', 'out_file')
 
 
 @AnatPipeline(inputspec_fields=['in_file'],
