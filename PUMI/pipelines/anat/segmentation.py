@@ -1,18 +1,12 @@
-import sys
-from PUMI.engine import AnatPipeline, QcPipeline
-from PUMI.engine import NestedNode as Node
+from PUMI.engine import AnatPipeline, QcPipeline, NestedNode as Node
 from PUMI.interfaces.HDBet import HDBet
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 from PUMI.utils import create_segmentation_qc
-from nipype import Function
 from nipype.interfaces import fsl
 from nipype.interfaces.utility import Split
 from matplotlib.colors import LinearSegmentedColormap
 from nipype import Function
-from PUMI.engine import AnatPipeline
-from PUMI.engine import NestedNode as Node
 import os
-from nibabel import load
 
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
