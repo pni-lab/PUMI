@@ -1,11 +1,10 @@
+from nipype import Function
+from nipype.interfaces import afni
 from nipype.algorithms import confounds
 from nipype.interfaces import afni, fsl, utility
 from PUMI.engine import NestedNode as Node, QcPipeline
 from PUMI.engine import FuncPipeline
-
-
-# Inputspec  is the input of the workflow
-# Outputspec is the output of the workflow
+from examples.carpet_plot import plot_carpet
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume, timecourse2png
 from PUMI.utils import calc_friston_twenty_four, calculate_FD_Jenkinson, mean_from_txt, max_from_txt
 
@@ -21,7 +20,34 @@ def despiking_afni(wf, **kwargs):
     wf.connect('inputspec', 'in_file', despike, 'in_file')
     wf.connect(despike, 'out_file', 'outputspec', 'out_file')
 
-    #todo: qc
+    qc_wf = qc('qc_wf')
+    wf.connect(despike, 'out_file', qc_wf, 'in_file')
+
+
+@QcPipeline(inputspec_fields=['in_file'],
+            outputspec_fields=['out_file'])
+def qc(wf):
+    plot_interface = Function(
+        input_names=['img', 'save_carpet'],
+        output_names=['ax1'],
+        function=plot_carpet,
+        imports=['import os', 'import numpy as np', 'import nibabel as nb',
+                 'import matplotlib.pyplot as plt', 'from matplotlib import gridspec as mgs',
+                 'from nilearn._utils import check_niimg_4d',
+                 'from nilearn._utils.niimg import _safe_get_data',
+                 'from nilearn.signal import clean'])
+
+
+    # Important because the default of save_plot is False
+    plot_interface.inputs.save_carpet = True
+
+    carpet_node = Node(name='carpet_node',
+                       interface=plot_interface)
+
+
+    wf.connect('inputspec', 'in_file', carpet_node, 'img')
+
+    wf.connect(carpet_node, 'ax1', 'outputspec', 'out_file')
 
 
 @QcPipeline(inputspec_fields=['func', 'motion_correction', 'plot_motion_trans', 'FD_figure'],
