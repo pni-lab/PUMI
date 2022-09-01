@@ -14,8 +14,6 @@ from PUMI.engine import NestedNode as Node
 import os
 from nibabel import load
 
-from pipelines.multimodal.image_manipulation import pick_volume
-
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
             outputspec_fields=['out_file'])
