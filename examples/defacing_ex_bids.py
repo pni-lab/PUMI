@@ -13,7 +13,6 @@ working_dir = os.path.join(ROOT_DIR,
                            'data_out')  # path where the folder 'bet_iter_wf' will be created for the workflow
 
 
-
 @BidsPipeline(output_query={  # Defacing will be performed only on anatomical images
     'T1w': dict(
         datatype='anat',
@@ -21,18 +20,28 @@ working_dir = os.path.join(ROOT_DIR,
     )
 })
 def defacing_wf(wf, **kwargs):
-    # Create the defacing workflow
+    """
+     Example for Defacing workflow
+
+     Inputs
+     -------
+     Path to anatomical image
+
+     Output
+     -------
+     Mask of the defaced image
+
+
+    """
+
     deface_wf = defacing('deface_wf')
 
     wf.connect('inputspec', 'T1w', deface_wf, 'in_file')
-
 
     outputspec = Node(IdentityInterface(fields=['out_file']), name='outputspec')
     wf.connect(deface_wf, 'deface_mask', outputspec, 'out_file')
 
     wf.write_graph('deface_graph.png')
-
-
 
 
 deface_ex_wf = defacing_wf('deface_ex_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])

@@ -1,7 +1,6 @@
 from PUMI.engine import BidsPipeline
 from PUMI.engine import NestedNode as Node
 from nipype import Function
-import os
 
 # experiment specific parameters:
 input_dir = 'data_in/pumi_test_data'  # place where the bids data is located

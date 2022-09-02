@@ -3,9 +3,6 @@ from nipype.interfaces.fsl import Reorient2Std
 
 from PUMI.engine import NestedWorkflow as Workflow, BidsPipeline
 from PUMI.engine import NestedNode as Node
-
-from nipype.interfaces import BIDSDataGrabber
-from nipype.utils.filemanip import list_to_filename
 import os
 
 # experiment specific parameters:
