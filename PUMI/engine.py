@@ -262,7 +262,8 @@ class FuncPipeline(PumiPipeline):
         substitutions = []
 
         if default_regexp_sub:
-            substitutions = []  # coming soon
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)\/([^\/]+)$', r'\g<1>\g<3>/\g<4>'),
+                             ('_subject_', 'sub-')]
 
         substitutions.extend(regexp_sub)
         super().__init__(inputspec_fields, outputspec_fields, substitutions)

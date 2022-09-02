@@ -129,4 +129,55 @@ def vol2png(wf, overlay=True, **kwargs):
     wf.connect('inputspec', 'bg_image', slicer, 'in_file')
     if overlay:
         wf.connect('inputspec', 'overlay_image', slicer, 'image_edges')
-    wf.connect(slicer, 'out_file', 'sinker', 'out_file')
+    wf.connect(slicer, 'out_file', 'outputspec', 'out_file')
+
+
+@QcPipeline(inputspec_fields=['func', 'mask', 'x', 'y', 'z'],
+            outputspec_fields=['out_file'])
+def timecourse2png(wf, plot_type='all', sink=True, **kwargs):
+    """
+    plot_type: 'all': nothing to specify, will input everything greater than zero
+               'vox': use 'x', 'y', 'z' fields for voxel then
+               'roi': use 'mask' for roi
+    """
+    from PUMI.engine import Node
+    import nipype.pipeline as pe
+    import nipype.interfaces.fsl as fsl
+
+    if plot_type == 'all':
+        vox_roi = Node(fsl.ImageMaths(), name='vox_roi')
+        def set_inputs(x, y, z):
+            return '-roi '\
+                           + str(x) + ' 1 '\
+                           + str(y) + ' 1 '\
+                           + str(z) + ' 1 0 -1 -bin'
+
+        voxroi_args = pe.Node(
+            Function(
+                input_names=['x', 'y', 'z'],
+                output_names=['args'],
+                function=set_inputs),
+            name="voxroi_args")
+    elif plot_type == 'all':
+        vox_roi = Node(fsl.ImageMaths(op_string= '-bin'), name='vox_roi')
+
+    mean_ts = Node(fsl.ImageMeants(), name='mean_ts')
+    plottimeser = Node(fsl.PlotTimeSeries(), name='plottimeser')
+
+    if plot_type == 'vox':
+        wf.connect('inputspec', 'func', vox_roi, 'in_file')
+        wf.connect('inputspec', 'x', voxroi_args, 'x')
+        wf.connect('inputspec', 'y', voxroi_args, 'y')
+        wf.connect('inputspec', 'z', voxroi_args, 'z')
+        wf.connect(voxroi_args, 'args', vox_roi, 'args')
+        wf.connect(vox_roi, 'out_file', mean_ts, 'mask')
+    elif plot_type == 'all':
+        wf.connect('inputspec', 'func', vox_roi, 'in_file')
+        wf.connect(vox_roi, 'out_file', mean_ts, 'mask')
+    elif plot_type == 'roi':
+        wf.connect('inputspec', 'mask', mean_ts, 'mask')
+
+    wf.connect('inputspec', 'func',  mean_ts, 'in_file')
+    wf.connect(mean_ts, 'out_file', plottimeser, 'in_file')
+    wf.connect(plottimeser, 'out_file', 'outputspec', 'out_file')
+
