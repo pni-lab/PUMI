@@ -1,4 +1,5 @@
 dot2tex>=2.11.3
+templateflow>=0.8.0
 graphviz>=0.17
 matplotlib==3.5.2
 numpy>=1.21.1
@@ -13,6 +14,4 @@ pybids>=0.15.1
 poetry>=1.1.13
 poetry-dynamic-versioning>=0.17.1
 pydeface>=2.0.0
-templateflow>=1.4.1
-
-
+seaborn>=0.11.2
