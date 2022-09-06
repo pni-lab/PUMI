@@ -1,21 +1,15 @@
-import sys
-from nipype import IdentityInterface, Function
-from PUMI.engine import NestedWorkflow as Workflow, BidsPipeline
-from PUMI.engine import NestedNode as Node
-from nipype.interfaces import BIDSDataGrabber
-from nipype.utils.filemanip import list_to_filename
-from PUMI.pipelines.anat.segmentation import bet_fsl, bet_hd
-from pipelines.multimodal.image_manipulation import pick_volume
+from PUMI.engine import BidsPipeline
+from PUMI.pipelines.anat.segmentation import bet_fsl
 import argparse
 import os
 
 
-'''
-Using command line arguments, one can set the paths to the input/output/working directory of the workflow.
-Remember to enter a full path.
-
-If nothing was given, default paths will be used.(Might cause Exception)
-'''
+"""
+    Using command line arguments, one can set the paths to the input/output/working directory of the workflow.
+    Remember to enter a full path.
+    
+    If nothing was given, default paths will be used.(Might cause Exception)
+"""
 
 
 ROOT_DIR = os.path.dirname(os.getcwd())
@@ -47,7 +41,13 @@ args = parser.parse_args()
 })
 def bet_wf(wf, **kwargs):
 
-    bet = bet_fsl('brain_extraction')
+    """
+
+     Example for Brain Extraction workflow
+
+    """
+
+    bet = bet_fsl('brain_extraction', fmri=True)
     wf.output_dir = kwargs.get('output_dir')
     wf.base_dir = os.path.abspath(args.working_dir)
 

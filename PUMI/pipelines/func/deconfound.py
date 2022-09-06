@@ -1,13 +1,11 @@
 from nipype import Function
-from nipype.interfaces import afni
 from nipype.algorithms import confounds
 from nipype.interfaces import afni, fsl, utility
 from PUMI.engine import NestedNode as Node, QcPipeline
 from PUMI.engine import FuncPipeline
-from PUMI.plot.carpet_plot import plot_carpet
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume, timecourse2png
 from PUMI.utils import calc_friston_twenty_four, calculate_FD_Jenkinson, mean_from_txt, max_from_txt
-from plot.carpet_plot import plot_carpet
+from PUMI.plot.carpet_plot import plot_carpet
 
 
 @FuncPipeline(inputspec_fields=['in_file'],
@@ -15,15 +13,15 @@ from plot.carpet_plot import plot_carpet
 def despiking_afni(wf, **kwargs):
     """
 
-    Removes 'spikes' from functional 3d+time images
+    Removes 'spikes' from functional 3d+time images.
 
     Inputs:
-        in_file (str): Path to the 4d image
+        in_file (str): Path to the 4d image.
 
     Outputs:
-        out_file (str): 4d Image with spikes removed
+        out_file (str): 4d Image with spikes removed.
 
-    Sinking():
+    Sinking:
     - The output image
 
     """
@@ -44,17 +42,14 @@ def qc(wf):
 
     Creates carpet plot after dispiking.
 
-    Inputs
-    ----------
-    in_file (str): Path to dispiked 4d image
+    Inputs:
+        in_file (str): Path to dispiked 4d image.
 
-    Ouputs
-    ----------
-    out_file (Axes): matplotlib Axes to be used in composite figures
+    Outputs:
+        out_file (Axes): Matplotlib Axes to be used in composite figures.
 
-    Sinking
-    ----------
-    - Carpet plot as png image
+    Sinking:
+        Carpet plot as png image.
 
     """
 
@@ -86,22 +81,20 @@ def qc_motion_correction_mcflirt(wf, **kwargs):
 
     Save quality check images for mcflirt motion-correction
 
-    Inputs
-    ----------
-    func (str):
-    motion_correction (str):
-    plot_motion_trans (str):
-    FD_figure (str):
+    Inputs:
+        func (str):
+        motion_correction (str):
+        plot_motion_trans (str):
+        FD_figure (str):
 
-    Outputs
-    ----------
+    Outputs:
 
-    Sinking
-    ----------
-    - rotations plot
-    - translations plot
-    - FD plot
-    - timeseries
+
+    Sinking:
+        - rotations plot
+        - translations plot
+        - FD plot
+        - timeseries
 
     """
 
@@ -123,43 +116,38 @@ def motion_correction_mcflirt(wf, reference_vol='middle', FD_mode='Power', **kwa
     Use FSL MCFLIRT to do the motion correction of the 4D functional data and use the 6df rigid body motion parameters
     to calculate friston24 parameters for later nuissance regression step.
 
-    Parameters
-    ----------
-    reference_vol (str): Either "first", "middle", "last", "mean", or the index of the volume which the rigid body
-                         registration (motion correction) will use as reference.
-                         Default is 'middle'.
-    FD_mode: Either "Power" or "Jenkinson"
+    Parameters:
+        reference_vol (str): Either "first", "middle", "last", "mean", or the index of the volume which the rigid body
+                             registration (motion correction) will use as reference.
+                             Default is 'middle'.
+        FD_mode: Either "Power" or "Jenkinson"
 
-    Inputs
-    ----------
-    in_file (str): Reoriented functional file
+    Inputs:
+        in_file (str): Reoriented functional file
 
-    Outputs
-    ----------
-    func_out_file (str): Path to motion-corrected timeseries
-    mat_file (str): Path to motion-correction transformation matrices
-    mc_par_file (str): Path to file with motion parameters
-    friston24_file (str): Path to file with friston24 parameters
-    FD_file (str): Path to file with FD
+    Outputs:
+        func_out_file (str): Path to motion-corrected timeseries
+        mat_file (str): Path to motion-correction transformation matrices
+        mc_par_file (str): Path to file with motion parameters
+        friston24_file (str): Path to file with friston24 parameters
+        FD_file (str): Path to file with FD
 
-    Sinking
-    ----------
-    - motion-corrected timeseries
-    - motion-correction transformation matrices
-    - absolute and relative displacement parameters
-    - friston24 parameters
-    - FD
-    - FDmax
-    - quality check images (FD/rotations/translations and timeseries plot)
+    Sinking:
+        - motion-corrected timeseries
+        - motion-correction transformation matrices
+        - absolute and relative displacement parameters
+        - friston24 parameters
+        - FD
+        - FDmax
+        - quality check images (FD/rotations/translations and timeseries plot)
 
-    Acknowledgements
-    ----------
-    Adapted from Balint Kincses (2018)
+    Acknowledgements:
+        Adapted from Balint Kincses (2018)
 
-    Modified version of PAC.func_preproc.func_preproc
-    (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py)
-    and CPAC.generate_motion_statistics.generate_motion_statistics
-    (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py)
+        Modified version of PAC.func_preproc.func_preproc
+        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py)
+        and CPAC.generate_motion_statistics.generate_motion_statistics
+        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py)
     """
 
     if FD_mode not in ['Power', 'Jenkinson']:
@@ -276,17 +264,14 @@ def qc_nuisance_removal(wf, **kwargs):
 
     Create quality check images for nuisance removal.
 
-    Inputs
-    ----------
-    in_file (str): Filtered data
+    Inputs:
+        in_file (str): Filtered data
 
-    Ouputs
-    ----------
-    out_file (str): Path to quality check image
+    Outputs:
+        out_file (str): Path to quality check image
 
-    Sinking
-    ----------
-    - The quality check image
+    Sinking:
+        - The quality check image
 
     """
 
@@ -309,25 +294,20 @@ def nuisance_removal(wf, **kwargs):
 
     CAUTION: Name in the old PUMI was nuissremov_workflow
 
-    Parameters
-    ----------
+    Parameters:
 
-    Inputs
-    ----------
-    in_file (str): Path to reoriented motion corrected functional data.
-    design_file (str): Path to matrix which contains all the nuissance regressors (motion + compcor noise + ...).
+    Inputs:
+        in_file (str): Path to reoriented motion corrected functional data.
+        design_file (str): Path to matrix which contains all the nuissance regressors (motion + compcor noise + ...).
 
-    Outputs
-    ----------
-    - Path to the filtered data
+    Outputs:
+        - Path to the filtered data
 
-    Sinking
-    ----------
-    - Filtered data
+    Sinking:
+        - Filtered data
 
-    Acknowledgements
-    ----------
-    Adapted from Balint Kincses (2018)
+    Acknowledgements:
+        Adapted from Balint Kincses (2018)
 
     """
     import nipype.interfaces.fsl as fsl

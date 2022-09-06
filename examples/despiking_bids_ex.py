@@ -18,7 +18,12 @@ working_dir = os.path.join(ROOT_DIR,
     )
 })
 def despiking_wf(wf, **kwargs):
-    # Create the despiking workflow
+
+    """
+
+     Example for despiking workflow
+
+    """
     despike_wf = despiking_afni('despike_wf')
 
     wf.connect('inputspec', 'bold', despike_wf, 'in_file')

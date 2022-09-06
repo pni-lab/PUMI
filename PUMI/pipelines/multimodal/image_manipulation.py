@@ -1,13 +1,8 @@
-from nipype import Function
 from PUMI.engine import NestedNode as Node, QcPipeline
-from nipype.interfaces import fsl
 from PUMI.engine import FuncPipeline
 
 
-"""
-    To extract voxels 10 to 12 inclusive you would specify 10 and 3 (not 10 and 12).
-"""
-
+# To extract voxels 10 to 12 inclusive you would specify 10 and 3 (not 10 and 12).
 
 @FuncPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file'])
@@ -31,6 +26,8 @@ def pick_volume(wf, volume='first', **kwargs):
     from nipype.interfaces.fsl import ImageMaths
     from PUMI.engine import Node
     import nipype.interfaces.fsl as fsl
+    from nipype import Function
+
 
     # Basic interface which get the start index, from which the slicing begins
     img_4d_info = Node(Function(input_names=['in_file', 'volume'],
@@ -73,7 +70,7 @@ def get_info(in_file, volume='first'):
 
     - In case of a non-valid value, a ValueException will be thrown.
 
-    * Beaware : This function will be called only if the volume != 'mean'
+    - Beaware : This function will be called only if the volume != 'mean'
 
     Parameters:
         in_file(str): Path to input functional run.
@@ -84,6 +81,8 @@ def get_info(in_file, volume='first'):
         start_idx (integer): The index in the 4d-sequence, from which we start slicing.
     """
     from nibabel import load
+    from nipype import Function
+    from nipype.interfaces import fsl
 
     # Init variables
     img = load(in_file)
@@ -115,12 +114,13 @@ def get_info(in_file, volume='first'):
 @QcPipeline(inputspec_fields=['bg_image', 'overlay_image'],
             outputspec_fields=['out_file'])
 def vol2png(wf, overlay=True, **kwargs):
-
     """
 
     # Todo Docs
 
     """
+
+    from nipype.interfaces import fsl
 
     slicer = Node(interface=fsl.Slicer(), name='slicer')
     slicer.inputs.image_width = 2000
@@ -143,6 +143,8 @@ def timecourse2png(wf, plot_type='all', sink=True, **kwargs):
     from PUMI.engine import Node
     import nipype.pipeline as pe
     import nipype.interfaces.fsl as fsl
+    from nipype import Function
+
 
     if plot_type == 'all':
         vox_roi = Node(fsl.ImageMaths(), name='vox_roi')

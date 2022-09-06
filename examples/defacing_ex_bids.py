@@ -1,7 +1,7 @@
 import os
 from PUMI.pipelines.anat.segmentation import defacing
-from nipype import IdentityInterface, Function
-from PUMI.engine import NestedWorkflow as Workflow, BidsPipeline
+from nipype import IdentityInterface
+from PUMI.engine import BidsPipeline
 from PUMI.engine import NestedNode as Node
 
 ROOT_DIR = os.path.dirname(os.getcwd())
@@ -23,14 +23,11 @@ def defacing_wf(wf, **kwargs):
     """
      Example for Defacing workflow
 
-     Inputs
-     -------
-     Path to anatomical image
+     Inputs:
+        Path to anatomical image
 
-     Output
-     -------
-     Mask of the defaced image
-
+     Outputs:
+        Mask of the defaced image
 
     """
 

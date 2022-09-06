@@ -1,6 +1,6 @@
 import argparse
-from PUMI.engine import NestedWorkflow as Workflow, BidsPipeline
-from PUMI.pipelines.anat.segmentation import bet_fsl, bet_hd
+from PUMI.engine import BidsPipeline
+from PUMI.pipelines.anat.segmentation import bet_hd
 import os
 
 
@@ -32,6 +32,12 @@ args = parser.parse_args()
     )
 })
 def bet_wf(wf, **kwargs):
+    """
+
+     Example for Brain Extraction workflow
+
+    """
+
     bet = bet_hd('brain_extraction')
 
     wf.connect('inputspec', 'T1w', bet, 'in_file')

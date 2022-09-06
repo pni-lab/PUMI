@@ -11,6 +11,12 @@ working_dir = 'data_out'  # place where the folder 'bet_iter_wf' will be created
 @BidsPipeline(output_query=None)
 def load_bids(wf, **kwargs):
 
+    """
+
+     #todo docs
+
+    """
+
     def printMe(paths):
         print("\n\nanalyzing " + str(paths) + "\n\n")
 

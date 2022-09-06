@@ -1,10 +1,6 @@
-import sys
 from PUMI.engine import AnatPipeline, QcPipeline
-from PUMI.engine import NestedNode as Node
 from PUMI.interfaces.HDBet import HDBet
-from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 from PUMI.utils import create_segmentation_qc
-from nipype import Function
 from nipype.interfaces import fsl
 from nipype.interfaces.utility import Split
 from matplotlib.colors import LinearSegmentedColormap
@@ -12,7 +8,7 @@ from nipype import Function
 from PUMI.engine import AnatPipeline
 from PUMI.engine import NestedNode as Node
 import os
-from pipelines.multimodal.image_manipulation import pick_volume
+from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
@@ -82,16 +78,16 @@ def qc_tissue_segmentation(wf, **kwargs):
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file', 'brain_mask'])
 def bet_fsl(wf, fmri=False, **kwargs):
-def bet_fsl(wf, **kwargs):
     """
 
     Performs Brain extraction of a 3d-vloume.
     User can choose the position of the 3d-volume
 
+    Parameter:
+        fmri(bool):
+
     Inputs:
         in_file(str): Path to the functional 4d-image.
-
-
 
     Outputs:
         out_file(str):
@@ -104,6 +100,8 @@ def bet_fsl(wf, **kwargs):
     bet.inputs.mask = True
     bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=-0.3)
     wf.connect('inputspec', 'in_file', bet, 'in_file')
+
+
     if fmri:
         bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_func', fallback=0.3)
         bet.inputs.functional = True
@@ -117,16 +115,6 @@ def bet_fsl(wf, **kwargs):
     else:
         bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_anat', fallback=0.3)
         bet.inputs.robust = True
-    bet.inputs.robust = True
-    bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac', fallback=0.5)
-    bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=0)
-
-
-    # extract 3D-volume choosen by the user from a functional 4D-Sequence
-    img_extraction_wf = pick_volume('img_extraction_wf', volume='mean')
-    wf.connect('inputspec', 'in_file', img_extraction_wf, 'in_file')
-    wf.connect(img_extraction_wf, 'out_file', bet, 'in_file')
-
 
     # quality check
     qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
@@ -266,8 +254,6 @@ def tissue_segmentation_fsl(wf, priormap=True, **kwargs):
     wf.connect(split_partial_volume_files, 'out1', 'outputspec', 'parvol_csf')
     wf.connect(split_partial_volume_files, 'out2', 'outputspec', 'parvol_gm')
     wf.connect(split_partial_volume_files, 'out3', 'outputspec', 'parvol_wm')
-
-
 
 
 
