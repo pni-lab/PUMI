@@ -11,16 +11,13 @@ def qc_temporal_filtering(wf, **kwargs):
 
     Create quality check images for temporal filtering.
 
-    Inputs
-    ----------
-    in_file (str): Temporal filtered data (e. g. result of afni 3dBandpass)
+    Inputs:
+        in_file (str): Temporal filtered data (e. g. result of afni 3dBandpass)
 
-    Outputs
-    ----------
-    out_file (str): Path to quality check image
+    Outputs:
+        out_file (str): Path to quality check image
 
-    Sinking
-    ----------
+    Sinking:
     - quality check image
 
     """
@@ -41,20 +38,17 @@ def temporal_filtering(wf, **kwargs):
 
     Creates a slice time corrected functional image.
 
-    Inputs
-    ----------
-    func (str): The reoriented functional file.
-    highpass (str): The highpass filter in Hz (e. g. 0.008)
-    lowpass (str): The lowpass filter in Hz (e. g. 0.08)
+    Inputs:
+        func (str): The reoriented functional file.
+        highpass (str): The highpass filter in Hz (e. g. 0.008)
+        lowpass (str): The lowpass filter in Hz (e. g. 0.08)
 
-    Outputs
-    ----------
-    out_file (str): Temporal filtered data
+    Outputs:
+        out_file (str): Temporal filtered data
 
-    Acknowledgements
-    ----------
-    Adapted from Balint Kincses (2018)
-    Modified version of porcupine generated temporal filtering code.
+    Acknowledgements:
+        Adapted from Balint Kincses (2018)
+        Modified version of porcupine generated temporal filtering code.
 
     """
 

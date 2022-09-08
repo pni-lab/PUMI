@@ -12,24 +12,18 @@ def anat_noise_roi(wf, **kwargs):
 
     CAUTION: Name in the old PUMI was create_anat_noise_roi_workflow
 
-    Parameters
-    ----------
 
-    Inputs
-    ----------
-    wm_mask (str): Path to white matter mask
-    ventricle_mask (str): Path to ventricle mask
+    Inputs:
+        wm_mask (str): Path to white matter mask
+        ventricle_mask (str): Path to ventricle mask
 
-    Outputs
-    ----------
-    out_file (str): Path to noise ROI
+    Outputs:
+        out_file (str): Path to noise ROI
 
-    Sinking
-    ----------
+    Sinking:
 
     Acknowledgements
-    ----------
-    Adapted from Tamas Spisak (2018)
+        Adapted from Tamas Spisak (2018)
 
     """
 
@@ -56,16 +50,14 @@ def compcor_qc(wf, **kwargs):
     Save quality check images for mcflirt motion-correction
 
     Inputs
-    ----------
-    func_aligned (str): Reoriented and realigned functional image
-    mask_file (str): Mask files which determine ROI(s)
+        func_aligned (str): Reoriented and realigned functional image
+        mask_file (str): Mask files which determine ROI(s)
 
-    Outputs
-    ----------
+    Outputs:
+
 
     Sinking
-    ----------
-    - compcor qc image
+        - compcor qc image
 
     """
 
@@ -83,23 +75,19 @@ def compcor(wf, **kwargs):
     Component based noise reduction method (Behzadi et al.,2007): Regressing out principal components from noise ROIs.
     Here the aCompCor is used.
 
-    Inputs
-    ----------
-    func_aligned (str): Reoriented and realigned functional image
-    mask_files (str): Mask files which determine ROI(s)
+    Inputs:
+        func_aligned (str): Reoriented and realigned functional image
+        mask_files (str): Mask files which determine ROI(s)
 
-    Outputs
-    ----------
-    out_file (str): Path to text file containing the noise components
+    Outputs:
+        out_file (str): Path to text file containing the noise components
 
-    Sinking
-    ----------
-    - Text file containing the noise components
-    - Mask files which determine ROI(s)
+    Sinking:
+        - Text file containing the noise components
+        - Mask files which determine ROI(s)
 
-    Acknowledgements
-    ----------
-    Adapted from Balint Kincses (2018)
+    Acknowledgements:
+        Adapted from Balint Kincses (2018)
 
     """
 

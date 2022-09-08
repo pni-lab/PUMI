@@ -11,8 +11,8 @@ from PUMI.pipelines.func.temporal_filtering import temporal_filtering
 @FuncPipeline(inputspec_fields=['func', 'cc_noise_roi'],
               outputspec_fields=['func_preprocessed', 'func_preprocessed_scrubbed', 'FD'])
 def func_proc_despike_afni(wf, stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
-    """
 
+    """
     Performs processing of functional (resting-state) images:
     Images should be already reoriented, e.g. with fsl fslreorient2std (see scripts/ex_pipeline.py)
     Workflow inputs:

@@ -22,39 +22,33 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
 
     ATTENTION: Images should be already "reoriented" (e.g. with fsl fslreorient2std)
 
-    Parameters
-    ----------
-    bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL' or 'HD-BET'
-    reg_tool (str): Set to registration tool you want to use. Can be 'FSL' or 'ANTS'
+    Parameters:
+        bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL' or 'HD-BET'
+        reg_tool (str): Set to registration tool you want to use. Can be 'FSL' or 'ANTS'
 
-    Inputs
-    ----------
-    brain (str): Path to the brain which should be segmented.
-    stand2anat_xfm (str): Path to standard2input matrix calculated by FSL FLIRT.
-                          Only necessary when using prior probability maps!
+    Inputs:
+        brain (str): Path to the brain which should be segmented.
+        stand2anat_xfm (str): Path to standard2input matrix calculated by FSL FLIRT.
+        Only necessary when using prior probability maps!
 
-    Outputs
-    ----------
-    brain (str): brain extracted image in subject space
-    brain_mask (str): brain mask in subject space
-    std_brain (str): spatially standardised brain extracted image
-    head (str): full head image in subjacet space
+    Outputs:
+        brain (str): brain extracted image in subject space
+        brain_mask (str): brain mask in subject space
+        std_brain (str): spatially standardised brain extracted image
+        head (str): full head image in subjacet space
+        partvol_map (str): hard segmented tissue map
+        anat2mni_warpfield (str): spatial standardization warping field
+        probmap_csf (str): csf probability map.
+        probmap_gm (str): gm probability map.
+        probmap_wm (str): wm probability map
+        mixeltype (str): mixeltype volume file
+        parvol_csf (str): csf partial volume file
+        parvol_gm (str): gm partial volume file
+        parvol_wm (str): wm partial volume file
+        partial_volume_map (str): Path to partial volume map
 
-    partvol_map (str): hard segmented tissue map
-    anat2mni_warpfield (str): spatial standardization warping field
-
-    probmap_csf (str): csf probability map.
-    probmap_gm (str): gm probability map.
-    probmap_wm (str): wm probability map
-    mixeltype (str): mixeltype volume file
-    parvol_csf (str): csf partial volume file
-    parvol_gm (str): gm partial volume file
-    parvol_wm (str): wm partial volume file
-    partial_volume_map (str): Path to partial volume map
-
-    Acknowledgements
-    ----------
-    Adapted from Tamas Spisak (2018) code.
+    Acknowledgements:
+        Adapted from Tamas Spisak (2018) code.
 
     """
 

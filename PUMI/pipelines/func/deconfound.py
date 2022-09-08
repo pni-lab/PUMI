@@ -22,7 +22,7 @@ def despiking_afni(wf, **kwargs):
         out_file (str): 4d Image with spikes removed.
 
     Sinking:
-    - The output image
+        - The output image
 
     """
     despike = Node(interface=afni.Despike(**kwargs), name='despike')
@@ -87,7 +87,6 @@ def qc_motion_correction_mcflirt(wf, **kwargs):
         plot_motion_trans (str):
         FD_figure (str):
 
-    Outputs:
 
 
     Sinking:
@@ -118,8 +117,8 @@ def motion_correction_mcflirt(wf, reference_vol='middle', FD_mode='Power', **kwa
 
     Parameters:
         reference_vol (str): Either "first", "middle", "last", "mean", or the index of the volume which the rigid body
-                             registration (motion correction) will use as reference.
-                             Default is 'middle'.
+         registration (motion correction) will use as reference.
+         Default is 'middle'.
         FD_mode: Either "Power" or "Jenkinson"
 
     Inputs:

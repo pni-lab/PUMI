@@ -14,23 +14,19 @@ def bbr(wf, **kwargs):
 
     BBR registration of functional image to anat.
 
-    Inputs
-    ----------
-    func (str): One volume of the 4D fMRI
-                (The one which is the closest to the fieldmap recording in time should be chosen
-                e.g: if fieldmap was recorded after the fMRI the last volume of it should be chosen)
-    head (str): The oriented T1w image.
-    anat_wm_segmentation (str): WM probability mask
-    anat_gm_segmentation (str): GM probability mask
-    anat_csf_segmentation (str): CSF probability mask
+    Inputs:
+        func (str): One volume of the 4D fMRI
+        (The one which is the closest to the fieldmap recording in time should be chosen
+        e.g: if fieldmap was recorded after the fMRI the last volume of it should be chosen)
+        head (str): The oriented T1w image.
+        anat_wm_segmentation (str): WM probability mask
+        anat_gm_segmentation (str): GM probability mask
+        anat_csf_segmentation (str): CSF probability mask
 
-    Acknowledgements
-    ----------
-
-    Adapted from Balint Kincses (2018) code.
-
-    Modified version of CPAC.registration.registration
-    (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/registration/registration.py)
+    Acknowledgements:
+        Adapted from Balint Kincses (2018) code.
+        Modified version of CPAC.registration.registration
+        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/registration/registration.py)
 
     """
 
@@ -58,9 +54,18 @@ def bbr(wf, **kwargs):
     vent_bb_mask = Node(interface=fsl.ImageMaths(), name='vent_bb_mask')
     vent_bb_mask.inputs.op_string = '-thr 0.8 -bin -ero -dilM'  # stricter threshold and some morphology for compcor
 
-    # A function is defined for define bbr argument which says flirt to perform bbr registration
-    # for each element of the list, due to MapNode
+
     def bbreg_args(bbreg_target):
+
+        """
+
+        A function is defined for define bbr argument which says flirt to perform bbr registration
+        for each element of the list, due to MapNode
+
+        Parameter:
+
+        """
+
         return '-cost bbr -wmseg ' + bbreg_target
 
     bbreg_arg_convert = Node(interface=Function(input_names=["bbreg_target"],
