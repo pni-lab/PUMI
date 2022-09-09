@@ -2,10 +2,6 @@ def plot_carpet(img, mask=None, output_file=None, save_carpet=False, cmap='gray'
                 detrend=True, standardize='zscore',
                 clean_data=True, show_carpet=False):
     """
-    Adapted from: https://github.com/poldracklab/niworkflows
-    Plot an image representation of voxel intensities across time also known
-    as the "carpet plot" or "Power plot". See Jonathan Power Neuroimage
-    2017 Jul 1; 154:150-158.
 
     - X-axis: timeframes (bottom to top along z axis).
     - Y-axis: voxels.
@@ -37,8 +33,15 @@ def plot_carpet(img, mask=None, output_file=None, save_carpet=False, cmap='gray'
             In case output_file is None: carpet will be stored in the current working directory.
             Note: if output_file was provide save_carpet will be set to True automatically.
 
+
     Returns:
         Matplotlib Axes: The plot itself.
+
+
+    Adapted from: https://github.com/poldracklab/niworkflows
+    Plot an image representation of voxel intensities across time also known
+    as the "carpet plot" or "Power plot". See Jonathan Power Neuroimage
+    2017 Jul 1; 154:150-158.
 
 
     """

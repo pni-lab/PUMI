@@ -165,6 +165,10 @@ class PumiPipeline:
         self.regexp_sub = regexp_sub
 
     def __call__(self, pipeline_fun):
+
+        from functools import wraps
+
+        @wraps(pipeline_fun) # So that decorated functions can be documented properly
         def wrapper(name, base_dir='.', sink_dir=None, qc_dir=None, **kwargs):
 
             cfg_parser = SafeConfigParser()

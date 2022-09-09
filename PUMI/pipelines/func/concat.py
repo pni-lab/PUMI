@@ -7,6 +7,8 @@ from PUMI.utils import concatenate
 def concat(wf, fname='parfiles.txt', **kwargs):
     """
     Concatenate up to 10 nuissance regressors in one txt file. Inputs should be 'txt' files.
+
+        # todo docs
     """
 
     from nipype.interfaces.utility import Function

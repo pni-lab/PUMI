@@ -14,17 +14,14 @@ def qc(wf, **kwargs):
 
     Create quality check images for brain coregistration.
 
-    Inputs
-    ----------
-    in_file (str): Path to the registered brain.
+    Inputs:
+        in_file (str): Path to the registered brain.
 
-    Ouputs
-    ----------
-    out_file (str): Path to the quality check image
+    Ouputs:
+        out_file (str): Path to the quality check image
 
-    Sinking
-    ----------
-    - The quality check image
+    Sinking:
+        - The quality check image
 
     """
     plot = Node(Function(input_names=['registered_brain', 'template'],
@@ -49,6 +46,13 @@ def anat2mni_fsl(wf,
                  ref_brain=None,
                  ref_brain_mask=None,
                  **kwargs):
+    """
+
+    #Todo Docs
+
+    """
+
+
     # Todo: re-think template handling
     if ref_head is None:
         ref_head = get_reference(wf, 'head')

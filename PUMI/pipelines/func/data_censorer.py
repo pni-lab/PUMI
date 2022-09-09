@@ -27,45 +27,39 @@ def datacens_workflow_threshold(wf, ex_before=1, ex_after=2, **kwargs):
 
     CAUTION: Name in the old PUMI was datacens_workflow_threshold
 
-    Parameters
-    ----------
+    Parameters:
 
-    Inputs
-    ----------
-    func (str): The reoriented,motion occrected, nuissance removed and bandpass filtered functional file.
-    FD (str): the frame wise displacement calculated by the MotionCorrecter.py script
-    threshold (str): threshold of FD volumes which should be excluded
+    Inputs:
+        func (str): The reoriented,motion occrected, nuissance removed and bandpass filtered functional file.
+        FD (str): the frame wise displacement calculated by the MotionCorrecter.py script
+        threshold (str): threshold of FD volumes which should be excluded
 
-    Outputs
-    ----------
-    scrubbed_image (str)
-    FD_scrubbed (str)
+    Outputs:
+        scrubbed_image (str)
+        FD_scrubbed (str)
 
     Sinking
-    ----------
-    -
+        -
 
-    Acknowledgements
-    ----------
+    Acknowledgements:
+        Adapted from Balint Kincses (2018).
 
-    Adapted from Balint Kincses (2018).
+        Modified version of
+        CPAC.scrubbing.scrubbing
+        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/scrubbing/scrubbing.py),
+        CPAC.generate_motion_statistics.generate_motion_statistics
+        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py),
+        CPAC.func_preproc.func_preproc
+        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py)
 
-    Modified version of
-    CPAC.scrubbing.scrubbing
-    (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/scrubbing/scrubbing.py),
-    CPAC.generate_motion_statistics.generate_motion_statistics
-    (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py),
-    CPAC.func_preproc.func_preproc
-    (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py)
-
-    [1] Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L., & Petersen, S. E. (2012). Spurious
-        but systematic correlations in functional connectivity MRI networks arise from subject motion. NeuroImage, 59(3),
-        2142-2154. doi:10.1016/j.neuroimage.2011.10.018
-    [2] Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L., & Petersen, S. E. (2012). Steps
-        toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp.
-        NeuroImage. doi:10.1016/j.neuroimage.2012.03.017
-    [3] Jenkinson, M., Bannister, P., Brady, M., Smith, S., 2002. Improved optimization for the robust
-        and accurate linear registration and motion correction of brain images. Neuroimage 17, 825-841.
+        [1] Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L., & Petersen, S. E. (2012). Spurious
+            but systematic correlations in functional connectivity MRI networks arise from subject motion. NeuroImage, 59(3),
+            2142-2154. doi:10.1016/j.neuroimage.2011.10.018
+        [2] Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L., & Petersen, S. E. (2012). Steps
+            toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp.
+            NeuroImage. doi:10.1016/j.neuroimage.2012.03.017
+        [3] Jenkinson, M., Bannister, P., Brady, M., Smith, S., 2002. Improved optimization for the robust
+            and accurate linear registration and motion correction of brain images. Neuroimage 17, 825-841.
 
     """
 
