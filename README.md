@@ -8,7 +8,7 @@ Laboratory for Predictive Neuroimaging - University Hospital Essen, Germany
 ![GitHub last commit](https://img.shields.io/github/last-commit/pni-lab/pumi)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/pni-lab/pumi/test_and_dockerize?logo=%232088FF)
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/pni-lab/pumi?label=latest%20tag)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/pni-lab/pumi)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/pni-lab/PUMI)
 
 #### Docker
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/pnilab/pumi?color=blue&label=pnilab%2Fpumi%3A&logo=docker&sort=semver)](https://hub.docker.com/repository/docker/pnilab/pumi)
