@@ -5,7 +5,7 @@ from PUMI.engine import FuncPipeline
 
 
 """
-    to extract voxels 10 to 12 inclusive you would specify 10 and 3 (not 10 and 12).
+    To extract voxels 10 to 12 inclusive you would specify 10 and 3 (not 10 and 12).
 """
 
 
@@ -13,24 +13,19 @@ from PUMI.engine import FuncPipeline
               outputspec_fields=['out_file'])
 def pick_volume(wf, volume='first', **kwargs):
     """
-        Sub-Workflow that deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence
+    Sub-Workflow that deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence
 
-        Parameters
-        ----------
-        wf :
-           Name of the workflow.
-        volume : string
-            The volume specified by the user.
+    Parameters:
+        wf(str): Name of the workflow.
 
-            Possible Values : (first / middle / last / mean / arbitrary number)
+        volume(str): The volume specified by the user.
+            - Possible Values : (first | middle | last | mean | arbitrary number).
+            - In case no value was given, the first volume will be returned.
+            - In case of a non-valid value, a ValueException will be thrown.
 
-            In case no value was given, the first volume will be returned.
+    Returns:
+        wf(Workflow): The sub-workflow itself.
 
-            In case of a non-valid value, a ValueException will be thrown.
-        Returns
-        --------
-        wf:
-            The sub-workflow itself.
     """
 
     from nipype.interfaces.fsl import ImageMaths
@@ -72,25 +67,21 @@ def pick_volume(wf, volume='first', **kwargs):
 def get_info(in_file, volume='first'):
     """
     Adapted from C-PAC (https://github.com/FCP-INDI/C-PAC)
-    Method to get the right index, from which the slicing requested by the user, starts.
+    Function to get the right index, from which the slicing requested by the user, starts.
 
-    In case no value was given, the first volume will be returned.
+    - In case no value was given, the first volume will be returned.
 
-    In case of a non-valid value, a ValueException will be thrown.
+    - In case of a non-valid value, a ValueException will be thrown.
 
-    Beaware : Will be called only if the volume != 'mean'
+    * Beaware : This function will be called only if the volume != 'mean'
 
-    Parameters
-    ----------
-    in_file : string (nifti file)
-       Path to input functional run
-    volume : string
-        The volume specified by the user
-        Possible Values : (first / middle / last / mean / arbitrary number)
+    Parameters:
+        in_file(str): Path to input functional run.
+        volume(str): The volume specified by the user.
+            Possible Values: (first | middle | last | mean | arbitrary number)
 
-    Returns
-    -------
-        The index in the 4d-sequence, from which we start slicing
+    Returns:
+        start_idx (integer): The index in the 4d-sequence, from which we start slicing.
     """
     from nibabel import load
 
@@ -105,23 +96,32 @@ def get_info(in_file, volume='first'):
     # Grab the maximum number of volumes in the 4d-img
     vol_count = img.shape[3]
     # check which volume the user want
+    start_idx = 0
     if volume == 'first':
-        return 0
+        return start_idx
     elif volume == 'middle':
-        return round(vol_count / 2)
+        start_idx = round(vol_count / 2)
     elif volume == 'last':
-        return vol_count - 1
+        start_idx = vol_count - 1
     # User wants a specific volume
     elif volume.isdigit() and vol_count > int(volume) > 0:
-        return int(volume) - 1
+        start_idx = int(volume) - 1
     else:
         raise ValueError('{} is a non-valid value for the Parameter volume \nPossible values : first / middle / last '
                          '/ mean / arbitrary number'.format(volume))
+    return start_idx
 
 
 @QcPipeline(inputspec_fields=['bg_image', 'overlay_image'],
             outputspec_fields=['out_file'])
 def vol2png(wf, overlay=True, **kwargs):
+
+    """
+
+    # Todo Docs
+
+    """
+
     slicer = Node(interface=fsl.Slicer(), name='slicer')
     slicer.inputs.image_width = 2000
     slicer.inputs.sample_axial = 5  # set output all axial slices into one picture

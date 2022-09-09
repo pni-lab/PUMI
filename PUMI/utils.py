@@ -291,6 +291,11 @@ def create_coregistration_qc(registered_brain, template, output_file=None, level
 
 
 def registration_ants_hardcoded(brain, reference_brain, head, reference_head):
+
+    """
+    Todo Docs
+    """
+
     import os
     import subprocess
     # parameters based on Satra's post: https://gist.github.com/satra/8439778

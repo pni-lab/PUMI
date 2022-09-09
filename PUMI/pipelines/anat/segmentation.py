@@ -1,12 +1,18 @@
-from PUMI.engine import AnatPipeline, QcPipeline, NestedNode as Node
+import sys
+from PUMI.engine import AnatPipeline, QcPipeline
+from PUMI.engine import NestedNode as Node
 from PUMI.interfaces.HDBet import HDBet
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 from PUMI.utils import create_segmentation_qc
+from nipype import Function
 from nipype.interfaces import fsl
 from nipype.interfaces.utility import Split
 from matplotlib.colors import LinearSegmentedColormap
 from nipype import Function
+from PUMI.engine import AnatPipeline
+from PUMI.engine import NestedNode as Node
 import os
+from pipelines.multimodal.image_manipulation import pick_volume
 
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
@@ -16,18 +22,15 @@ def qc_segmentation(wf, **kwargs):
 
     Create quality check images for background extraction workflows
 
-    Inputs
-    ----------
-    background (str): Path to the extracted brain.
-    overlay (str): Path to the overlay.
+    Inputs:
+        background (str): Path to the extracted brain.
+        overlay (str): Path to the overlay.
 
-    Ouputs
-    ----------
-    out_file (str): Path to the quality check image
+    Outputs:
+        out_file (str): Path to the quality check image
 
-    Sinking
-    ----------
-    - The quality check image
+    Sinking:
+    -   The quality check image
 
     """
     plot = Node(Function(input_names=['overlay', 'bg_img', 'cmap'],
@@ -51,17 +54,14 @@ def qc_tissue_segmentation(wf, **kwargs):
 
     Create quality check images for tissue segmentation workflows
 
-    Inputs
-    ----------
-    in_file (str): Path to the partial volume map
+    Inputs:
+        in_file (str): Path to the partial volume map
 
-    Ouputs
-    ----------
-    out_file (str): Path to the quality check image
+    Outputs:
+        out_file (str): Path to the quality check image
 
-    Sinking
-    ----------
-    - The quality check image
+    Sinking:
+    -   The quality check image
 
     """
     plot = Node(Function(input_names=['overlay', 'cmap'],
@@ -82,6 +82,23 @@ def qc_tissue_segmentation(wf, **kwargs):
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file', 'brain_mask'])
 def bet_fsl(wf, fmri=False, **kwargs):
+def bet_fsl(wf, **kwargs):
+    """
+
+    Performs Brain extraction of a 3d-vloume.
+    User can choose the position of the 3d-volume
+
+    Inputs:
+        in_file(str): Path to the functional 4d-image.
+
+
+
+    Outputs:
+        out_file(str):
+        brain_mask(str):
+
+    """
+
     # bet
     bet = Node(interface=fsl.BET(), name='bet')
     bet.inputs.mask = True
@@ -100,6 +117,16 @@ def bet_fsl(wf, fmri=False, **kwargs):
     else:
         bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_anat', fallback=0.3)
         bet.inputs.robust = True
+    bet.inputs.robust = True
+    bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac', fallback=0.5)
+    bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=0)
+
+
+    # extract 3D-volume choosen by the user from a functional 4D-Sequence
+    img_extraction_wf = pick_volume('img_extraction_wf', volume='mean')
+    wf.connect('inputspec', 'in_file', img_extraction_wf, 'in_file')
+    wf.connect(img_extraction_wf, 'out_file', bet, 'in_file')
+
 
     # quality check
     qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
@@ -152,16 +179,6 @@ def bet_hd(wf, **kwargs):
     wf.connect('inputspec', 'in_file', qc, 'background')
     wf.connect(bet, 'out_file', qc, 'overlay')
 
-
-
-    '''
-    # sinking
-    wf.connect(bet, 'out_file', 'sinker', 'out_file')
-    wf.connect(bet, 'mask_file', 'sinker', 'mask_file')
-    '''
-
-
-    # return
     wf.connect(bet, 'out_file', 'outputspec', 'out_file')
     wf.connect(bet, 'mask_file', 'outputspec', 'brain_mask')
 
@@ -174,35 +191,30 @@ def tissue_segmentation_fsl(wf, priormap=True, **kwargs):
 
     Perform segmentation of a brain extracted T1w image.
 
-    Parameters
-    ----------
-    priormap (bool): Set to True if you want to use prior probability maps.
-                     In that case the stand2anat_xfm input is needed (otherwise not).
+    Parameters:
+        priormap (bool): Set to True if you want to use prior probability maps.
+                         In that case the stand2anat_xfm input is needed (otherwise not).
 
-    Inputs
-    ----------
-    brain (str): Path to the brain which should be segmented.
-    stand2anat_xfm (str): Path to standard2input matrix calculated by FSL FLIRT.
-                          Only necessary when using prior probability maps!
+    Inputs:
+        brain (str): Path to the brain which should be segmented.
+        stand2anat_xfm (str): Path to standard2input matrix calculated by FSL FLIRT.
+                              Only necessary when using prior probability maps!
 
-    Ouputs
-    ----------
-    probmap_csf (str): Path to csf probability map.
-    probmap_gm (str): Path to gm probability map.
-    probmap_wm (str): Path to wm probability map
-    mixeltype (str): Path to mixeltype volume file
-    parvol_csf (str): Path to csf partial volume file
-    parvol_gm (str): Path to gm partial volume file
-    parvol_wm (str): Path to wm partial volume file
-    partial_volume_map (str): Path to partial volume map
+    Outputs:
+        probmap_csf (str): Path to csf probability map.
+        probmap_gm (str): Path to gm probability map.
+        probmap_wm (str): Path to wm probability map
+        mixeltype (str): Path to mixeltype volume file
+        parvol_csf (str): Path to csf partial volume file
+        parvol_gm (str): Path to gm partial volume file
+        parvol_wm (str): Path to wm partial volume file
+        partial_volume_map (str): Path to partial volume map
 
-    Sinking
-    ----------
+    Sinking:
     - The probability maps for csf, gm and wm.
 
-    Acknowledgements
-    ----------
-    Modified version of CPAC.seg_preproc.seg_preproc (https://github.com/FCP-INDI/C-PAC) and Balint Kinces code (2018)
+    Acknowledgements:
+        Modified version of CPAC.seg_preproc.seg_preproc (https://github.com/FCP-INDI/C-PAC) and Balint Kinces code (2018)
 
     For a deeper insight:
         - https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST
@@ -292,6 +304,24 @@ deface_mask : String
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file', 'deface_mask'])
 def defacing(wf, **kwargs):
+
+    """
+    Pipeline for defacing anatomical images.
+    Also creates quality check images
+
+    Inputs
+        in_file(str): Path to anat image.
+
+    Outputs
+        out_file(nii.gz) : Defaced anatomical image
+
+        deface_mask(str): Path to the defacing mask.
+
+    Sinker
+    -   Defaced anatomical image
+
+    """
+
     deface_node = Node(Function(input_names=['infile', 'force'],
                                 output_names=['warped_mask_img', 'warped_mask'],
                                 function=pydeface_wrapper,
