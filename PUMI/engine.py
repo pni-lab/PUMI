@@ -16,7 +16,8 @@ import re
 
 def _parameterization_dir(param):
     """
-    Returns the directory name for the given parameterization string as follows:
+    Returns
+        the directory name for the given parameterization string as follows:
         - If the parameterization is longer than 32 characters, then
           return the SHA-1 hex digest.
         - Otherwise, return the parameterization unchanged.
@@ -86,6 +87,10 @@ class NestedWorkflow(Workflow):
 
     def connect(self, *args, **kwargs):
 
+        """
+        Todo docs
+        """
+
         # we convert the input to handle the subworkflow-shortcuts
         # (i.e. adding 'inoutspec.' and 'outputspec.' when needed)
 
@@ -143,6 +148,10 @@ class NestedWorkflow(Workflow):
 
 # decorator class
 class PumiPipeline:
+
+    """
+     # Todo docs
+    """
 
     def __init__(self, inputspec_fields=None, outputspec_fields=None, regexp_sub=None):
         if outputspec_fields is None:
@@ -223,6 +232,10 @@ class PumiPipeline:
 
 class AnatPipeline(PumiPipeline):
 
+    """
+     # Todo docs
+    """
+
     def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None, default_regexp_sub=True):
         regexp_sub = [] if regexp_sub is None else regexp_sub
         substitutions = []
@@ -239,6 +252,10 @@ class AnatPipeline(PumiPipeline):
 
 
 class QcPipeline(PumiPipeline):
+
+    """
+     # Todo docs
+    """
 
     def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None, default_regexp_sub=True):
         regexp_sub = [] if regexp_sub is None else regexp_sub
@@ -257,6 +274,10 @@ class QcPipeline(PumiPipeline):
 
 class FuncPipeline(PumiPipeline):
 
+    """
+     # Todo docs
+    """
+
     def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None, default_regexp_sub=True):
         regexp_sub = [] if regexp_sub is None else regexp_sub
         substitutions = []
@@ -272,8 +293,16 @@ class FuncPipeline(PumiPipeline):
         return super().__call__(func_fun)
 
 
+
 class BidsPipeline(PumiPipeline):
-    # decorator for top-level pipelines, with BIDS input
+
+    """
+
+    decorator for top-level pipelines, with BIDS input
+
+    """
+
+
     def __init__(self, output_query=None):
         #regexp_sub = [] if regexp_sub is None else regexp_sub
         #substitutions = []
@@ -313,6 +342,10 @@ class BidsPipeline(PumiPipeline):
 
     def __call__(self, pipeline_fun):
         def wrapper(name, bids_dir, subjects=None, base_dir='.', sink_dir=None, qc_dir=None, run_args=None, **kwargs):
+
+            """
+            # Todo Docs
+            """
 
             # default: multiproc
             if run_args is None:

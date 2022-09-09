@@ -115,6 +115,10 @@ def anat2mni_ants(wf,
                   ref_brain=None,
                   **kwargs):
 
+    """
+        Todo docs
+    """
+
     # Todo: re-think template handling
     if ref_head is None:
         ref_head = get_reference(wf, 'head')
@@ -179,6 +183,9 @@ def anat2mni_ants_hardcoded(wf,
                             ref_brain=None,
                             **kwargs
                             ):
+    """
+        Todo docs
+    """
     # Todo: re-think template handling
     if ref_head is None:
         ref_head = get_reference(wf, 'head')

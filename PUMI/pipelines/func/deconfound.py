@@ -4,16 +4,28 @@ from nipype.algorithms import confounds
 from nipype.interfaces import afni, fsl, utility
 from PUMI.engine import NestedNode as Node, QcPipeline
 from PUMI.engine import FuncPipeline
-from examples.carpet_plot import plot_carpet
+from PUMI.plot.carpet_plot import plot_carpet
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume, timecourse2png
 from PUMI.utils import calc_friston_twenty_four, calculate_FD_Jenkinson, mean_from_txt, max_from_txt
+from plot.carpet_plot import plot_carpet
 
 
 @FuncPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file'])
 def despiking_afni(wf, **kwargs):
     """
-    todo
+
+    Removes 'spikes' from functional 3d+time images
+
+    Inputs:
+        in_file (str): Path to the 4d image
+
+    Outputs:
+        out_file (str): 4d Image with spikes removed
+
+    Sinking():
+    - The output image
+
     """
     despike = Node(interface=afni.Despike(**kwargs), name='despike')
     despike.inputs.outputtype = 'NIFTI_GZ'
@@ -27,18 +39,32 @@ def despiking_afni(wf, **kwargs):
 @QcPipeline(inputspec_fields=['in_file'],
             outputspec_fields=['out_file'])
 def qc(wf):
+
+    """
+
+    Creates carpet plot after dispiking.
+
+    Inputs
+    ----------
+    in_file (str): Path to dispiked 4d image
+
+    Ouputs
+    ----------
+    out_file (Axes): matplotlib Axes to be used in composite figures
+
+    Sinking
+    ----------
+    - Carpet plot as png image
+
+    """
+
     plot_interface = Function(
         input_names=['img', 'save_carpet'],
         output_names=['ax1'],
-        function=plot_carpet,
-        imports=['import os', 'import numpy as np', 'import nibabel as nb',
-                 'import matplotlib.pyplot as plt', 'from matplotlib import gridspec as mgs',
-                 'from nilearn._utils import check_niimg_4d',
-                 'from nilearn._utils.niimg import _safe_get_data',
-                 'from nilearn.signal import clean'])
+        function=plot_carpet)
 
 
-    # Important because the default of save_plot is False
+    # Important because the default of save_carpet is False
     plot_interface.inputs.save_carpet = True
 
     carpet_node = Node(name='carpet_node',

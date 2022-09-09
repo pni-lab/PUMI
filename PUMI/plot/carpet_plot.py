@@ -1,59 +1,46 @@
-"""
-    - This input 4d-image contains 290 volumes
-    - Each Volume(3d Image) contains 38 Slices(2d Images)
-    - Each Slice is 94 x 94 Pixel
-    So there are 94*94*38=335768 Rows and 290 Columns.
-    For example the whole first column represents the all pixels of the first volume
-
-    one_vol = func_data[..., 150]
-    one_slice = one_vol[..., 15]
-
-    INPUT:
-    take a 4D functional image as input
-    optional argument: 'mask', this can be a 3d binary image (brain mask) or a float between 0 and 1 (default: 0.1), which is
-    additional params: ax: matplotlib axis, for composite figure (optional), cmap: matplotlib-like colormap (default: grayscale)
-    The function plots all within-mask voxels as a "carpet image":
-    y-axis: voxels (bottom to top along z axis)
-    x-axis. timeframes
-    color: voxel intensity
-    returns:
-    the plot itself (matplotlib axis)
-"""
-
-import os
-from numpy import random
-
-
 def plot_carpet(img, mask=None, output_file=None, save_carpet=False, cmap='gray',
                 detrend=True, standardize='zscore',
                 clean_data=True, show_carpet=False):
     """
     Adapted from: https://github.com/poldracklab/niworkflows
-    Plot an image representation of voxel intensities across time also know
+    Plot an image representation of voxel intensities across time also known
     as the "carpet plot" or "Power plot". See Jonathan Power Neuroimage
     2017 Jul 1; 154:150-158.
-    Parameters
-    ----------
-        img : Niimg-like object
-            See http://nilearn.github.io/manipulating_images/input_output.html0
-            4D input image
-        mask : 3d binary image (brain mask) or a float between 0 and 1 (default: 0.1)
-            fractional intensity threshold, i.e. ignoring all voxels being smaller than the min+mask*(max-min) (or something like that)
-        cmap :
-            The color map
-        detrend : {True, False}
-        standardize : {'zscore', 'psc', False}, optional
-            Strategy to standardize the signal
-        clean_data : Boolean
-            remove voxels that stay 0 through time.
-        show_carpet : Boolean
-            show the generated carpet plot
-        output_file: String
+
+    - X-axis: timeframes (bottom to top along z axis).
+    - Y-axis: voxels.
+    - Color: voxel intensity.
+
+    Parameters:
+        img (Niimg-like object):
+            4D functional image.
+        mask (3d binary image (brain mask) or a float between 0 and 1):
+            Fractional intensity threshold, i.e. ignoring all voxels being smaller than the min+mask*(max-min).
+            Default = 0.1
+        cmap (str) :
+            The color map that will be used to color the carpet.
+            Default = 'gray'
+        detrend (bool) :
+            Weather data will be detrended or not. Default = True
+        standardize :{'zscore', 'psc', False}.
+            Strategy to standardize the signal. Default = 'zscore'
+        clean_data (bool):
+            Remove voxels that stay 0 through time.
+            Default = True.
+        show_carpet (bool):
+            Show the generated carpet plot after generating it.
+        output_file (str):
             Absolute Path in which the carpet plot should be saved
             If the value is None, carpet will be stored in the cwd.
-        save_carpet : Boolean, default Fasle
-            save generated carpet
-            Note : if output_file was provide save_carpet will be set to True automatically.
+        save_carpet (bool):
+            Save generated carpet in the path output_file.
+            In case output_file is None: carpet will be stored in the current working directory.
+            Note: if output_file was provide save_carpet will be set to True automatically.
+
+    Returns:
+        Matplotlib Axes: The plot itself.
+
+
     """
     import numpy as np
     import nibabel as nb
@@ -62,6 +49,7 @@ def plot_carpet(img, mask=None, output_file=None, save_carpet=False, cmap='gray'
     from nilearn._utils import check_niimg_4d
     from nilearn._utils.niimg import _safe_get_data
     from nilearn.signal import clean
+    import os
 
     # actually load data
     print(img)
@@ -171,6 +159,9 @@ def plot_carpet(img, mask=None, output_file=None, save_carpet=False, cmap='gray'
 
 
 if __name__ == '__main__':
+    import os
+    from numpy import random
+
     # Test Mask
     arr = random.randint(2, size=(94, 94, 38))
     ROOT_DIR = os.path.dirname(os.getcwd())
