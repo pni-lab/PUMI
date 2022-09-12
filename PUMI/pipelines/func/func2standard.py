@@ -8,22 +8,25 @@ from nipype.interfaces.c3 import C3dAffineTool
 import os
 
 
-@QcPipeline(inputspec_fields=['warped_image', 'example_func', 'func', 'atlas', 'confounds'],
+@QcPipeline(inputspec_fields=['warped_image', 'example_func', 'func'],
             outputspec_fields=[])
 def atlas2func_qc(wf, carpet_plot=True, **kwargs):
     atlas2func_vol2png = vol2png('atlas2func_vol2png')
     wf.connect('inputspec', 'warped_image', atlas2func_vol2png, 'overlay_image')
     wf.connect('inputspec', 'example_func', atlas2func_vol2png, 'bg_image')
 
-    # todo: create carpet plot
-
-    """
     if carpet_plot:
-        altas2func_carpet_plot = plot_carpet('altas2func_carpet_plot')
-        wf.connect('inputspec', 'func', altas2func_carpet_plot, 'inputspec.func')
-        wf.connect('inputspec', 'atlas', altas2func_carpet_plot, 'inputspec.atlas')
-        wf.connect('inputspec', 'confounds', altas2func_carpet_plot, 'inputspec.confounds')
-    """
+        carpet_node = Node(
+            utility.Function(
+                input_names=['img', 'save_carpet'],
+                output_names=['ax1'],
+                function=plot_carpet
+            )
+        )
+        wf.connect('inputspec', 'func', carpet_node, 'img')
+        # wf.connect('inputspec', 'atlas', altas2func_carpet_plot, 'inputspec.atlas')
+        # wf.connect('inputspec', 'confounds', altas2func_carpet_plot, 'inputspec.confounds')
+        # todo: support 'atlas' and 'confounds' parameter in carpet plot
 
 
 @FuncPipeline(inputspec_fields=['atlas', 'anat', 'inv_linear_reg_mtrx', 'inv_nonlinear_reg_mtrx', 'func',
