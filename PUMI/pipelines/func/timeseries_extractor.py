@@ -1,7 +1,71 @@
-import nipype.interfaces.utility as utility
-from PUMI.engine import NestedNode as Node, GroupPipeline
-from PUMI.utils import relabel_atlas, get_reference
+from PUMI.pipelines.func.func2standard import atlas2func
 from nipype.interfaces import afni
+import nipype.interfaces.utility as utility
+from PUMI.engine import GroupPipeline, FuncPipeline, NestedNode as Node, QcPipeline
+from PUMI.utils import relabel_atlas, get_reference, TsExtractor, plot_carpet_ts
+
+
+@QcPipeline(inputspec_fields=['timeseries', 'modules', 'atlas'],
+            outputspec_fields=[])
+def extract_timeseries_nativespace_qc(wf, **kwargs):
+    if wf.get_node('inputspec').inputs.atlas is None:
+        wf.get_node('inputspec').inputs.atlas = None
+
+    qc_timeseries = Node(interface=utility.Function(
+        input_names=['timeseries', 'modules', 'output_file', 'atlas'],
+        output_names=['plotfile'],
+        function=plot_carpet_ts
+    ),
+        name="qc_timeseries"
+    )
+    qc_timeseries.inputs.output_file = "qc_timeseries.png"
+
+    wf.connect('inputspec', 'timeseries', qc_timeseries, 'timeseries')
+    wf.connect('inputspec', 'atlas', qc_timeseries, 'atlas')
+    wf.connect('inputspec', 'modules', qc_timeseries, 'modules')
+    wf.connect(qc_timeseries, 'plotfile', 'sinker', 'regTimeseriesQC')
+
+
+@FuncPipeline(inputspec_fields=['atlas', 'labels', 'modules', 'anat', 'inv_linear_reg_mtrx', 'inv_nonlinear_reg_mtrx',
+                                'func', 'gm_mask', 'confounds', 'confound_names'],
+              outputspec_fields=['timeseries', 'out_gm_label'])
+def extract_timeseries_nativespace(wf, global_signal=True, **kwargs):
+    # this workflow transforms atlas back to native space and uses TsExtractor
+
+    # 'anat', # only obligatory if stdreg==globals._RegType_.ANTS
+
+    # transform atlas back to native EPI spaces!
+    atlas2native = atlas2func('atlas2native', stdreg='ants')
+    wf.connect('inputspec', 'atlas', atlas2native, 'inputspec.atlas')
+    wf.connect('inputspec', 'anat', atlas2native, 'inputspec.anat')
+    wf.connect('inputspec', 'inv_linear_reg_mtrx', atlas2native, 'inputspec.inv_linear_reg_mtrx')
+    wf.connect('inputspec', 'inv_nonlinear_reg_mtrx', atlas2native, 'inputspec.inv_nonlinear_reg_mtrx')
+    wf.connect('inputspec', 'func', atlas2native, 'inputspec.func')
+    wf.connect('inputspec', 'gm_mask', atlas2native, 'inputspec.example_func')
+    wf.connect('inputspec', 'confounds', atlas2native, 'inputspec.confounds')
+    wf.connect('inputspec', 'confound_names', atlas2native, 'inputspec.confound_names')
+
+    # extract timeseries
+    extract_timeseries = Node(interface=utility.Function(input_names=['labels', 'labelmap', 'func', 'mask', 'global_signal'],
+                                                                output_names=['out_file', 'labels', 'out_gm_label'],
+                                                                function=TsExtractor),
+                                     name='extract_timeseries')
+    extract_timeseries.inputs.global_signal = global_signal
+    wf.connect(atlas2native, 'outputspec.atlas2func', extract_timeseries, 'labelmap')
+    wf.connect('inputspec', 'labels', extract_timeseries, 'labels')
+    wf.connect('inputspec', 'gm_mask', extract_timeseries, 'mask')
+    wf.connect('inputspec', 'func', extract_timeseries, 'func')
+
+    wf.connect(extract_timeseries, 'out_file', 'sinker', 'regional_timeseries')
+
+    # QC
+    timeseries_qc = extract_timeseries_nativespace_qc('extract_timeseries_nativespace_qc')
+    wf.connect('inputspec', 'modules', timeseries_qc, 'modules')
+    wf.connect('inputspec', 'atlas', timeseries_qc, 'atlas')
+    wf.connect(extract_timeseries, 'out_file', timeseries_qc, 'timeseries')
+
+    wf.connect(extract_timeseries, 'out_file', 'outputspec', 'timeseries')
+    wf.connect(extract_timeseries, 'out_gm_label', 'outputspec', 'out_gm_label')
 
 
 @GroupPipeline(inputspec_fields=['labelmap', 'modules', 'labels'],
