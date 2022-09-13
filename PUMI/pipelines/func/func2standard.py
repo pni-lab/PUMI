@@ -2,13 +2,12 @@ import nipype.interfaces.utility as utility
 from PUMI.engine import FuncPipeline, NestedNode as Node, QcPipeline
 from PUMI.pipelines.multimodal.image_manipulation import vol2png
 from PUMI.plot.carpet_plot import plot_carpet
-from PUMI.utils import relabel_atlas, get_reference
 from nipype.interfaces import fsl, ants
 from nipype.interfaces.c3 import C3dAffineTool
 import os
 
 
-@QcPipeline(inputspec_fields=['warped_image', 'example_func', 'func'],
+@QcPipeline(inputspec_fields=['warped_image', 'example_func', 'func', 'atlas', 'confounds'],
             outputspec_fields=[])
 def atlas2func_qc(wf, carpet_plot=True, **kwargs):
     atlas2func_vol2png = vol2png('atlas2func_vol2png')
@@ -21,8 +20,10 @@ def atlas2func_qc(wf, carpet_plot=True, **kwargs):
                 input_names=['img', 'save_carpet'],
                 output_names=['ax1'],
                 function=plot_carpet
-            )
+            ),
+            name='atlas2func_carpet_plot'
         )
+        carpet_node.inputs.save_carpet = True
         wf.connect('inputspec', 'func', carpet_node, 'img')
         # wf.connect('inputspec', 'atlas', altas2func_carpet_plot, 'inputspec.atlas')
         # wf.connect('inputspec', 'confounds', altas2func_carpet_plot, 'inputspec.confounds')
@@ -114,7 +115,7 @@ def atlas2func(wf, stdreg='ants', interp="NearestNeighbor", carpet_plot=True, **
     if stdreg == 'fsl':
         wf.connect(applywarp, 'out_file', 'outputspec', 'atlas2func')
     elif stdreg == 'ants':
-        wf.connect(applywarp, 'output_file', 'sinker', 'atlas2func')
+        wf.connect(applywarp, 'output_image', 'outputspec', 'atlas2func')
 
     # Sinking
     if stdreg == 'fsl':
