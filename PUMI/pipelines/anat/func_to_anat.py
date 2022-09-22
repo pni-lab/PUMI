@@ -8,7 +8,8 @@ from nipype.interfaces import fsl
                                 'anat_csf_segmentation', 'anat_ventricle_segmentation'],
               outputspec_fields=['func_sample2anat', 'example_func', 'func_to_anat_linear_xfm',
                                  'anat_to_func_linear_xfm', 'csf_mask_in_funcspace', 'csf_mask_in_funcspace',
-                                 'csf_mask_in_funcspace', 'ventricle_mask_in_funcspace', 'wm_mask_in_funcspace'])
+                                 'csf_mask_in_funcspace', 'ventricle_mask_in_funcspace', 'wm_mask_in_funcspace',
+                                 'gm_mask_in_funcspace'])
 def bbr(wf, **kwargs):
     """
 

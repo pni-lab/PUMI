@@ -45,6 +45,10 @@ def plot_carpet(img, mask=None, output_file=None, save_carpet=False, cmap='gray'
 
 
     """
+
+    # todo: support 'atlas' and 'confounds' parameter in carpet plot
+
+
     import numpy as np
     import nibabel as nb
     import matplotlib.pyplot as plt

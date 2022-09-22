@@ -297,6 +297,21 @@ class FuncPipeline(PumiPipeline):
         return super().__call__(func_fun)
 
 
+class GroupPipeline(PumiPipeline):
+
+    def __init__(self, inputspec_fields, outputspec_fields, regexp_sub=None, default_regexp_sub=True):
+        regexp_sub = [] if regexp_sub is None else regexp_sub
+        substitutions = []
+
+        if default_regexp_sub:
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<3>')]
+
+        substitutions.extend(regexp_sub)
+        super().__init__(inputspec_fields, outputspec_fields, substitutions)
+
+    def __call__(self, group_fun):
+        return super().__call__(group_fun)
+
 
 class BidsPipeline(PumiPipeline):
 
