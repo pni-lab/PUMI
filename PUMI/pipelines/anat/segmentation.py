@@ -33,8 +33,8 @@ def qc_segmentation(wf, **kwargs):
                          output_names=['out_file'],
                          function=create_segmentation_qc),
                 name='plot')
-    wf.connect('inputspec', 'background', plot, 'overlay')
-    wf.connect('inputspec', 'overlay', plot, 'bg_img')
+    wf.connect('inputspec', 'background', plot, 'bg_img')
+    wf.connect('inputspec', 'overlay', plot, 'overlay')
 
     # sinking
     wf.connect(plot, 'out_file', 'sinker', 'qc_segmentation')
@@ -100,7 +100,6 @@ def bet_fsl(wf, fmri=False, **kwargs):
     bet.inputs.mask = True
     bet.inputs.vertical_gradient = wf.cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=-0.3)
     wf.connect('inputspec', 'in_file', bet, 'in_file')
-
 
     if fmri:
         bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_func', fallback=0.3)
