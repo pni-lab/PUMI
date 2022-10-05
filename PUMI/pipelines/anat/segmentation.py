@@ -77,7 +77,7 @@ def qc_tissue_segmentation(wf, **kwargs):
 
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file', 'brain_mask'])
-def bet_fsl(wf, fmri=False, **kwargs):
+def bet_fsl(wf, fmri=False, volume='middle', **kwargs):
     """
 
     Performs Brain extraction of a 3d-vloume.
@@ -105,7 +105,7 @@ def bet_fsl(wf, fmri=False, **kwargs):
         bet.inputs.frac = wf.cfg_parser.getfloat('FSL', 'bet_frac_func', fallback=0.3)
         bet.inputs.functional = True
 
-        bet_vol = pick_volume('bet_vol')
+        bet_vol = pick_volume('bet_vol', volume=volume)
         wf.connect(bet, 'mask_file', bet_vol, 'in_file')
 
         apply_mask = Node(fsl.ApplyMask(), name="apply_mask")
