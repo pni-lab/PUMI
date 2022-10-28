@@ -202,14 +202,11 @@ def rpn(wf, **kwargs):
 
     wf.write_graph('rpn-signature.png')
 
+run_args = {
+    'plugin':'MultiProc',
+    'plugin_args':{'n_procs':4,'memory_gb':5}
+}
+
 
 print("Starting RPN-signature...")
-#rpn_wf = rpn('rpn', base_dir=working_dir, bids_dir=input_dir, subjects=['001']) todo: does not work. fix!
-"""
-42 --  /mnt/MyHDD/PNI/PUMI/data_out/derivatives
-"""
-rpn_wf = rpn('rpn', bids_dir=input_dir, subjects=['001'])
-"""
-42 --  /mnt/MyHDD/PNI/PUMI/pipelines/derivatives
-"""
-collect_predictions(rpn_wf)
+rpn_wf = rpn('rpn', bids_dir=input_dir, subjects=['001'], run_args=run_args)
