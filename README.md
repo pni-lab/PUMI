@@ -35,7 +35,7 @@ git clone git@github.com:pni-lab/PUMI.git
    - `pnilab/pumi:latest`: for the full image, containing all dependnecies but no PUMI source code (useful when integrating new tools, but takes long to download). To work in the full image:
          - run it: docker run -ti pnilab/pumi bash
          - get the latest PUMI source by `git clone http://github.com/pni-lab/PUMI.git`
-         - TODO
+         - install PUMI: `cd /PUMI; pip install .`
 - set up your IDE to work within the container
 
 ### Option B: Install all non-python dependencies locally
