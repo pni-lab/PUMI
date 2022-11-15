@@ -6,7 +6,7 @@ from PUMI.engine import FuncPipeline
 
 @FuncPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file'])
-def pick_volume(wf, volume='first', **kwargs):
+def pick_volume(wf, volume='middle', **kwargs):
     """
     Sub-Workflow that deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence
 
@@ -46,7 +46,6 @@ def pick_volume(wf, volume='first', **kwargs):
                       name='fslroi')
         fslroi.inputs.t_size = 1
 
-
     if mean:
         wf.connect('inputspec', 'in_file', img_mean, 'in_file')
         wf.connect(img_mean, 'out_file', 'sinker', 'out_file')
@@ -57,9 +56,6 @@ def pick_volume(wf, volume='first', **kwargs):
         wf.connect(img_4d_info, 'start_idx', fslroi, 't_min')
         wf.connect(fslroi, 'roi_file', 'sinker', 'out_file')
         wf.connect(fslroi, 'roi_file', 'outputspec', 'out_file')
-
-
-
 
 def get_info(in_file, volume='first'):
     """
