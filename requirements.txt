@@ -16,3 +16,4 @@ poetry-dynamic-versioning>=0.17.1
 pydeface>=2.0.0
 seaborn>=0.11.2
 scikit-learn==1.1.2
+nibabel
