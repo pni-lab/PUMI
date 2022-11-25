@@ -49,11 +49,6 @@ parser.add_argument('--gradient',
 
 args = parser.parse_args()
 
-bids_dir = args.bids_dir
-output_dir = args.output_dir
-working_dir = args.working_dir
-participant_label = args.participant_label
-
 
 @BidsPipeline(output_query={
     'T1w': dict(
@@ -79,10 +74,10 @@ def bet_wf(wf, **kwargs):
         print(e)
 
 
-bet_func_ex_wf = bet_wf(
-    'bet_wf',
+bids_demo = bet_wf(
+    'bids_demo',
     bids_dir=args.bids_dir,
     output_dir=args.output_dir,
-    working_dir=working_dir,
-    subjects=participant_label
+    working_dir=args.working_dir,
+    subjects=args.participant_label
 )
