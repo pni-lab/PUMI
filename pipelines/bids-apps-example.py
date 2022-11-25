@@ -73,7 +73,10 @@ def bet_wf(wf, **kwargs):
     wf.base_dir = os.path.abspath(kwargs.get('working_dir'))
 
     wf.connect('inputspec', 'T1w', bet, 'in_file')
-    wf.write_graph('bet_wf.png')
+    try:
+        wf.write_graph('bet_wf.png')
+    except OSError as e:
+        print(e)
 
 
 bet_func_ex_wf = bet_wf(
