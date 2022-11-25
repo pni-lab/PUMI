@@ -80,6 +80,7 @@ RUN apt-get update -qq \
            nano \
            sudo \
            wget \
+           graphviz \
     && rm -rf /var/lib/apt/lists/* \
     && echo "Downloading FSL ..." \
     && mkdir -p /opt/fsl-6.0.4 \
