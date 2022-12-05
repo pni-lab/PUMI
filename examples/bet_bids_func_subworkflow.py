@@ -4,6 +4,7 @@ import argparse
 import os
 
 
+
 """
     Using command line arguments, one can set the paths to the input/output/working directory of the workflow.
     Remember to enter a full path.
