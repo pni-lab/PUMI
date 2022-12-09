@@ -9,13 +9,63 @@ from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels
 import traits
+from PUMI.pipelines.anat.segmentation import bet_fsl
+from PUMI._version import get_versions
+from configparser import ConfigParser
+from PUMI.engine import BidsPipeline
+import argparse
+import PUMI
+import os
 
-ROOT_DIR = os.path.dirname(os.getcwd())
+cfg_parser = ConfigParser()
+cfg_parser.read(os.path.join(os.path.dirname(PUMI.__file__), 'settings.ini'))
 
-input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # path where the bids data is located
-#input_dir = os.path.join(ROOT_DIR, 'data_in/pumi-unittest')  # path where the bids data is located
-#output_dir = os.path.join(ROOT_DIR, 'data_out')  # path for the folder with the results of this script
-working_dir = os.path.join(ROOT_DIR, 'data_out')  # path for the workflow folder
+__version__ = get_versions()['version']
+
+
+parser = argparse.ArgumentParser(description='RPN-signature: Resting-state Pain susceptibility Network signature'
+                                             'to predict individual pain sensitivity based on resting-state fMRI.',
+                                 formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('bids_dir',
+                    help='Root directory of the BIDS-compliant input dataset.')
+parser.add_argument('output_dir',
+                    help='Directory where the results will be stored.')
+parser.add_argument('analysis_level',
+                    help='Level of the analysis that will be performed.',
+                    choices=['participant'])
+parser.add_argument('--participant_label',
+                    help='Space delimited list of participant-label(s) (e.g. "001 002 003"). '
+                         'Perform the tool on the given participants or if this parameter is not '
+                         'provided then perform the procedure on all subjects.',
+                    default=None,
+                    nargs="+")
+parser.add_argument('-v', '--version', action='version', version='Version {}'.format(__version__),
+                    help='Print version of the application.')
+parser.add_argument('--working_dir', type=str, default='.',
+                    help='Directory where temporary data will be stored.')
+
+"""
+Additionally some more pipeline-specific arguments
+"""
+parser.add_argument('--frac',
+                    default=cfg_parser.getfloat('FSL', 'bet_frac_anat', fallback=0.3),
+                    type=float,
+                    help='Fractional intensity threshold parameter for FSL BET.')
+parser.add_argument('--gradient',
+                    default=cfg_parser.getfloat('FSL', 'bet_vertical_gradient', fallback=-0.3),
+                    type=float,
+                    help='Vertical gradient in fractional intensity threshold for FSL BET.')
+
+
+args = parser.parse_args()
+
+
+"""
+
+Here starts the work....
+
+
+"""
 
 
 @FuncPipeline(inputspec_fields=['ts_files', 'fd_files', 'scrub_threshold'],
@@ -202,11 +252,18 @@ def rpn(wf, **kwargs):
 
     wf.write_graph('rpn-signature.png')
 
+"""
 run_args = {
     'plugin':'MultiProc',
     'plugin_args':{'n_procs':4,'memory_gb':5}
 }
-
+"""
 
 print("Starting RPN-signature...")
-rpn_wf = rpn('rpn', bids_dir=input_dir, subjects=['001'], run_args=run_args)
+rpn_wf = rpn(
+    'rpn',
+    bids_dir=args.bids_dir,
+    output_dir=args.output_dir,
+    working_dir=args.working_dir,
+    subjects=args.participant_label
+)
