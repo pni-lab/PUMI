@@ -49,5 +49,6 @@ def func_to_anat_wf(wf, **kwargs):
     wf.connect(anat_proc, 'probmap_ventricle', bbr, 'anat_ventricle_segmentation')
 
 
-func_to_anat_wf = func_to_anat_wf('func_to_anat_wf', bids_dir=input_dir, base_dir=working_dir,
-                                  output_dir=output_dir, subjects=['002'])
+if __name__ == '__main__':
+    func_to_anat_wf = func_to_anat_wf('func_to_anat_wf', bids_dir=input_dir, base_dir=working_dir,
+                                      output_dir=output_dir, subjects=['002'])

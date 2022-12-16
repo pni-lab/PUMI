@@ -26,5 +26,6 @@ def load_bids(wf, **kwargs):
     wf.connect('inputspec', "bold", analyzeBOLD, "paths")
 
 
-wf = load_bids('load_bids', base_dir='data_out', bids_dir=input_dir)
+if __name__ == '__main__':
+    wf = load_bids('load_bids', base_dir='data_out', bids_dir=input_dir)
 

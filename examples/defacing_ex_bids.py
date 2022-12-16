@@ -41,4 +41,5 @@ def defacing_wf(wf, **kwargs):
     wf.write_graph('deface_graph.png')
 
 
-deface_ex_wf = defacing_wf('deface_ex_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])
+if __name__ == '__main__':
+    deface_ex_wf = defacing_wf('deface_ex_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])

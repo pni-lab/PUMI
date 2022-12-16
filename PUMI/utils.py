@@ -578,7 +578,7 @@ def scrub_image(scrub_input):
     Method to run 3dcalc in order to scrub the image. This is used instead of
     the Nipype interface for 3dcalc because functionality is needed for
     specifying an input file with specifically-selected volumes. For example:
-        input.nii.gz[2,3,4,..98], etc.
+    input.nii.gz[2,3,4,..98], etc.
 
     Parameters:
         scrub_input (str): path to 4D file to be scrubbed, plus with selected volumes to be included
