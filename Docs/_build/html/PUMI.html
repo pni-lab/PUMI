@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI package &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PUMI.interfaces package" href="PUMI.interfaces.html" />
+    <link rel="prev" title="PUMI" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">PUMI</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PUMI package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.interfaces.html">PUMI.interfaces package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.html">PUMI.pipelines package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.plot.html">PUMI.plot package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-PUMI.engine">PUMI.engine module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-PUMI.utils">PUMI.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pipelines.html">pipelines package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html">examples package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">PUMI</a> &raquo;</li>
+      <li>PUMI package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/PUMI.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pumi-package">
+<h1>PUMI package<a class="headerlink" href="#pumi-package" title="Permalink to this headline"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="PUMI.interfaces.html">PUMI.interfaces package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="PUMI.interfaces.html#module-PUMI.interfaces.HDBet">PUMI.interfaces.HDBet module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="PUMI.pipelines.html">PUMI.pipelines package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="PUMI.pipelines.anat.html">PUMI.pipelines.anat package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.anat.html#module-PUMI.pipelines.anat.anat2mni">PUMI.pipelines.anat.anat2mni module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.anat.html#module-PUMI.pipelines.anat.anat_proc">PUMI.pipelines.anat.anat_proc module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.anat.html#module-PUMI.pipelines.anat.func_to_anat">PUMI.pipelines.anat.func_to_anat module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.anat.html#module-PUMI.pipelines.anat.segmentation">PUMI.pipelines.anat.segmentation module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PUMI.pipelines.dwi.html">PUMI.pipelines.dwi package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PUMI.pipelines.func.html">PUMI.pipelines.func package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.func.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="PUMI.pipelines.func.info.html">PUMI.pipelines.func.info package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.func.html#module-PUMI.pipelines.func.compcor">PUMI.pipelines.func.compcor module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.func.html#module-PUMI.pipelines.func.concat">PUMI.pipelines.func.concat module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.func.html#module-PUMI.pipelines.func.data_censorer">PUMI.pipelines.func.data_censorer module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.func.html#module-PUMI.pipelines.func.deconfound">PUMI.pipelines.func.deconfound module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.func.html#module-PUMI.pipelines.func.func_proc">PUMI.pipelines.func.func_proc module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.func.html#module-PUMI.pipelines.func.temporal_filtering">PUMI.pipelines.func.temporal_filtering module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PUMI.pipelines.multimodal.html">PUMI.pipelines.multimodal package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.pipelines.multimodal.html#module-PUMI.pipelines.multimodal.image_manipulation">PUMI.pipelines.multimodal.image_manipulation module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="PUMI.plot.html">PUMI.plot package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="PUMI.plot.html#module-PUMI.plot.carpet_plot">PUMI.plot.carpet_plot module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="module-PUMI.engine">
+<span id="pumi-engine-module"></span><h2>PUMI.engine module<a class="headerlink" href="#module-PUMI.engine" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.AnatPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">AnatPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputspec_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputspec_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#AnatPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.AnatPipeline" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#PUMI.engine.PumiPipeline" title="PUMI.engine.PumiPipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">PUMI.engine.PumiPipeline</span></code></a></p>
+<p># Todo docs</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.BidsPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">BidsPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#BidsPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.BidsPipeline" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#PUMI.engine.PumiPipeline" title="PUMI.engine.PumiPipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">PUMI.engine.PumiPipeline</span></code></a></p>
+<p>decorator for top-level pipelines, with BIDS input</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.FuncPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">FuncPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputspec_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputspec_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#FuncPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.FuncPipeline" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#PUMI.engine.PumiPipeline" title="PUMI.engine.PumiPipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">PUMI.engine.PumiPipeline</span></code></a></p>
+<p># Todo docs</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.GroupPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">GroupPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputspec_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputspec_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#GroupPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.GroupPipeline" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#PUMI.engine.PumiPipeline" title="PUMI.engine.PumiPipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">PUMI.engine.PumiPipeline</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.NestedMapNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">NestedMapNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterfield</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serial</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nested</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#NestedMapNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.NestedMapNode" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.pipeline.engine.nodes.MapNode</span></code>, <a class="reference internal" href="#PUMI.engine.NestedNode" title="PUMI.engine.NestedNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">PUMI.engine.NestedNode</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="PUMI.engine.NestedMapNode.output_dir">
+<span class="sig-name descname"><span class="pre">output_dir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#NestedMapNode.output_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.NestedMapNode.output_dir" title="Permalink to this definition"></a></dt>
+<dd><p>Return the location of the output directory for the node</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.NestedNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">NestedNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itersource</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">synchronize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">needed_outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_without_submitting</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_procs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mem_gb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#NestedNode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.NestedNode" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.pipeline.engine.nodes.Node</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="PUMI.engine.NestedNode.output_dir">
+<span class="sig-name descname"><span class="pre">output_dir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#NestedNode.output_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.NestedNode.output_dir" title="Permalink to this definition"></a></dt>
+<dd><p>Return the location of the output directory for the node</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.NestedWorkflow">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">NestedWorkflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#NestedWorkflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.NestedWorkflow" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">nipype.pipeline.engine.workflows.Workflow</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="PUMI.engine.NestedWorkflow.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#NestedWorkflow.connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.NestedWorkflow.connect" title="Permalink to this definition"></a></dt>
+<dd><p>Todo docs</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.PumiPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">PumiPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputspec_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputspec_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#PumiPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.PumiPipeline" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p># Todo docs</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="PUMI.engine.QcPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PUMI.engine.</span></span><span class="sig-name descname"><span class="pre">QcPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputspec_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputspec_fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_regexp_sub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/engine.html#QcPipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.engine.QcPipeline" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#PUMI.engine.PumiPipeline" title="PUMI.engine.PumiPipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">PUMI.engine.PumiPipeline</span></code></a></p>
+<p># Todo docs</p>
+</dd></dl>
+
+</section>
+<section id="module-PUMI.utils">
+<span id="pumi-utils-module"></span><h2>PUMI.utils module<a class="headerlink" href="#module-PUMI.utils" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.TsExtractor">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">TsExtractor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_signal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'reg_timeseries.tsv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlabelmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'individual_gm_labelmap.nii.gz'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#TsExtractor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.TsExtractor" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.above_threshold">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">above_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_before</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#above_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.above_threshold" title="Permalink to this definition"></a></dt>
+<dd><p>todo docs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.calc_friston_twenty_four">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">calc_friston_twenty_four</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#calc_friston_twenty_four"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.calc_friston_twenty_four" title="Permalink to this definition"></a></dt>
+<dd><p>Method to calculate friston twenty-four parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>in_file</strong> (<em>str</em>) – input movement parameters file from motion correction</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>output 1D file containing 24 parameter values</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>new_file (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.calculate_FD_Jenkinson">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">calculate_FD_Jenkinson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#calculate_FD_Jenkinson"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.calculate_FD_Jenkinson" title="Permalink to this definition"></a></dt>
+<dd><p>Method to calculate friston twenty four parameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>in_file</strong> (<em>str</em>) – input movement parameters file from motion correction</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to output file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>new_file (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.concatenate">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">concatenate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'parfiles.txt'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">pars</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#concatenate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.concatenate" title="Permalink to this definition"></a></dt>
+<dd><p>todo Docs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.create_coregistration_qc">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">create_coregistration_qc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">registered_brain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'winter'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#create_coregistration_qc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.create_coregistration_qc" title="Permalink to this definition"></a></dt>
+<dd><p>Create coregistration quality check images.</p>
+<p>Can be used in a nipype function node. In this case output_file should stay None!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>output_file</em>) – </p></li>
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong> – </p></li>
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong> – If it’s set to None (default), the path and filename is automatically generated.</p></li>
+<li><p><strong>(</strong><strong>list</strong><strong>)</strong> (<em>levels</em>) – </p></li>
+<li><p><strong>colormap</strong><strong>)</strong> (<em>cmap</em><em> (</em><em>matplotlib</em>) – </p></li>
+<li><p><strong>**kwargs</strong> (<em>These parameters are passed to plot_roi method.</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>output_file (str)</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Path to the saved plot.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.create_segmentation_qc">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">create_segmentation_qc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overlay</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg_img</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'winter'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#create_segmentation_qc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.create_segmentation_qc" title="Permalink to this definition"></a></dt>
+<dd><p>Create segmentation (e.g. brain extraction, tissue segmentation) quality check images.</p>
+<p>Can be used in a nipype function node. In this case output_file should stay None!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overlay</strong> (<em>str</em>) – Path to the overlay (e.g. in brain extraction workflows the extracted brain).</p></li>
+<li><p><strong>bg_img</strong> (<em>str</em>) – Path to the background (e.g. in brain extraction workflows the head).</p></li>
+<li><p><strong>output_file</strong> (<em>str</em>) – Filename of quality check image. Can be be an absolute path or a relative path.
+If it’s set to None (default), the filename is automatically generated.</p></li>
+<li><p><strong>cmap</strong> (<em>matplotlib colormap</em>) – Colormap.</p></li>
+<li><p><strong>**kwargs</strong> – These parameters are passed to the plot_roi method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Path to the saved plot.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>output_file (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.drop_first_line">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">drop_first_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#drop_first_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.drop_first_line" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.get_config">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">section</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#get_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.get_config" title="Permalink to this definition"></a></dt>
+<dd><p>Return the absolute path to the desired config file.</p>
+<p>The method is going to search for a specified path in the settings.ini.
+If no path was specified, a fallback value is used if possible.</p>
+<p>Note:
+Unlike some other methods, in the case of a relative path the path is NOT considered relative to the FSL-Dir,
+but relative to the current working directory!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wf</strong> (<em>Workflow</em>) – the workflow</p></li>
+<li><p><strong>section</strong> (<em>str</em>) – the section where the path should be found in settings.ini (e.g. ‘FSL’)</p></li>
+<li><p><strong>config</strong> (<em>str</em>) – name (key) of the config (e.g. ‘fnirt_config’)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.get_indx">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">get_indx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scrub_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frames_in_1D_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#get_indx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.get_indx" title="Permalink to this definition"></a></dt>
+<dd><p>Method to get the list of time
+frames that are to be included</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>in_file</strong> (<em>str</em>) – path to file containing the valid time frames</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>input string for 3dCalc in scrubbing workflow,</dt><dd><p>looks something like ” 4dfile.nii.gz[0,1,2,..100] “</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>scrub_input_string (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.get_ref_from_templateflow">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">get_ref_from_templateflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#get_ref_from_templateflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.get_ref_from_templateflow" title="Permalink to this definition"></a></dt>
+<dd><p>Try to get the specified reference from templateflow and return the absolute path to the file.
+The schema for the query is ‘template/file’.
+Note: ‘tpl-’ in the template specification (NOT the file specification!) can be omitted.
+Look at the available references at ‘<a class="reference external" href="https://www.templateflow.org/browse/">https://www.templateflow.org/browse/</a>’</p>
+<p>A possible query would be: ‘tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz’
+Also okay: ‘MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz’</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.get_ref_locally">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">get_ref_locally</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#get_ref_locally"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.get_ref_locally" title="Permalink to this definition"></a></dt>
+<dd><p>Try to get the reference locally and return the absolute path to the file
+Possible values for the ref parameter are ‘head’, ‘brain’, ‘brain_mask’ or ‘ventricle_mask’.</p>
+<p>The method looks in the settings.ini for specified paths for the desired reference in the TEMPLATES section.</p>
+<p>If no path was specified, the respective 2mm reference from FSL’s standard repertoire is returned.
+If a path was specified, it is checked if the path starts with a ‘/’. If so, this path is considered as
+an absolute path, otherwise the path is considered relative to the FSL-Dir (NOT the current working directory)!</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.get_reference">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">get_reference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#get_reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.get_reference" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the absolute path to the desired reference.
+Possible values for the type parameter are ‘head’, ‘brain’, ‘brain_mask’ or ‘ventricle_mask’.</p>
+<p>If ref = None, the method looks in the settings.ini for specified paths (and source specifications) for the desired reference in
+the TEMPLATES section.</p>
+<p>If no path was specified, the respective 2mm reference from FSL’s standard repertoire is returned.
+If a path was specified, it looks if also a source was specified.
+If no source was specified (or the source is ‘local’), then it’s going to search local.
+If a local search is performed, it is checked if the path starts with a ‘/’. If so, this path is considered as
+an absolute path, otherwise the path is considered relative to the FSL-Dir (NOT the current working directory)!
+If the source is ‘templateflow’ or also ‘tf’, it is tried to get the reference from templateflow.</p>
+<p>Some possible path specification without use of templateflow:
+‘head = data/standard/MNI152_T1_2mm.nii.gz’ or
+‘head = data/standard/MNI152_T1_2mm.nii.gz; source=local’ or
+‘head = /usr/local/fsl/data/standard/MNI152_T1_2mm_brain.nii.gz’</p>
+<p>Possible path specification with use of templateflow:
+‘head = tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz; source=templateflow’</p>
+<p>The ‘tpl-’ in the folder/template specification (NOT the file specification!) can also be omitted.
+Also ‘tf’ can be used as abbreviation for templateflow.</p>
+<p>So this is also okay:
+‘head = MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz; source=tf’</p>
+<p>Be aware that ‘head’, ‘brain’ and ‘brain_mask’ must also be lowercased in the settings.ini!</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.max_from_txt">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">max_from_txt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'max.txt'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#max_from_txt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.max_from_txt" title="Permalink to this definition"></a></dt>
+<dd><p>Saves the maximum along a given axis into another text-file.</p>
+<p>Caution: Name in the old PUMI was txt2MaxTxt</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_file</strong> (<em>str</em>) – input file</p></li>
+<li><p><strong>axis</strong> (<em>None/int/</em><em>(</em><em>int</em><em>,</em><em>int</em><em>)</em>) – axis or axes along the maximum values are computed.
+Default: Use flattened array.</p></li>
+<li><p><strong>header</strong> (<em>bool</em>) – Drop line if True</p></li>
+<li><p><strong>out_file</strong> (<em>str</em>) – Name of the resulting text-file. If only the filename is given, it will be saved into the
+current working directory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to new file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>new_file (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.mean_from_txt">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">mean_from_txt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean.txt'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#mean_from_txt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.mean_from_txt" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate column-means, row-means or the global mean depending on the ‘axis’ parameter and save it to
+another text-file.</p>
+<p>Caution: Name in the old PUMI was txt2MeanTxt</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_file</strong> (<em>str</em>) – input file</p></li>
+<li><p><strong>axis</strong> (<em>None/int/</em><em>(</em><em>int</em><em>,</em><em>int</em><em>)</em>) – axis or axes along which the means are computed.
+Default: Compute mean of the flattened array.</p></li>
+<li><p><strong>header</strong> (<em>bool</em>) – Drop line if True</p></li>
+<li><p><strong>out_file</strong> (<em>str</em>) – Name of the resulting text-file. If only the filename is given, it will be saved into the
+current working directory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to new file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>new_file (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.mist_labels">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">mist_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mist_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'122'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#mist_labels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.mist_labels" title="Permalink to this definition"></a></dt>
+<dd><p>Return a list of the labels contained in the MIST atlas
+:param mist_directory: Path to the MIST directory
+:type mist_directory: str
+:param resolution: Resolution (you have to check which resolutions are valid)
+:type resolution: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list containing the labels in the MIST atlas</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>result ([str])</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.mist_modules">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">mist_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mist_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'122'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#mist_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.mist_modules" title="Permalink to this definition"></a></dt>
+<dd><p>Return a list of the modules contained in the MIST atlas
+:param mist_directory: Path to the MIST directory
+:type mist_directory: str
+:param resolution: Resolution (you have to check which resolutions are valid)
+:type resolution: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list containing the modules in the MIST atlas</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>result ([str])</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.plot_carpet_ts">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">plot_carpet_ts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeseries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atlas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subplot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'regts.png'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#plot_carpet_ts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.plot_carpet_ts" title="Permalink to this definition"></a></dt>
+<dd><p>Adapted from: <a class="reference external" href="https://github.com/poldracklab/niworkflows">https://github.com/poldracklab/niworkflows</a></p>
+<p>Plot an image representation of voxel intensities across time also know
+as the “carpet plot” or “Power plot”. See Jonathan Power Neuroimage
+2017 Jul 1; 154:150-158.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>timeseries</strong> (<em>numpy.ndarray</em>) – 4D input image. See <a class="reference external" href="http://nilearn.github.io/manipulating_images/input_output.html">http://nilearn.github.io/manipulating_images/input_output.html</a>.</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em>, </em><em>None</em>) – Optional! The name of the output image. Valid extensions are .png, .pdf, .svg.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.plot_roi">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">plot_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">roi_img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg_img</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mosaic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_cross</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">black_bg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tab10'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_interpolation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nearest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'continuous'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colorbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_img</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#plot_roi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.plot_roi" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper for nilearn’s plot_roi method (with small modifications).</p>
+<p>Can be used in a nipype function node. In this case output_file should stay None and save_img should stay True!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>save_img.</strong> (<em>Only parameter that does not occur in nilearn's plot_roi method is</em>) – </p></li>
+<li><p><strong>object.</strong> (<em>Set to False if you don't want to save the result and just need the plot</em>) – </p></li>
+<li><p><strong>suitable</strong> (<em>This parameter is necessary because we substitute output_file by the current working directory and a</em>) – </p></li>
+<li><p><strong>None</strong> (<em>filename if output_file is set to</em>) – </p></li>
+<li><p><strong>node</strong> (<em>In case the function is executed within a nipype function</em>) – </p></li>
+<li><p><strong>working</strong> (<em>the current working directory is the</em>) – </p></li>
+<li><p><strong>node.</strong> (<em>directory of the respective</em>) – </p></li>
+<li><p><strong>nodes.</strong> (<em>We introduced this modifications in order to be able to use this method easily in nipype function</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<p>For more information about the other parameters, see the documentation of nilearn.
+<a class="reference external" href="https://nilearn.github.io/modules/generated/nilearn.plotting.plot_roi.html">https://nilearn.github.io/modules/generated/nilearn.plotting.plot_roi.html</a></p>
+<p>Only a few changes have been made to the default parameters.
+Here a mosaic plot with 5 columns is generated by default, the background of every plot is black and the default
+cmap has been changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Plot object.
+output_file (str): Path to the saved plot (if save_img is False, None is returned).</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>plot (nilearn.plotting.displays.OrthoSlicer)</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Acknowledgements:</dt><dd><dl class="simple">
+<dt>Further informations:</dt><dd><ul class="simple">
+<li><p><a class="reference external" href="https://nilearn.github.io/index.html">https://nilearn.github.io/index.html</a></p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.registration_ants_hardcoded">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">registration_ants_hardcoded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">brain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_brain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_head</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#registration_ants_hardcoded"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.registration_ants_hardcoded" title="Permalink to this definition"></a></dt>
+<dd><p>Todo Docs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.relabel_atlas">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">relabel_atlas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atlas_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#relabel_atlas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.relabel_atlas" title="Permalink to this definition"></a></dt>
+<dd><p>Relabel atlas
+* Beware : currently works only with labelmap!!
+:param atlas_file: Path to the atlas file
+:type atlas_file: str
+:param modules: List containing the modules in MIST
+:type modules: [str]
+:param labels: List containing the labels in MIST
+:type labels: [str]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Path to relabeld atlas file
+reordered_modules ([str]): list containing reordered module names
+reordered_labels ([str]): list containing reordered label names
+new_labels (str): Path to .tsv-file with the new labels</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>relabel_file (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.rpn_model">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">rpn_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#rpn_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.rpn_model" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.scale_vol">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">scale_vol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#scale_vol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.scale_vol" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.utils.scrub_image">
+<span class="sig-prename descclassname"><span class="pre">PUMI.utils.</span></span><span class="sig-name descname"><span class="pre">scrub_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scrub_input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/utils.html#scrub_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.utils.scrub_image" title="Permalink to this definition"></a></dt>
+<dd><p>Method to run 3dcalc in order to scrub the image. This is used instead of
+the Nipype interface for 3dcalc because functionality is needed for
+specifying an input file with specifically-selected volumes. For example:
+input.nii.gz[2,3,4,..98], etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>scrub_input</strong> (<em>str</em>) – path to 4D file to be scrubbed, plus with selected volumes to be included</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>path to the scrubbed 4D file</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>scrubbed_image (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="PUMI" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="PUMI.interfaces.html" class="btn btn-neutral float-right" title="PUMI.interfaces package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
