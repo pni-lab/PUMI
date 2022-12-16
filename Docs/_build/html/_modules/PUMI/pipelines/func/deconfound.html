@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.pipelines.func.deconfound &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.pipelines.func.deconfound</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.pipelines.func.deconfound</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">nipype</span> <span class="kn">import</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">nipype.algorithms</span> <span class="kn">import</span> <span class="n">confounds</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">afni</span><span class="p">,</span> <span class="n">fsl</span><span class="p">,</span> <span class="n">utility</span>
+<span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">NestedNode</span> <span class="k">as</span> <span class="n">Node</span><span class="p">,</span> <span class="n">QcPipeline</span>
+<span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">FuncPipeline</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.multimodal.image_manipulation</span> <span class="kn">import</span> <span class="n">pick_volume</span><span class="p">,</span> <span class="n">timecourse2png</span>
+<span class="kn">from</span> <span class="nn">PUMI.utils</span> <span class="kn">import</span> <span class="n">calc_friston_twenty_four</span><span class="p">,</span> <span class="n">calculate_FD_Jenkinson</span><span class="p">,</span> <span class="n">mean_from_txt</span><span class="p">,</span> <span class="n">max_from_txt</span>
+<span class="kn">from</span> <span class="nn">PUMI.plot.carpet_plot</span> <span class="kn">import</span> <span class="n">plot_carpet</span>
+
+
+<div class="viewcode-block" id="despiking_afni"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.deconfound.despiking_afni">[docs]</a><span class="nd">@FuncPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">despiking_afni</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Removes &#39;spikes&#39; from functional 3d+time images.</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        in_file (str): Path to the 4d image.</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        out_file (str): 4d Image with spikes removed.</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">        - The output image</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">despike</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">afni</span><span class="o">.</span><span class="n">Despike</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;despike&#39;</span><span class="p">)</span>
+    <span class="n">despike</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">outputtype</span> <span class="o">=</span> <span class="s1">&#39;NIFTI_GZ&#39;</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">despike</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">despike</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span>
+
+    <span class="n">qc_wf</span> <span class="o">=</span> <span class="n">qc</span><span class="p">(</span><span class="s1">&#39;qc_wf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">despike</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc_wf</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="qc"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.deconfound.qc">[docs]</a><span class="nd">@QcPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+            <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">qc</span><span class="p">(</span><span class="n">wf</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Creates carpet plot after dispiking.</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        in_file (str): Path to dispiked 4d image.</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        out_file (Axes): Matplotlib Axes to be used in composite figures.</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">        Carpet plot as png image.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">plot_interface</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span>
+        <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;save_carpet&#39;</span><span class="p">],</span>
+        <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ax1&#39;</span><span class="p">],</span>
+        <span class="n">function</span><span class="o">=</span><span class="n">plot_carpet</span><span class="p">)</span>
+
+
+    <span class="c1"># Important because the default of save_carpet is False</span>
+    <span class="n">plot_interface</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">save_carpet</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">carpet_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;carpet_node&#39;</span><span class="p">,</span>
+                       <span class="n">interface</span><span class="o">=</span><span class="n">plot_interface</span><span class="p">)</span>
+
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">carpet_node</span><span class="p">,</span> <span class="s1">&#39;img&#39;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">carpet_node</span><span class="p">,</span> <span class="s1">&#39;ax1&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="qc_motion_correction_mcflirt"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.deconfound.qc_motion_correction_mcflirt">[docs]</a><span class="nd">@QcPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="s1">&#39;motion_correction&#39;</span><span class="p">,</span> <span class="s1">&#39;plot_motion_trans&#39;</span><span class="p">,</span> <span class="s1">&#39;FD_figure&#39;</span><span class="p">],</span>
+            <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">default_regexp_sub</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">regexp_sub</span><span class="o">=</span><span class="p">[(</span><span class="sa">r</span><span class="s1">&#39;(.*\/)([^\/]+)\/([^\/]+)\/([^\/]+)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\g&lt;1&gt;qc_motion_correction/\g&lt;3&gt;-\g&lt;2&gt;.png&#39;</span><span class="p">),</span>
+                        <span class="p">(</span><span class="s1">&#39;_subject_&#39;</span><span class="p">,</span> <span class="s1">&#39;sub-&#39;</span><span class="p">)])</span>
+<span class="k">def</span> <span class="nf">qc_motion_correction_mcflirt</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Save quality check images for mcflirt motion-correction</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        func (str):</span>
+<span class="sd">        motion_correction (str):</span>
+<span class="sd">        plot_motion_trans (str):</span>
+<span class="sd">        FD_figure (str):</span>
+
+
+
+<span class="sd">    Sinking:</span>
+<span class="sd">        - rotations plot</span>
+<span class="sd">        - translations plot</span>
+<span class="sd">        - FD plot</span>
+<span class="sd">        - timeseries</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mc_timecourse</span> <span class="o">=</span> <span class="n">timecourse2png</span><span class="p">(</span><span class="s1">&#39;mc_timeseries&#39;</span><span class="p">,</span> <span class="n">sink</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># sink=False important for qc-folder-struktur</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="n">mc_timecourse</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mc_timecourse</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_timeseries&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;motion_correction&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_rotations&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;plot_motion_trans&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_translations&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;FD_figure&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;FD&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="motion_correction_mcflirt"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.deconfound.motion_correction_mcflirt">[docs]</a><span class="nd">@FuncPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;func_out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;mat_file&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_par_file&#39;</span><span class="p">,</span> <span class="s1">&#39;friston24_file&#39;</span><span class="p">,</span> <span class="s1">&#39;FD_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">motion_correction_mcflirt</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">reference_vol</span><span class="o">=</span><span class="s1">&#39;middle&#39;</span><span class="p">,</span> <span class="n">FD_mode</span><span class="o">=</span><span class="s1">&#39;Power&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Use FSL MCFLIRT to do the motion correction of the 4D functional data and use the 6df rigid body motion parameters</span>
+<span class="sd">    to calculate friston24 parameters for later nuissance regression step.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        reference_vol (str): Either &quot;first&quot;, &quot;middle&quot;, &quot;last&quot;, &quot;mean&quot;, or the index of the volume which the rigid body</span>
+<span class="sd">         registration (motion correction) will use as reference.</span>
+<span class="sd">         Default is &#39;middle&#39;.</span>
+<span class="sd">        FD_mode: Either &quot;Power&quot; or &quot;Jenkinson&quot;</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        in_file (str): Reoriented functional file</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        func_out_file (str): Path to motion-corrected timeseries</span>
+<span class="sd">        mat_file (str): Path to motion-correction transformation matrices</span>
+<span class="sd">        mc_par_file (str): Path to file with motion parameters</span>
+<span class="sd">        friston24_file (str): Path to file with friston24 parameters</span>
+<span class="sd">        FD_file (str): Path to file with FD</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">        - motion-corrected timeseries</span>
+<span class="sd">        - motion-correction transformation matrices</span>
+<span class="sd">        - absolute and relative displacement parameters</span>
+<span class="sd">        - friston24 parameters</span>
+<span class="sd">        - FD</span>
+<span class="sd">        - FDmax</span>
+<span class="sd">        - quality check images (FD/rotations/translations and timeseries plot)</span>
+
+<span class="sd">    Acknowledgements:</span>
+<span class="sd">        Adapted from Balint Kincses (2018)</span>
+
+<span class="sd">        Modified version of PAC.func_preproc.func_preproc</span>
+<span class="sd">        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py)</span>
+<span class="sd">        and CPAC.generate_motion_statistics.generate_motion_statistics</span>
+<span class="sd">        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">FD_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Power&#39;</span><span class="p">,</span> <span class="s1">&#39;Jenkinson&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;FD_mode has to be &quot;Power&quot; or &quot;Jenkinson&quot;! %s is not a valid option!&#39;</span> <span class="o">%</span> <span class="n">FD_mode</span><span class="p">)</span>
+
+    <span class="n">refvol</span> <span class="o">=</span> <span class="n">pick_volume</span><span class="p">(</span><span class="n">volume</span><span class="o">=</span><span class="n">reference_vol</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;refvol&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">refvol</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">mcflirt</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">MCFLIRT</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="s2">&quot;spline&quot;</span><span class="p">,</span> <span class="n">stats_imgs</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mcflirt&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">reference_vol</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+        <span class="n">mcflirt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">mean_vol</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">mcflirt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">dof</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">mcflirt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">save_mats</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">mcflirt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">save_plots</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">mcflirt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">save_rms</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">mcflirt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">stats_imgs</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">reference_vol</span> <span class="o">!=</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">refvol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;ref_file&#39;</span><span class="p">)</span>
+
+    <span class="n">calc_friston</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">],</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">calc_friston_twenty_four</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;calc_friston&#39;</span>
+    <span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;par_file&#39;</span><span class="p">,</span> <span class="n">calc_friston</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">FD_mode</span> <span class="o">==</span> <span class="s2">&quot;Power&quot;</span><span class="p">:</span>
+        <span class="n">calculate_FD</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+            <span class="n">confounds</span><span class="o">.</span><span class="n">FramewiseDisplacement</span><span class="p">(</span>
+                <span class="n">parameter_source</span><span class="o">=</span><span class="s1">&#39;FSL&#39;</span><span class="p">,</span>
+                <span class="n">save_plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">out_figure</span><span class="o">=</span><span class="s1">&#39;fd_power_2012.png&#39;</span>
+            <span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;calculate_FD_Power&#39;</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">FD_mode</span> <span class="o">==</span> <span class="s2">&quot;Jenkinson&quot;</span><span class="p">:</span>
+        <span class="n">calculate_FD</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+            <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+                <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+                <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">],</span>
+                <span class="n">function</span><span class="o">=</span><span class="n">calculate_FD_Jenkinson</span>
+            <span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;calculate_FD_Jenkinson&#39;</span>
+        <span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;par_file&#39;</span><span class="p">,</span> <span class="n">calculate_FD</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">mean_FD</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="s1">&#39;axis&#39;</span><span class="p">,</span> <span class="s1">&#39;header&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mean_file&#39;</span><span class="p">],</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">mean_from_txt</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;meanFD&#39;</span>
+    <span class="p">)</span>
+    <span class="n">mean_FD</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># global mean</span>
+    <span class="n">mean_FD</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">header</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># global mean</span>
+    <span class="n">mean_FD</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">out_file</span> <span class="o">=</span> <span class="s1">&#39;FD.txt&#39;</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">calculate_FD</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">mean_FD</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">max_FD</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="s1">&#39;axis&#39;</span><span class="p">,</span> <span class="s1">&#39;header&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;max_file&#39;</span><span class="p">],</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">max_from_txt</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;maxFD&#39;</span>
+    <span class="p">)</span>
+    <span class="n">max_FD</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># global mean</span>
+    <span class="n">max_FD</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">header</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">max_FD</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">out_file</span> <span class="o">=</span> <span class="s1">&#39;FDmax.txt&#39;</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">calculate_FD</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">max_FD</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">plot_motion_rot</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">PlotMotionParams</span><span class="p">(</span><span class="n">in_source</span><span class="o">=</span><span class="s1">&#39;fsl&#39;</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;plot_motion_rot&#39;</span><span class="p">)</span>
+    <span class="n">plot_motion_rot</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;rotations&#39;</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;par_file&#39;</span><span class="p">,</span> <span class="n">plot_motion_rot</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">plot_motion_trans</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">PlotMotionParams</span><span class="p">(</span><span class="n">in_source</span><span class="o">=</span><span class="s1">&#39;fsl&#39;</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;plot_motion_trans&#39;</span><span class="p">)</span>
+    <span class="n">plot_motion_trans</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">=</span> <span class="s1">&#39;translations&#39;</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;par_file&#39;</span><span class="p">,</span> <span class="n">plot_motion_trans</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">qc_mc</span> <span class="o">=</span> <span class="n">qc_motion_correction_mcflirt</span><span class="p">(</span><span class="s1">&#39;qc_mc&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">plot_motion_rot</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc_mc</span><span class="p">,</span> <span class="s1">&#39;motion_correction&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">plot_motion_trans</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc_mc</span><span class="p">,</span> <span class="s1">&#39;plot_motion_trans&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">calculate_FD</span><span class="p">,</span> <span class="s1">&#39;out_figure&#39;</span><span class="p">,</span> <span class="n">qc_mc</span><span class="p">,</span> <span class="s1">&#39;FD_figure&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc_mc</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_func&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;par_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_par&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;rms_files&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_rms&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">calc_friston</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_first24&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mean_FD</span><span class="p">,</span> <span class="s1">&#39;mean_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;FD&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">max_FD</span><span class="p">,</span> <span class="s1">&#39;max_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;FDmax&#39;</span><span class="p">)</span>
+
+    <span class="c1"># output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;func_out_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;mat_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;mat_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">mcflirt</span><span class="p">,</span> <span class="s1">&#39;par_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;mc_par_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">calculate_FD</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;FD_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">calc_friston</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;friston24_file&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="qc_nuisance_removal"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.deconfound.qc_nuisance_removal">[docs]</a><span class="nd">@QcPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+            <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">qc_nuisance_removal</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Create quality check images for nuisance removal.</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        in_file (str): Filtered data</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        out_file (str): Path to quality check image</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">        - The quality check image</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nuisance_removal_qc</span> <span class="o">=</span> <span class="n">timecourse2png</span><span class="p">(</span><span class="s1">&#39;nuisance_removal_qc&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">nuisance_removal_qc</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">)</span>
+
+    <span class="c1"># outputspec</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">nuisance_removal_qc</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">nuisance_removal_qc</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;qc_nuisance_removal&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="nuisance_removal"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.deconfound.nuisance_removal">[docs]</a><span class="nd">@FuncPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="s1">&#39;design_file&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">nuisance_removal</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Perform nuisance removal.</span>
+
+<span class="sd">    CAUTION: Name in the old PUMI was nuissremov_workflow</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        in_file (str): Path to reoriented motion corrected functional data.</span>
+<span class="sd">        design_file (str): Path to matrix which contains all the nuissance regressors (motion + compcor noise + ...).</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        - Path to the filtered data</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">        - Filtered data</span>
+
+<span class="sd">    Acknowledgements:</span>
+<span class="sd">        Adapted from Balint Kincses (2018)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">nipype.interfaces.fsl</span> <span class="k">as</span> <span class="nn">fsl</span>
+
+    <span class="n">nuisance_regression</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">FilterRegressor</span><span class="p">(</span><span class="n">filter_all</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;nuisance_regression&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">nuisance_regression</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;design_file&#39;</span><span class="p">,</span> <span class="n">nuisance_regression</span><span class="p">,</span> <span class="s1">&#39;design_file&#39;</span><span class="p">)</span>
+
+    <span class="c1"># qc</span>
+    <span class="n">qc</span> <span class="o">=</span> <span class="n">qc_nuisance_removal</span><span class="p">(</span><span class="s1">&#39;qc&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">nuisance_regression</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">nuisance_regression</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;func_nuis_corrected&#39;</span><span class="p">)</span>
+
+    <span class="c1"># output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">nuisance_regression</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO: test nuisance removal wf</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

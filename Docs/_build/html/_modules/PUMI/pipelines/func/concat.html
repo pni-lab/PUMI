@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.pipelines.func.concat &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.pipelines.func.concat</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.pipelines.func.concat</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">FuncPipeline</span><span class="p">,</span> <span class="n">NestedNode</span> <span class="k">as</span> <span class="n">Node</span>
+<span class="kn">from</span> <span class="nn">PUMI.utils</span> <span class="kn">import</span> <span class="n">concatenate</span>
+
+
+<div class="viewcode-block" id="concat"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.concat.concat">[docs]</a><span class="nd">@FuncPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;par1&#39;</span><span class="p">,</span> <span class="s1">&#39;par2&#39;</span><span class="p">,</span> <span class="s1">&#39;par3&#39;</span><span class="p">,</span> <span class="s1">&#39;par4&#39;</span><span class="p">,</span> <span class="s1">&#39;par5&#39;</span><span class="p">,</span> <span class="s1">&#39;par6&#39;</span><span class="p">,</span> <span class="s1">&#39;par7&#39;</span><span class="p">,</span> <span class="s1">&#39;par8&#39;</span><span class="p">,</span> <span class="s1">&#39;par9&#39;</span><span class="p">,</span> <span class="s1">&#39;par10&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;concat_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">concat</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;parfiles.txt&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Concatenate up to 10 nuissance regressors in one txt file. Inputs should be &#39;txt&#39; files.</span>
+
+<span class="sd">        # todo docs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">from</span> <span class="nn">nipype.interfaces.utility</span> <span class="kn">import</span> <span class="n">Function</span>
+
+    <span class="n">conc</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">interface</span><span class="o">=</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;par1&#39;</span><span class="p">,</span> <span class="s1">&#39;par2&#39;</span><span class="p">,</span> <span class="s1">&#39;par3&#39;</span><span class="p">,</span> <span class="s1">&#39;par4&#39;</span><span class="p">,</span> <span class="s1">&#39;par5&#39;</span><span class="p">,</span> <span class="s1">&#39;par6&#39;</span><span class="p">,</span> <span class="s1">&#39;par7&#39;</span><span class="p">,</span> <span class="s1">&#39;par8&#39;</span><span class="p">,</span> <span class="s1">&#39;par9&#39;</span><span class="p">,</span> <span class="s1">&#39;par10&#39;</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="s1">&#39;out_file&#39;</span><span class="p">,</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">concatenate</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;concatenate&#39;</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">actparam</span> <span class="o">=</span> <span class="s2">&quot;par&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="n">actparam</span><span class="p">,</span> <span class="n">conc</span><span class="p">,</span> <span class="n">actparam</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">conc</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;concat_file&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.pipelines.func.temporal_filtering &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.pipelines.func.temporal_filtering</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.pipelines.func.temporal_filtering</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">FuncPipeline</span><span class="p">,</span> <span class="n">QcPipeline</span><span class="p">,</span> <span class="n">NestedNode</span> <span class="k">as</span> <span class="n">Node</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.func.info.get_info</span> <span class="kn">import</span> <span class="n">get_repetition_time</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">afni</span><span class="p">,</span> <span class="n">utility</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.multimodal.image_manipulation</span> <span class="kn">import</span> <span class="n">timecourse2png</span>
+
+
+<div class="viewcode-block" id="qc_temporal_filtering"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.temporal_filtering.qc_temporal_filtering">[docs]</a><span class="nd">@QcPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+            <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">qc_temporal_filtering</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Create quality check images for temporal filtering.</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        in_file (str): Temporal filtered data (e. g. result of afni 3dBandpass)</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        out_file (str): Path to quality check image</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">    - quality check image</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tc2png_tmpfilt</span> <span class="o">=</span> <span class="n">timecourse2png</span><span class="p">(</span><span class="s2">&quot;tc2png_tmpfilt&quot;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">tc2png_tmpfilt</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">tc2png_tmpfilt</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;qc_temporal_filtering&#39;</span><span class="p">)</span>
+
+    <span class="c1"># output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">tc2png_tmpfilt</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="temporal_filtering"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.temporal_filtering.temporal_filtering">[docs]</a><span class="nd">@FuncPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="s1">&#39;highpass&#39;</span><span class="p">,</span> <span class="s1">&#39;lowpass&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">temporal_filtering</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Creates a slice time corrected functional image.</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        func (str): The reoriented functional file.</span>
+<span class="sd">        highpass (str): The highpass filter in Hz (e. g. 0.008)</span>
+<span class="sd">        lowpass (str): The lowpass filter in Hz (e. g. 0.08)</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        out_file (str): Temporal filtered data</span>
+
+<span class="sd">    Acknowledgements:</span>
+<span class="sd">        Adapted from Balint Kincses (2018)</span>
+<span class="sd">        Modified version of porcupine generated temporal filtering code.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">time_repetition</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">interface</span><span class="o">=</span><span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;tr&#39;</span><span class="p">],</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">get_repetition_time</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;time_repetition&#39;</span>
+    <span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="n">time_repetition</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">tmpfilt</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">afni</span><span class="o">.</span><span class="n">Bandpass</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;tmpfilt&#39;</span><span class="p">)</span>
+    <span class="n">tmpfilt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">despike</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">tmpfilt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">no_detrend</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">tmpfilt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">notrans</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">tmpfilt</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">outputtype</span> <span class="o">=</span> <span class="s1">&#39;NIFTI_GZ&#39;</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="n">tmpfilt</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">time_repetition</span><span class="p">,</span> <span class="s1">&#39;tr&#39;</span><span class="p">,</span> <span class="n">tmpfilt</span><span class="p">,</span> <span class="s1">&#39;tr&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;highpass&#39;</span><span class="p">,</span> <span class="n">tmpfilt</span><span class="p">,</span> <span class="s1">&#39;highpass&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;lowpass&#39;</span><span class="p">,</span> <span class="n">tmpfilt</span><span class="p">,</span> <span class="s1">&#39;lowpass&#39;</span><span class="p">)</span>
+
+    <span class="c1"># qc</span>
+    <span class="n">myqc</span> <span class="o">=</span> <span class="n">qc_temporal_filtering</span><span class="p">(</span><span class="s1">&#39;myqc&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">tmpfilt</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">myqc</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">tmpfilt</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;tmpfilt&#39;</span><span class="p">)</span>
+
+    <span class="c1"># output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">tmpfilt</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

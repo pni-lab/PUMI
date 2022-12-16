@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.pipelines.anat.func_to_anat &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.pipelines.anat.func_to_anat</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.pipelines.anat.func_to_anat</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">nipype.interfaces.utility</span> <span class="kn">import</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">NestedNode</span> <span class="k">as</span> <span class="n">Node</span><span class="p">,</span> <span class="n">AnatPipeline</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.multimodal.image_manipulation</span> <span class="kn">import</span> <span class="n">pick_volume</span><span class="p">,</span> <span class="n">vol2png</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">fsl</span>
+
+
+<div class="viewcode-block" id="bbr"><a class="viewcode-back" href="../../../../PUMI.pipelines.anat.html#PUMI.pipelines.anat.func_to_anat.bbr">[docs]</a><span class="nd">@AnatPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="s1">&#39;head&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_wm_segmentation&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_gm_segmentation&#39;</span><span class="p">,</span>
+                                <span class="s1">&#39;anat_csf_segmentation&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_ventricle_segmentation&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;func_sample2anat&#39;</span><span class="p">,</span> <span class="s1">&#39;example_func&#39;</span><span class="p">,</span> <span class="s1">&#39;func_to_anat_linear_xfm&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;anat_to_func_linear_xfm&#39;</span><span class="p">,</span> <span class="s1">&#39;csf_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="s1">&#39;csf_mask_in_funcspace&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;csf_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="s1">&#39;ventricle_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="s1">&#39;wm_mask_in_funcspace&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;gm_mask_in_funcspace&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">bbr</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    BBR registration of functional image to anat.</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        func (str): One volume of the 4D fMRI</span>
+<span class="sd">        (The one which is the closest to the fieldmap recording in time should be chosen</span>
+<span class="sd">        e.g: if fieldmap was recorded after the fMRI the last volume of it should be chosen)</span>
+<span class="sd">        head (str): The oriented T1w image.</span>
+<span class="sd">        anat_wm_segmentation (str): WM probability mask</span>
+<span class="sd">        anat_gm_segmentation (str): GM probability mask</span>
+<span class="sd">        anat_csf_segmentation (str): CSF probability mask</span>
+
+<span class="sd">    Acknowledgements:</span>
+<span class="sd">        Adapted from Balint Kincses (2018) code.</span>
+<span class="sd">        Modified version of CPAC.registration.registration</span>
+<span class="sd">        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/registration/registration.py)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">myonevol</span> <span class="o">=</span> <span class="n">pick_volume</span><span class="p">(</span><span class="s1">&#39;myonevol&#39;</span><span class="p">)</span>
+
+    <span class="c1"># trilinear interpolation is used by default in linear registration for func to anat</span>
+    <span class="n">linear_func_to_anat</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">FLIRT</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;linear_func_to_anat&#39;</span><span class="p">)</span>
+    <span class="n">linear_func_to_anat</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">cost</span> <span class="o">=</span> <span class="s1">&#39;corratio&#39;</span>
+    <span class="n">linear_func_to_anat</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">dof</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">linear_func_to_anat</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">out_matrix_file</span> <span class="o">=</span> <span class="s2">&quot;lin_mat&quot;</span>
+
+    <span class="c1"># WM probability map is thresholded and masked</span>
+    <span class="n">wm_bb_mask</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">ImageMaths</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;wm_bb_mask&#39;</span><span class="p">)</span>
+    <span class="n">wm_bb_mask</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">op_string</span> <span class="o">=</span> <span class="s1">&#39;-thr 0.5 -bin&#39;</span>
+
+    <span class="c1"># CSf probability map is thresholded and masked</span>
+    <span class="n">csf_bb_mask</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">ImageMaths</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;csf_bb_mask&#39;</span><span class="p">)</span>
+    <span class="n">csf_bb_mask</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">op_string</span> <span class="o">=</span> <span class="s1">&#39;-thr 0.5 -bin&#39;</span>
+
+    <span class="c1"># GM probability map is thresholded and masked</span>
+    <span class="n">gm_bb_mask</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">ImageMaths</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;gm_bb_mask&#39;</span><span class="p">)</span>
+    <span class="n">gm_bb_mask</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">op_string</span> <span class="o">=</span> <span class="s1">&#39;-thr 0.1 -bin&#39;</span> <span class="c1"># liberal mask to capture all gm signal</span>
+
+    <span class="c1"># ventricle probability map is thresholded and masked</span>
+    <span class="n">vent_bb_mask</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">ImageMaths</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;vent_bb_mask&#39;</span><span class="p">)</span>
+    <span class="n">vent_bb_mask</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">op_string</span> <span class="o">=</span> <span class="s1">&#39;-thr 0.8 -bin -ero -dilM&#39;</span>  <span class="c1"># stricter threshold and some morphology for compcor</span>
+
+
+    <span class="k">def</span> <span class="nf">bbreg_args</span><span class="p">(</span><span class="n">bbreg_target</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        A function is defined for define bbr argument which says flirt to perform bbr registration</span>
+<span class="sd">        for each element of the list, due to MapNode</span>
+
+<span class="sd">        Parameter:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="s1">&#39;-cost bbr -wmseg &#39;</span> <span class="o">+</span> <span class="n">bbreg_target</span>
+
+    <span class="n">bbreg_arg_convert</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">Function</span><span class="p">(</span><span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;bbreg_target&quot;</span><span class="p">],</span>
+                                                <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;arg&quot;</span><span class="p">],</span>
+                                                <span class="n">function</span><span class="o">=</span><span class="n">bbreg_args</span><span class="p">),</span>
+                             <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bbr_arg_converter&quot;</span><span class="p">)</span>
+
+    <span class="c1"># BBR registration within the FLIRT node</span>
+    <span class="n">bbreg_func_to_anat</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">FLIRT</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;bbreg_func_to_anat&#39;</span><span class="p">)</span>
+    <span class="n">bbreg_func_to_anat</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">dof</span> <span class="o">=</span> <span class="mi">6</span>
+
+    <span class="c1"># calculate the inverse of the transformation matrix (of func to anat)</span>
+    <span class="n">convertmatrix</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">ConvertXFM</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;convertmatrix&quot;</span><span class="p">)</span>
+    <span class="n">convertmatrix</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">invert_xfm</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># use the invers registration (anat to func) to transform anatomical csf mask</span>
+    <span class="n">reg_anatmask_to_func1</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">FLIRT</span><span class="p">(</span><span class="n">apply_xfm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interp</span><span class="o">=</span><span class="s1">&#39;nearestneighbour&#39;</span><span class="p">),</span>
+                                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;anatmasks_to_func1&#39;</span><span class="p">)</span>
+
+    <span class="c1"># use the invers registration (anat to func) to transform anatomical wm mask</span>
+    <span class="n">reg_anatmask_to_func2</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">FLIRT</span><span class="p">(</span><span class="n">apply_xfm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interp</span><span class="o">=</span><span class="s1">&#39;nearestneighbour&#39;</span><span class="p">),</span>
+                                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;anatmasks_to_func2&#39;</span><span class="p">)</span>
+
+    <span class="c1"># use the invers registration (anat to func) to transform anatomical gm mask</span>
+    <span class="n">reg_anatmask_to_func3</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">FLIRT</span><span class="p">(</span><span class="n">apply_xfm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interp</span><span class="o">=</span><span class="s1">&#39;nearestneighbour&#39;</span><span class="p">),</span>
+                                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;anatmasks_to_func3&#39;</span><span class="p">)</span>
+
+    <span class="c1"># use the invers registration (anat to func) to transform anatomical gm mask</span>
+    <span class="n">reg_anatmask_to_func4</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">FLIRT</span><span class="p">(</span><span class="n">apply_xfm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">interp</span><span class="o">=</span><span class="s1">&#39;nearestneighbour&#39;</span><span class="p">),</span>
+                                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;anatmasks_to_func4&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Create png images for quality check</span>
+    <span class="n">func2anat_qc</span> <span class="o">=</span> <span class="n">vol2png</span><span class="p">(</span><span class="s2">&quot;func2anat_qc&quot;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="n">myonevol</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">myonevol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">linear_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;head&#39;</span><span class="p">,</span> <span class="n">linear_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;reference&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">linear_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;out_matrix_file&#39;</span><span class="p">,</span> <span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;in_matrix_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">myonevol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_wm_segmentation&#39;</span><span class="p">,</span> <span class="n">bbreg_arg_convert</span><span class="p">,</span> <span class="s1">&#39;bbreg_target&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbreg_arg_convert</span><span class="p">,</span> <span class="s1">&#39;arg&#39;</span><span class="p">,</span> <span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;args&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;head&#39;</span><span class="p">,</span> <span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;reference&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;out_matrix_file&#39;</span><span class="p">,</span> <span class="n">convertmatrix</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">convertmatrix</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func1</span><span class="p">,</span> <span class="s1">&#39;in_matrix_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">myonevol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func1</span><span class="p">,</span> <span class="s1">&#39;reference&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">csf_bb_mask</span><span class="p">,</span><span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func1</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">convertmatrix</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func2</span><span class="p">,</span> <span class="s1">&#39;in_matrix_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">myonevol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func2</span><span class="p">,</span> <span class="s1">&#39;reference&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">wm_bb_mask</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func2</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">convertmatrix</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func3</span><span class="p">,</span> <span class="s1">&#39;in_matrix_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">myonevol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func3</span><span class="p">,</span> <span class="s1">&#39;reference&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">gm_bb_mask</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func3</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">convertmatrix</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func4</span><span class="p">,</span> <span class="s1">&#39;in_matrix_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">myonevol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func4</span><span class="p">,</span> <span class="s1">&#39;reference&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">vent_bb_mask</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">reg_anatmask_to_func4</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_wm_segmentation&#39;</span><span class="p">,</span> <span class="n">wm_bb_mask</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_csf_segmentation&#39;</span><span class="p">,</span> <span class="n">csf_bb_mask</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_gm_segmentation&#39;</span><span class="p">,</span> <span class="n">gm_bb_mask</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_ventricle_segmentation&#39;</span><span class="p">,</span> <span class="n">vent_bb_mask</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">myonevol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;example_func&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">func2anat_qc</span><span class="p">,</span> <span class="s1">&#39;bg_image&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">wm_bb_mask</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">func2anat_qc</span><span class="p">,</span> <span class="s1">&#39;overlay_image&#39;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">reg_anatmask_to_func1</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;csf_mask_in_funcspace&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">reg_anatmask_to_func2</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;wm_mask_in_funcspace&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">reg_anatmask_to_func3</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;gm_mask_in_funcspace&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">reg_anatmask_to_func4</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;ventricle_mask_in_funcspace&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;func_sample2anat&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;out_matrix_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;func_to_anat_linear_xfm&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">convertmatrix</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;anat_to_func_linear_xfm&#39;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbreg_func_to_anat</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s2">&quot;func2anat_qc&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
