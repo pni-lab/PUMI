@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.utils &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">sklearn.feature_selection</span> <span class="kn">import</span> <span class="n">SelectKBest</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">ElasticNet</span>
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">RobustScaler</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_selection</span> <span class="kn">import</span> <span class="n">f_regression</span>
+<span class="kn">from</span> <span class="nn">templateflow</span> <span class="kn">import</span> <span class="n">api</span> <span class="k">as</span> <span class="n">tflow</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<div class="viewcode-block" id="get_config"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.get_config">[docs]</a><span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the absolute path to the desired config file.</span>
+
+<span class="sd">    The method is going to search for a specified path in the settings.ini.</span>
+<span class="sd">    If no path was specified, a fallback value is used if possible.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">    Unlike some other methods, in the case of a relative path the path is NOT considered relative to the FSL-Dir,</span>
+<span class="sd">    but relative to the current working directory!</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        wf (Workflow): the workflow</span>
+<span class="sd">        section (str): the section where the path should be found in settings.ini (e.g. &#39;FSL&#39;)</span>
+<span class="sd">        config (str): name (key) of the config (e.g. &#39;fnirt_config&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1"># provide fallback values</span>
+        <span class="k">if</span> <span class="n">config</span> <span class="o">==</span> <span class="s1">&#39;fnirt_config&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FSLDIR&#39;</span><span class="p">],</span> <span class="s1">&#39;etc/flirtsch/TI_2_MNI152_2mm.cnf&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                    Can&#39;t find a path or fallback value for the config &#39;%s&#39; in the section &#39;%s&#39; in the settings.ini.</span>
+<span class="s2">                    Please specify a path for the config in the settings.ini!</span>
+<span class="s2">                &quot;&quot;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">section</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">path</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_reference"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.get_reference">[docs]</a><span class="k">def</span> <span class="nf">get_reference</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the absolute path to the desired reference.</span>
+<span class="sd">    Possible values for the type parameter are &#39;head&#39;, &#39;brain&#39;, &#39;brain_mask&#39; or &#39;ventricle_mask&#39;.</span>
+
+<span class="sd">    If ref = None, the method looks in the settings.ini for specified paths (and source specifications) for the desired reference in</span>
+<span class="sd">    the TEMPLATES section.</span>
+
+<span class="sd">    If no path was specified, the respective 2mm reference from FSL&#39;s standard repertoire is returned.</span>
+<span class="sd">    If a path was specified, it looks if also a source was specified.</span>
+<span class="sd">    If no source was specified (or the source is &#39;local&#39;), then it&#39;s going to search local.</span>
+<span class="sd">    If a local search is performed, it is checked if the path starts with a &#39;/&#39;. If so, this path is considered as</span>
+<span class="sd">    an absolute path, otherwise the path is considered relative to the FSL-Dir (NOT the current working directory)!</span>
+<span class="sd">    If the source is &#39;templateflow&#39; or also &#39;tf&#39;, it is tried to get the reference from templateflow.</span>
+
+<span class="sd">    Some possible path specification without use of templateflow:</span>
+<span class="sd">    &#39;head = data/standard/MNI152_T1_2mm.nii.gz&#39; or</span>
+<span class="sd">    &#39;head = data/standard/MNI152_T1_2mm.nii.gz; source=local&#39; or</span>
+<span class="sd">    &#39;head = /usr/local/fsl/data/standard/MNI152_T1_2mm_brain.nii.gz&#39;</span>
+
+<span class="sd">    Possible path specification with use of templateflow:</span>
+<span class="sd">    &#39;head = tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz; source=templateflow&#39;</span>
+
+<span class="sd">    The &#39;tpl-&#39; in the folder/template specification (NOT the file specification!) can also be omitted.</span>
+<span class="sd">    Also &#39;tf&#39; can be used as abbreviation for templateflow.</span>
+
+<span class="sd">    So this is also okay:</span>
+<span class="sd">    &#39;head = MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz; source=tf&#39;</span>
+
+<span class="sd">    Be aware that &#39;head&#39;, &#39;brain&#39; and &#39;brain_mask&#39; must also be lowercased in the settings.ini!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;head&#39;</span><span class="p">,</span> <span class="s1">&#39;brain&#39;</span><span class="p">,</span> <span class="s1">&#39;brain_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;ventricle_mask&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Can only provide references for </span><span class="se">\&#39;</span><span class="s1">head</span><span class="se">\&#39;</span><span class="s1">, </span><span class="se">\&#39;</span><span class="s1">brain</span><span class="se">\&#39;</span><span class="s1">, </span><span class="se">\&#39;</span><span class="s1">brain_mask</span><span class="se">\&#39;</span><span class="s1">, </span><span class="se">\&#39;</span><span class="s1">ventricle_mask</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;TEMPLATES&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">ref</span>
+
+    <span class="n">div</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;source=&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">div</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># no occurrence of &#39;;source=&#39; (no source specification) -&gt; search locally</span>
+        <span class="k">return</span> <span class="n">get_ref_locally</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">div</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># one occurrence of &#39;;source=&#39; (source was specified) -&gt; look at the specification</span>
+        <span class="n">path</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;source=&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s1">&#39;local&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">get_ref_locally</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">source</span> <span class="o">==</span> <span class="s1">&#39;templateflow&#39;</span> <span class="ow">or</span> <span class="n">source</span> <span class="o">==</span> <span class="s1">&#39;tf&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">get_ref_from_templateflow</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># No valid source was provided</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Source can be </span><span class="se">\&#39;</span><span class="s1">local</span><span class="se">\&#39;</span><span class="s1"> or </span><span class="se">\&#39;</span><span class="s1">templateflow</span><span class="se">\&#39;</span><span class="s1"> (</span><span class="se">\&#39;</span><span class="s1">tf</span><span class="se">\&#39;</span><span class="s1">). %s is not a valid option!&#39;</span> <span class="o">%</span> <span class="n">source</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># more than one occurrence of &#39;;source=&#39;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Check your settings.ini! Your path for %s contains the more than one source specification&#39;</span> <span class="o">%</span> <span class="n">ref</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_ref_from_templateflow"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.get_ref_from_templateflow">[docs]</a><span class="k">def</span> <span class="nf">get_ref_from_templateflow</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Try to get the specified reference from templateflow and return the absolute path to the file.</span>
+<span class="sd">    The schema for the query is &#39;template/file&#39;.</span>
+<span class="sd">    Note: &#39;tpl-&#39; in the template specification (NOT the file specification!) can be omitted.</span>
+<span class="sd">    Look at the available references at &#39;https://www.templateflow.org/browse/&#39;</span>
+
+<span class="sd">    A possible query would be: &#39;tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz&#39;</span>
+<span class="sd">    Also okay: &#39;MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">query</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;tpl-&#39;</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;tpl-&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Illegal schema. Please provide your query in the form template/file and not %s&#39;</span> <span class="o">%</span> <span class="n">query</span>
+        <span class="p">)</span>
+
+    <span class="n">template_dir</span><span class="p">,</span> <span class="n">template_file</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="n">search_result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">tflow</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">template_dir</span><span class="p">))))</span>
+
+    <span class="n">template_in_result</span> <span class="o">=</span> <span class="p">[</span><span class="n">template_file</span> <span class="ow">in</span> <span class="n">path</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">search_result</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">template_in_result</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">search_result</span><span class="p">[</span><span class="n">template_in_result</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Could not find the specified file. Are you sure %s is available in the templateflow archive?&#39;</span> <span class="o">%</span> <span class="n">query</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_ref_locally"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.get_ref_locally">[docs]</a><span class="k">def</span> <span class="nf">get_ref_locally</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Try to get the reference locally and return the absolute path to the file</span>
+<span class="sd">    Possible values for the ref parameter are &#39;head&#39;, &#39;brain&#39;, &#39;brain_mask&#39; or &#39;ventricle_mask&#39;.</span>
+
+<span class="sd">    The method looks in the settings.ini for specified paths for the desired reference in the TEMPLATES section.</span>
+
+<span class="sd">    If no path was specified, the respective 2mm reference from FSL&#39;s standard repertoire is returned.</span>
+<span class="sd">    If a path was specified, it is checked if the path starts with a &#39;/&#39;. If so, this path is considered as</span>
+<span class="sd">    an absolute path, otherwise the path is considered relative to the FSL-Dir (NOT the current working directory)!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ref</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;head&#39;</span><span class="p">,</span> <span class="s1">&#39;brain&#39;</span><span class="p">,</span> <span class="s1">&#39;brain_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;ventricle_mask&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Can only provide references for </span><span class="se">\&#39;</span><span class="s1">head</span><span class="se">\&#39;</span><span class="s1">, </span><span class="se">\&#39;</span><span class="s1">brain</span><span class="se">\&#39;</span><span class="s1">, </span><span class="se">\&#39;</span><span class="s1">brain_mask</span><span class="se">\&#39;</span><span class="s1">, </span><span class="se">\&#39;</span><span class="s1">ventricle_mask</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;TEMPLATES&#39;</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1"># provide fallback values</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="o">==</span> <span class="s1">&#39;head&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FSLDIR&#39;</span><span class="p">],</span> <span class="s1">&#39;data/standard/MNI152_T1_2mm.nii.gz&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ref</span> <span class="o">==</span> <span class="s1">&#39;brain&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FSLDIR&#39;</span><span class="p">],</span> <span class="s1">&#39;data/standard/MNI152_T1_2mm_brain.nii.gz&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FSLDIR&#39;</span><span class="p">],</span> <span class="s1">&#39;data/standard/MNI152_T1_2mm_brain_mask_dil.nii.gz&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>  <span class="c1"># absolute path</span>
+        <span class="k">return</span> <span class="n">path</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># relative path to the FSL-Dir</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FSLDIR&#39;</span><span class="p">],</span> <span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="plot_roi"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.plot_roi">[docs]</a><span class="k">def</span> <span class="nf">plot_roi</span><span class="p">(</span><span class="n">roi_img</span><span class="p">,</span> <span class="n">bg_img</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cut_coords</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display_mode</span><span class="o">=</span><span class="s1">&#39;mosaic&#39;</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">draw_cross</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">black_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+             <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;tab10&#39;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resampling_interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">view_type</span><span class="o">=</span><span class="s1">&#39;continuous&#39;</span><span class="p">,</span>
+             <span class="n">linewidths</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">colorbar</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">save_img</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Wrapper for nilearn&#39;s plot_roi method (with small modifications).</span>
+
+<span class="sd">    Can be used in a nipype function node. In this case output_file should stay None and save_img should stay True!</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        Only parameter that does not occur in nilearn&#39;s plot_roi method is save_img.</span>
+<span class="sd">        Set to False if you don&#39;t want to save the result and just need the plot object.</span>
+<span class="sd">        This parameter is necessary because we substitute output_file by the current working directory and a suitable</span>
+<span class="sd">        filename if output_file is set to None (default).</span>
+<span class="sd">        In case the function is executed within a nipype function node, the current working directory is the working</span>
+<span class="sd">        directory of the respective node.</span>
+<span class="sd">        We introduced this modifications in order to be able to use this method easily in nipype function nodes.</span>
+
+<span class="sd">    For more information about the other parameters, see the documentation of nilearn.</span>
+<span class="sd">    https://nilearn.github.io/modules/generated/nilearn.plotting.plot_roi.html</span>
+
+<span class="sd">    Only a few changes have been made to the default parameters.</span>
+<span class="sd">    Here a mosaic plot with 5 columns is generated by default, the background of every plot is black and the default</span>
+<span class="sd">    cmap has been changed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        plot (nilearn.plotting.displays.OrthoSlicer): Plot object.</span>
+<span class="sd">        output_file (str): Path to the saved plot (if save_img is False, None is returned).</span>
+
+<span class="sd">    Acknowledgements:</span>
+<span class="sd">        Further informations:</span>
+<span class="sd">            - https://nilearn.github.io/index.html</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">nilearn</span> <span class="kn">import</span> <span class="n">plotting</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="k">if</span> <span class="n">save_img</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">output_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">roi_img_name</span> <span class="o">=</span> <span class="n">roi_img</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">roi_img_name</span> <span class="o">+</span> <span class="s1">&#39;_plot.png&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">output_file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+                <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">output_file</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># make sure that no file is created when save_img=False</span>
+
+    <span class="n">plot</span> <span class="o">=</span> <span class="n">plotting</span><span class="o">.</span><span class="n">plot_roi</span><span class="p">(</span><span class="n">roi_img</span><span class="p">,</span> <span class="n">bg_img</span><span class="o">=</span><span class="n">bg_img</span><span class="p">,</span> <span class="n">cut_coords</span><span class="o">=</span><span class="n">cut_coords</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">output_file</span><span class="p">,</span>
+                             <span class="n">display_mode</span><span class="o">=</span><span class="n">display_mode</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span><span class="n">figure</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">axes</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="n">annotate</span><span class="p">,</span>
+                             <span class="n">draw_cross</span><span class="o">=</span><span class="n">draw_cross</span><span class="p">,</span>
+                             <span class="n">black_bg</span><span class="o">=</span><span class="n">black_bg</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span>
+                             <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">resampling_interpolation</span><span class="o">=</span><span class="n">resampling_interpolation</span><span class="p">,</span> <span class="n">view_type</span><span class="o">=</span><span class="n">view_type</span><span class="p">,</span>
+                             <span class="n">linewidths</span><span class="o">=</span><span class="n">linewidths</span><span class="p">,</span> <span class="n">colorbar</span><span class="o">=</span><span class="n">colorbar</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">plot</span><span class="p">,</span> <span class="n">output_file</span></div>
+
+
+<div class="viewcode-block" id="create_segmentation_qc"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.create_segmentation_qc">[docs]</a><span class="k">def</span> <span class="nf">create_segmentation_qc</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">bg_img</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cut_coords</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;winter&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Create segmentation (e.g. brain extraction, tissue segmentation) quality check images.</span>
+
+<span class="sd">    Can be used in a nipype function node. In this case output_file should stay None!</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        overlay (str): Path to the overlay (e.g. in brain extraction workflows the extracted brain).</span>
+<span class="sd">        bg_img (str): Path to the background (e.g. in brain extraction workflows the head).</span>
+<span class="sd">        output_file (str): Filename of quality check image. Can be be an absolute path or a relative path.</span>
+<span class="sd">                           If it&#39;s set to None (default), the filename is automatically generated.</span>
+<span class="sd">        cmap (matplotlib colormap): Colormap.</span>
+<span class="sd">        **kwargs: These parameters are passed to the plot_roi method.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        output_file (str): Path to the saved plot.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">PUMI.utils</span> <span class="kn">import</span> <span class="n">plot_roi</span>
+
+    <span class="n">plot</span><span class="p">,</span> <span class="n">output_file</span> <span class="o">=</span> <span class="n">plot_roi</span><span class="p">(</span><span class="n">roi_img</span><span class="o">=</span><span class="n">overlay</span><span class="p">,</span> <span class="n">bg_img</span><span class="o">=</span><span class="n">bg_img</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">output_file</span><span class="p">,</span> <span class="n">cut_coords</span><span class="o">=</span><span class="n">cut_coords</span><span class="p">,</span>
+                                 <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_file</span></div>
+
+
+<div class="viewcode-block" id="create_coregistration_qc"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.create_coregistration_qc">[docs]</a><span class="k">def</span> <span class="nf">create_coregistration_qc</span><span class="p">(</span><span class="n">registered_brain</span><span class="p">,</span> <span class="n">template</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;winter&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Create coregistration quality check images.</span>
+
+<span class="sd">    Can be used in a nipype function node. In this case output_file should stay None!</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    registered_brain (str): Path to the registered brain.</span>
+<span class="sd">    template (str): Path to the used template (reference) file.</span>
+<span class="sd">    output_file (str): Filename of quality check image. Can be be an absolute path or a relative path.</span>
+<span class="sd">                       If it&#39;s set to None (default), the path and filename is automatically generated.</span>
+<span class="sd">    levels (list): Contour fillings levels. If set to None, [0.5] will be used.</span>
+<span class="sd">    cmap (matplotlib colormap): Colormap.</span>
+<span class="sd">    **kwargs: These parameters are passed to plot_roi method.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ----------</span>
+<span class="sd">    output_file (str): Path to the saved plot.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">PUMI.utils</span> <span class="kn">import</span> <span class="n">plot_roi</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="k">if</span> <span class="n">levels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">]</span>
+
+    <span class="n">plot</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">plot_roi</span><span class="p">(</span><span class="n">roi_img</span><span class="o">=</span><span class="n">registered_brain</span><span class="p">,</span> <span class="n">bg_img</span><span class="o">=</span><span class="n">template</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">save_img</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">add_contours</span><span class="p">(</span><span class="n">registered_brain</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">levels</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">registered_brain_filename</span> <span class="o">=</span> <span class="n">registered_brain</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">registered_brain_filename</span> <span class="o">+</span> <span class="s1">&#39;_plot.png&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">output_file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">output_file</span><span class="p">)</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_file</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output_file</span></div>
+
+
+<div class="viewcode-block" id="registration_ants_hardcoded"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.registration_ants_hardcoded">[docs]</a><span class="k">def</span> <span class="nf">registration_ants_hardcoded</span><span class="p">(</span><span class="n">brain</span><span class="p">,</span> <span class="n">reference_brain</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="n">reference_head</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Todo Docs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">subprocess</span>
+    <span class="c1"># parameters based on Satra&#39;s post: https://gist.github.com/satra/8439778</span>
+    <span class="n">regcmd</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;antsRegistration&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--collapse-output-transforms&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--dimensionality&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span>
+
+              <span class="s2">&quot;--initial-moving-transform&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;[</span><span class="si">{0}</span><span class="s2">,</span><span class="si">{1}</span><span class="s2">,1]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference_brain</span><span class="p">,</span> <span class="n">brain</span><span class="p">),</span>
+              <span class="s2">&quot;--interpolation&quot;</span><span class="p">,</span> <span class="s2">&quot;Linear&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="s2">&quot;[transform,transform_Warped.nii.gz]&quot;</span><span class="p">,</span>
+
+              <span class="s2">&quot;--transform&quot;</span><span class="p">,</span> <span class="s2">&quot;Rigid[0.1]&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--metric&quot;</span><span class="p">,</span> <span class="s2">&quot;MI[</span><span class="si">{0}</span><span class="s2">,</span><span class="si">{1}</span><span class="s2">,1,32,&quot;</span> \
+              <span class="s2">&quot;Regular,0.3]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference_brain</span><span class="p">,</span> <span class="n">brain</span><span class="p">),</span>
+              <span class="s2">&quot;--convergence&quot;</span><span class="p">,</span> <span class="s2">&quot;[1000x500x250,1e-08,20]&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--smoothing-sigmas&quot;</span><span class="p">,</span> <span class="s2">&quot;4.0x2.0x1.0&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--shrink-factors&quot;</span><span class="p">,</span> <span class="s2">&quot;3x2x1&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--use-estimate-learning-rate-once&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--use-histogram-matching&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+
+              <span class="s2">&quot;--transform&quot;</span><span class="p">,</span> <span class="s2">&quot;Affine[0.1]&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--metric&quot;</span><span class="p">,</span> <span class="s2">&quot;MI[</span><span class="si">{0}</span><span class="s2">,</span><span class="si">{1}</span><span class="s2">,1,32,&quot;</span> \
+              <span class="s2">&quot;Regular,0.3]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference_brain</span><span class="p">,</span> <span class="n">brain</span><span class="p">),</span>
+              <span class="s2">&quot;--convergence&quot;</span><span class="p">,</span> <span class="s2">&quot;[1000x500x250,1e-08,20]&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--smoothing-sigmas&quot;</span><span class="p">,</span> <span class="s2">&quot;4.0x2.0x1.0&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--shrink-factors&quot;</span><span class="p">,</span> <span class="s2">&quot;3x2x1&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--use-estimate-learning-rate-once&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--use-histogram-matching&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+
+              <span class="s2">&quot;--transform&quot;</span><span class="p">,</span> <span class="s2">&quot;SyN[0.2,3.0,0.0]&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--metric&quot;</span><span class="p">,</span> <span class="s2">&quot;Mattes[</span><span class="si">{0}</span><span class="s2">,</span><span class="si">{1}</span><span class="s2">,0.5,32]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference_head</span><span class="p">,</span> <span class="n">head</span><span class="p">),</span>
+              <span class="s2">&quot;--metric&quot;</span><span class="p">,</span> <span class="s2">&quot;CC[</span><span class="si">{0}</span><span class="s2">,</span><span class="si">{1}</span><span class="s2">,0.5,4]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference_head</span><span class="p">,</span> <span class="n">head</span><span class="p">),</span>
+              <span class="s2">&quot;--convergence&quot;</span><span class="p">,</span> <span class="s2">&quot;[100x50x30,-0.01,5]&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--smoothing-sigmas&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0x0.5x0.0&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--shrink-factors&quot;</span><span class="p">,</span> <span class="s2">&quot;4x2x1&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--use-histogram-matching&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--winsorize-image-intensities&quot;</span><span class="p">,</span> <span class="s2">&quot;[0.005,0.995]&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--use-estimate-learning-rate-once&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;--write-composite-transform&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">regcmd</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s1">&#39;[!] ANTS registration did not complete successfully!</span><span class="se">\n\n</span><span class="s1">Error details:</span><span class="se">\n</span><span class="si">{0}</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">transform_composite</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">transform_inverse_composite</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">warped_image</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">f</span><span class="p">)]</span>
+
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;transformComposite&quot;</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;Warped&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span><span class="p">):</span>
+            <span class="n">transform_composite</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">f</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;transformInverseComposite&quot;</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;Warped&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span><span class="p">):</span>
+            <span class="n">transform_inverse_composite</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">f</span>
+        <span class="k">if</span> <span class="s2">&quot;Warped&quot;</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">warped_image</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">f</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">warped_image</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s1">&#39;[!] No registration output file found. ANTS registration may not have completed successfully.</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">transform_composite</span><span class="p">,</span> <span class="n">transform_inverse_composite</span><span class="p">,</span> <span class="n">warped_image</span></div>
+
+
+<div class="viewcode-block" id="scale_vol"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.scale_vol">[docs]</a><span class="k">def</span> <span class="nf">scale_vol</span><span class="p">(</span><span class="n">in_file</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">std</span><span class="p">[</span><span class="n">std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># divide with 1</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]):</span>
+        <span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">std</span>
+
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="p">)</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="s2">&quot;scaled_func.nii.gz&quot;</span>
+    <span class="n">nb</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">out_file</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">out_file</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="drop_first_line"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.drop_first_line">[docs]</a><span class="k">def</span> <span class="nf">drop_first_line</span><span class="p">(</span><span class="n">in_file</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fin</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">fin</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">in_file</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fout</span><span class="p">:</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>  <span class="c1"># don&#39;t write the first line into the new file</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">fname</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="calc_friston_twenty_four"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.calc_friston_twenty_four">[docs]</a><span class="k">def</span> <span class="nf">calc_friston_twenty_four</span><span class="p">(</span><span class="n">in_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Method to calculate friston twenty-four parameters</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        in_file (str): input movement parameters file from motion correction</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        new_file (str): output 1D file containing 24 parameter values</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
+    <span class="n">data_squared</span> <span class="o">=</span> <span class="n">data</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">new_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="n">data_squared</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">data_roll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">data_roll</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">new_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data_roll</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">data_roll_squared</span> <span class="o">=</span> <span class="n">data_roll</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">new_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">new_data</span><span class="p">,</span> <span class="n">data_roll_squared</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">new_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s1">&#39;fristons_twenty_four.1D&#39;</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">new_file</span><span class="p">,</span> <span class="n">new_data</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_file</span></div>
+
+
+<div class="viewcode-block" id="calculate_FD_Jenkinson"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.calculate_FD_Jenkinson">[docs]</a><span class="k">def</span> <span class="nf">calculate_FD_Jenkinson</span><span class="p">(</span><span class="n">in_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Method to calculate friston twenty four parameters</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        in_file (str): input movement parameters file from motion correction</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        new_file (str): path to output file</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">math</span>
+
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s1">&#39;FD_J.1D&#39;</span><span class="p">)</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">rows</span><span class="p">)])</span>
+
+    <span class="n">translations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span> <span class="p">:]))</span>
+    <span class="n">rotations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:]))</span>
+
+    <span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">rmax</span> <span class="o">=</span> <span class="mf">80.0</span>  <span class="c1"># The default radius (as in FSL) of a sphere represents the brain</span>
+
+    <span class="n">out_lines</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">translations</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">flag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">flag</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="c1"># first timepoint</span>
+            <span class="n">out_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">rotations</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,]</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">translations</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,]</span>
+            <span class="n">FD_J</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">rmax</span> <span class="o">*</span> <span class="n">rmax</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+            <span class="n">out_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="si">{0:.8f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">FD_J</span><span class="p">))</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">out_lines</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out_file</span></div>
+
+
+<div class="viewcode-block" id="mean_from_txt"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.mean_from_txt">[docs]</a><span class="k">def</span> <span class="nf">mean_from_txt</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="s1">&#39;mean.txt&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Calculate column-means, row-means or the global mean depending on the &#39;axis&#39; parameter and save it to</span>
+<span class="sd">    another text-file.</span>
+
+<span class="sd">    Caution: Name in the old PUMI was txt2MeanTxt</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        in_file (str): input file</span>
+<span class="sd">        axis (None/int/(int,int)): axis or axes along which the means are computed.</span>
+<span class="sd">                                   Default: Compute mean of the flattened array.</span>
+<span class="sd">        header (bool): Drop line if True</span>
+<span class="sd">        out_file (str): Name of the resulting text-file. If only the filename is given, it will be saved into the</span>
+<span class="sd">                        current working directory.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        new_file (str): path to new file</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;drop first line&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;don&#39;t drop first line&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="p">[</span><span class="n">mean</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">out_file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="n">new_file</span> <span class="o">=</span> <span class="n">out_file</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">out_file</span><span class="p">)</span>  <span class="c1"># need to add &#39;/&#39; manually?</span>
+    <span class="k">return</span> <span class="n">new_file</span></div>
+
+
+<div class="viewcode-block" id="max_from_txt"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.max_from_txt">[docs]</a><span class="k">def</span> <span class="nf">max_from_txt</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="s1">&#39;max.txt&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Saves the maximum along a given axis into another text-file.</span>
+
+<span class="sd">    Caution: Name in the old PUMI was txt2MaxTxt</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        in_file (str): input file</span>
+<span class="sd">        axis (None/int/(int,int)): axis or axes along the maximum values are computed.</span>
+<span class="sd">                                   Default: Use flattened array.</span>
+<span class="sd">        header (bool): Drop line if True</span>
+<span class="sd">        out_file (str): Name of the resulting text-file. If only the filename is given, it will be saved into the</span>
+<span class="sd">                        current working directory.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        new_file (str): path to new file</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;drop first line&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;don&#39;t drop first line&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_file</span><span class="p">)</span>
+    <span class="n">dmax</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="p">[</span><span class="n">dmax</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">out_file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="n">new_file</span> <span class="o">=</span> <span class="n">out_file</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">out_file</span><span class="p">)</span>  <span class="c1"># need to add &#39;/&#39; manually?</span>
+    <span class="k">return</span> <span class="n">new_file</span></div>
+
+
+<div class="viewcode-block" id="get_indx"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.get_indx">[docs]</a><span class="k">def</span> <span class="nf">get_indx</span><span class="p">(</span><span class="n">scrub_input</span><span class="p">,</span> <span class="n">frames_in_1D_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Method to get the list of time</span>
+<span class="sd">    frames that are to be included</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        in_file (str): path to file containing the valid time frames</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        scrub_input_string (str): input string for 3dCalc in scrubbing workflow,</span>
+<span class="sd">                              looks something like &quot; 4dfile.nii.gz[0,1,2,..100] &quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">frames_in_idx_str</span> <span class="o">=</span> <span class="s1">&#39;[&#39;</span> <span class="o">+</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">frames_in_1D_file</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
+    <span class="n">scrub_input_string</span> <span class="o">=</span> <span class="n">scrub_input</span> <span class="o">+</span> <span class="n">frames_in_idx_str</span>
+
+    <span class="k">return</span> <span class="n">scrub_input_string</span></div>
+
+
+<div class="viewcode-block" id="scrub_image"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.scrub_image">[docs]</a><span class="k">def</span> <span class="nf">scrub_image</span><span class="p">(</span><span class="n">scrub_input</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Method to run 3dcalc in order to scrub the image. This is used instead of</span>
+<span class="sd">    the Nipype interface for 3dcalc because functionality is needed for</span>
+<span class="sd">    specifying an input file with specifically-selected volumes. For example:</span>
+<span class="sd">    input.nii.gz[2,3,4,..98], etc.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        scrub_input (str): path to 4D file to be scrubbed, plus with selected volumes to be included</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        scrubbed_image (str): path to the scrubbed 4D file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;3dcalc -a </span><span class="si">%s</span><span class="s2"> -expr &#39;a&#39; -prefix scrubbed_preprocessed.nii.gz&quot;</span> <span class="o">%</span> <span class="n">scrub_input</span><span class="p">)</span>
+
+    <span class="n">scrubbed_image</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">&quot;scrubbed_preprocessed.nii.gz&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">scrubbed_image</span></div>
+
+
+<div class="viewcode-block" id="above_threshold"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.above_threshold">[docs]</a><span class="k">def</span> <span class="nf">above_threshold</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">frames_before</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">frames_after</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        todo docs</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">loadtxt</span><span class="p">,</span> <span class="n">savetxt</span>
+
+    <span class="n">powersFD_data</span> <span class="o">=</span> <span class="n">loadtxt</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">powersFD_data</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># TODO_ready: why do we need this: see output of nipype.algorithms.confounds.FramewiseDisplacement</span>
+    <span class="n">frames_in_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">powersFD_data</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">frames_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">powersFD_data</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">extra_indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">frames_out</span><span class="p">:</span>
+
+        <span class="c1"># remove preceding frames</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">while</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="n">frames_before</span><span class="p">:</span>
+                <span class="n">extra_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">count</span><span class="p">)</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># remove following frames</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="n">frames_after</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">+</span><span class="n">count</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">powersFD_data</span><span class="p">):</span>  <span class="c1"># do not censor unexistent data</span>
+                <span class="n">extra_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">count</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">indices_out</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">frames_out</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">extra_indices</span><span class="p">))</span>
+    <span class="n">indices_out</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+    <span class="n">frames_out_idx</span> <span class="o">=</span> <span class="n">indices_out</span>
+    <span class="n">frames_in_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">frames_in_idx</span><span class="p">,</span> <span class="n">indices_out</span><span class="p">)</span>
+
+    <span class="n">FD_scrubbed</span> <span class="o">=</span> <span class="n">powersFD_data</span><span class="p">[</span><span class="n">frames_in_idx</span><span class="p">]</span>
+    <span class="n">fd_scrubbed_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s1">&#39;FD_scrubbed.csv&#39;</span><span class="p">)</span>
+    <span class="n">savetxt</span><span class="p">(</span><span class="n">fd_scrubbed_file</span><span class="p">,</span> <span class="n">FD_scrubbed</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+
+    <span class="n">frames_in_idx_str</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">frames_in_idx</span><span class="p">)</span>
+    <span class="n">frames_in_idx</span> <span class="o">=</span> <span class="n">frames_in_idx_str</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="n">percentFD</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frames_out_idx</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">powersFD_data</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="c1"># % of frames censored</span>
+    <span class="n">percent_scrubbed_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s1">&#39;percent_scrubbed.txt&#39;</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">percent_scrubbed_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.3f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">percentFD</span><span class="p">))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="n">nvol</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">powersFD_data</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">frames_in_idx</span><span class="p">,</span> <span class="n">frames_out_idx</span><span class="p">,</span> <span class="n">percentFD</span><span class="p">,</span> <span class="n">percent_scrubbed_file</span><span class="p">,</span> <span class="n">fd_scrubbed_file</span><span class="p">,</span> <span class="n">nvol</span></div>
+
+
+<div class="viewcode-block" id="concatenate"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.concatenate">[docs]</a><span class="k">def</span> <span class="nf">concatenate</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s1">&#39;parfiles.txt&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">pars</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    todo Docs</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+    <span class="n">par_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pars</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="n">totpar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">par_files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">par_files</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">par_files</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">par_files</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+        <span class="n">totpar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">totpar</span><span class="p">,</span> <span class="n">tmp</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fname</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">fname</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">fname</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">totpar</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+<div class="viewcode-block" id="mist_modules"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.mist_modules">[docs]</a><span class="k">def</span> <span class="nf">mist_modules</span><span class="p">(</span><span class="n">mist_directory</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;122&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Return a list of the modules contained in the MIST atlas</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">           mist_directory (str): Path to the MIST directory</span>
+<span class="sd">           resolution (str): Resolution (you have to check which resolutions are valid)</span>
+<span class="sd">       Returns:</span>
+<span class="sd">           result ([str]): A list containing the modules in the MIST atlas</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+    <span class="n">resolution</span> <span class="o">=</span> <span class="s1">&#39;s&#39;</span> <span class="o">+</span> <span class="n">resolution</span>
+    <span class="n">mist_hierarchy_filename</span> <span class="o">=</span> <span class="n">mist_directory</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="s1">&#39;Hierarchy/MIST_PARCEL_ORDER_ROI.csv&#39;</span>
+    <span class="n">mist_hierarchy</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">mist_hierarchy_filename</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="n">mist_hierarchy_res</span> <span class="o">=</span> <span class="n">mist_hierarchy</span><span class="p">[(</span><span class="n">resolution</span><span class="p">)]</span>
+    <span class="n">mist_hierarchy_res</span> <span class="o">=</span> <span class="n">mist_hierarchy_res</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+
+    <span class="n">modul_indices</span> <span class="o">=</span> <span class="n">mist_hierarchy</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mist_hierarchy_res</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;s7&#39;</span><span class="p">,</span> <span class="n">resolution</span><span class="p">]]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">resolution</span><span class="p">)[</span><span class="s1">&#39;s7&#39;</span><span class="p">]</span>
+    <span class="n">mist_s7_filename</span> <span class="o">=</span> <span class="n">mist_directory</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="s1">&#39;Parcel_Information/MIST_7.csv&#39;</span>
+    <span class="n">mist_s7</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">mist_s7_filename</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">)</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">mist_s7</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">modul_indices</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="mist_labels"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.mist_labels">[docs]</a><span class="k">def</span> <span class="nf">mist_labels</span><span class="p">(</span><span class="n">mist_directory</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;122&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Return a list of the labels contained in the MIST atlas</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">           mist_directory (str): Path to the MIST directory</span>
+<span class="sd">           resolution (str): Resolution (you have to check which resolutions are valid)</span>
+<span class="sd">       Returns:</span>
+<span class="sd">           result ([str]): A list containing the labels in the MIST atlas</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+    <span class="n">mist_filename</span> <span class="o">=</span> <span class="n">mist_directory</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="s1">&#39;Parcel_Information/MIST_&#39;</span> <span class="o">+</span> <span class="n">resolution</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span>
+
+    <span class="n">mist</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">mist_filename</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;;&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">mist</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="relabel_atlas"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.relabel_atlas">[docs]</a><span class="k">def</span> <span class="nf">relabel_atlas</span><span class="p">(</span><span class="n">atlas_file</span><span class="p">,</span> <span class="n">modules</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Relabel atlas</span>
+<span class="sd">       * Beware : currently works only with labelmap!!</span>
+<span class="sd">       Parameters:</span>
+<span class="sd">           atlas_file(str): Path to the atlas file</span>
+<span class="sd">           modules ([str]): List containing the modules in MIST</span>
+<span class="sd">           labels ([str]): List containing the labels in MIST</span>
+<span class="sd">       Returns:</span>
+<span class="sd">           relabel_file (str): Path to relabeld atlas file</span>
+<span class="sd">           reordered_modules ([str]): list containing reordered module names</span>
+<span class="sd">           reordered_labels ([str]): list containing reordered label names</span>
+<span class="sd">           new_labels (str): Path to .tsv-file with the new labels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;modules&#39;</span><span class="p">:</span> <span class="n">modules</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="n">labels</span><span class="p">})</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># indexing from 1</span>
+
+    <span class="n">reordered</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;modules&#39;</span><span class="p">)</span>
+
+    <span class="c1"># relabel labelmap</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">atlas_file</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;relabeling does not work for probability maps!&quot;</span><span class="p">)</span>
+
+    <span class="n">lut</span> <span class="o">=</span> <span class="n">reordered</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">lut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lut</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="c1"># maybe this is a bit complicated, but believe me it does what it should</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+    <span class="n">newdata</span> <span class="o">=</span> <span class="n">lut</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)]</span>  <span class="c1"># apply lookup table to swap labels</span>
+
+    <span class="n">img</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">newdata</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
+    <span class="n">nib</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s1">&#39;relabeled_atlas.nii.gz&#39;</span><span class="p">)</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">reordered</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">relabel_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s1">&#39;relabeled_atlas.nii.gz&#39;</span><span class="p">)</span>
+    <span class="n">reordered_modules</span> <span class="o">=</span> <span class="n">reordered</span><span class="p">[</span><span class="s1">&#39;modules&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">reordered_labels</span> <span class="o">=</span> <span class="n">reordered</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="n">newlabels_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s1">&#39;newlabels.tsv&#39;</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">newlabels_file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">relabel_file</span><span class="p">,</span> <span class="n">reordered_modules</span><span class="p">,</span> <span class="n">reordered_labels</span><span class="p">,</span> <span class="n">newlabels_file</span></div>
+
+
+<div class="viewcode-block" id="TsExtractor"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.TsExtractor">[docs]</a><span class="k">def</span> <span class="nf">TsExtractor</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">labelmap</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">global_signal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pca</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">outfile</span><span class="o">=</span><span class="s2">&quot;reg_timeseries.tsv&quot;</span><span class="p">,</span>
+                <span class="n">outlabelmap</span><span class="o">=</span><span class="s2">&quot;individual_gm_labelmap.nii.gz&quot;</span><span class="p">):</span>
+    <span class="c1"># todo: check method</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+    <span class="n">func_data</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+    <span class="n">labelmap_data</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">labelmap</span><span class="p">)</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+    <span class="n">mask_data</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+
+    <span class="n">labelmap_data</span><span class="p">[</span><span class="n">mask_data</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># background</span>
+
+    <span class="n">outlab</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">labelmap_data</span><span class="p">,</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">labelmap</span><span class="p">)</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
+    <span class="n">nib</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">outlab</span><span class="p">,</span> <span class="n">outlabelmap</span><span class="p">)</span>
+
+    <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">global_signal</span><span class="p">:</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">mask_data</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">func_data</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.000001</span><span class="p">:</span>
+                <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">func_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">pca</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">sklearn.decomposition</span> <span class="k">as</span> <span class="nn">decomp</span>
+            <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="n">PCA</span> <span class="o">=</span> <span class="n">decomp</span><span class="o">.</span><span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">svd_solver</span><span class="o">=</span><span class="s2">&quot;arpack&quot;</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">PCA</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">indices</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">labelmap_data</span> <span class="o">==</span> <span class="n">l</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">func_data</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.000001</span><span class="p">:</span>
+                <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">func_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">pca</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">sklearn.decomposition</span> <span class="k">as</span> <span class="nn">decomp</span>
+            <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="n">PCA</span> <span class="o">=</span> <span class="n">decomp</span><span class="o">.</span><span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">svd_solver</span><span class="o">=</span><span class="s2">&quot;arpack&quot;</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">PCA</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ret</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">global_signal</span><span class="p">:</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GlobSig&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">labels</span>
+
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">ret</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+
+    <span class="n">ret</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">outfile</span><span class="p">),</span> <span class="n">labels</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">outlabelmap</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="plot_carpet_ts"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.plot_carpet_ts">[docs]</a><span class="k">def</span> <span class="nf">plot_carpet_ts</span><span class="p">(</span><span class="n">timeseries</span><span class="p">,</span> <span class="n">modules</span><span class="p">,</span> <span class="n">atlas</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">background_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">subplot</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;regts.png&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adapted from: https://github.com/poldracklab/niworkflows</span>
+
+<span class="sd">    Plot an image representation of voxel intensities across time also know</span>
+<span class="sd">    as the &quot;carpet plot&quot; or &quot;Power plot&quot;. See Jonathan Power Neuroimage</span>
+<span class="sd">    2017 Jul 1; 154:150-158.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        timeseries (numpy.ndarray): 4D input image. See http://nilearn.github.io/manipulating_images/input_output.html.</span>
+<span class="sd">        output_file (str, None): Optional! The name of the output image. Valid extensions are .png, .pdf, .svg.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+    <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">gridspec</span> <span class="k">as</span> <span class="n">mgs</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.cm</span> <span class="k">as</span> <span class="nn">cm</span>
+    <span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">ListedColormap</span>
+    <span class="kn">from</span> <span class="nn">nilearn.plotting</span> <span class="kn">import</span> <span class="n">plot_img</span>
+
+    <span class="n">legend</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">atlas</span><span class="p">:</span>
+        <span class="n">legend</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># actually load data</span>
+    <span class="n">timeseries</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">timeseries</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1">#normalise all timeseries</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">timeseries</span> <span class="o">=</span> <span class="p">(</span><span class="n">timeseries</span> <span class="o">-</span> <span class="n">timeseries</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">timeseries</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">timeseries</span> <span class="o">=</span> <span class="n">timeseries</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+    <span class="n">minimum</span> <span class="o">=</span> <span class="n">timeseries</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">maximum</span> <span class="o">=</span> <span class="n">timeseries</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">myrange</span> <span class="o">=</span> <span class="n">maximum</span> <span class="o">-</span> <span class="n">minimum</span>
+
+    <span class="n">modules</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">lut</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">factorize</span><span class="p">(</span><span class="n">modules</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+
+    <span class="c1"># If subplot is not defined</span>
+    <span class="k">if</span> <span class="n">subplot</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">subplot</span> <span class="o">=</span> <span class="n">mgs</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Define nested GridSpec</span>
+    <span class="n">wratios</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">mgs</span><span class="o">.</span><span class="n">GridSpecFromSubplotSpec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">legend</span><span class="p">),</span> <span class="n">subplot_spec</span><span class="o">=</span><span class="n">subplot</span><span class="p">,</span>
+                                     <span class="n">width_ratios</span><span class="o">=</span><span class="n">wratios</span><span class="p">[:</span><span class="mi">2</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">legend</span><span class="p">)],</span>
+                                     <span class="n">wspace</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="n">mycolors</span> <span class="o">=</span> <span class="n">ListedColormap</span><span class="p">(</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;Set1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">colors</span><span class="p">[:</span><span class="mi">7</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Segmentation colorbar</span>
+
+    <span class="n">ax0</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">ax0</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+    <span class="n">ax0</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+
+    <span class="n">lutt</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="n">lut</span><span class="p">})</span>
+    <span class="n">ax0</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">lutt</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+               <span class="n">cmap</span><span class="o">=</span><span class="n">mycolors</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+    <span class="n">ax0</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax0</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax0</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;bottom&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+    <span class="n">ax0</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;bottom&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+
+    <span class="c1"># Carpet plot</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">timeseries</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span>
+               <span class="n">vmin</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vmax</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([])</span>
+
+    <span class="c1"># Set 10 frame markers in X axis</span>
+    <span class="n">interval</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">timeseries</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">timeseries</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">xticks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">timeseries</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="n">interval</span><span class="p">])</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">xticks</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Remove and redefine spines</span>
+    <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]:</span>
+        <span class="c1"># Toggle the spine objects</span>
+        <span class="n">ax0</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="n">side</span><span class="p">]</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+        <span class="n">ax0</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="n">side</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="n">side</span><span class="p">]</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="n">side</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;bottom&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;bottom&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">legend</span><span class="p">:</span>
+        <span class="n">gslegend</span> <span class="o">=</span> <span class="n">mgs</span><span class="o">.</span><span class="n">GridSpecFromSubplotSpec</span><span class="p">(</span>
+            <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">subplot_spec</span><span class="o">=</span><span class="n">gs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">background_file</span><span class="p">:</span>
+            <span class="n">background_file</span> <span class="o">=</span> <span class="n">atlas</span> <span class="c1">#TODO: works only for 3mm atlas</span>
+        <span class="n">background</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">background_file</span><span class="p">)</span>
+        <span class="n">atlas</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">atlas</span><span class="p">)</span>
+
+        <span class="n">nslices</span> <span class="o">=</span> <span class="n">background</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">40</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">]</span>  <span class="c1"># works in MNI space</span>
+        <span class="n">lut2</span> <span class="o">=</span> <span class="n">lut</span>
+        <span class="n">lut2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lut2</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+        <span class="n">relabeled</span><span class="o">=</span><span class="n">lut2</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">atlas</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)]</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">relabeled</span><span class="p">,</span> <span class="n">atlas</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coords</span><span class="p">):</span>
+            <span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gslegend</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">plot_img</span><span class="p">(</span><span class="n">atl</span><span class="p">,</span> <span class="n">bg_img</span><span class="o">=</span><span class="n">background</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">display_mode</span><span class="o">=</span><span class="s1">&#39;z&#39;</span><span class="p">,</span>
+                     <span class="n">annotate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cut_coords</span><span class="o">=</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">mycolors</span><span class="p">,</span>
+                     <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">figure</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
+        <span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">figure</span><span class="p">)</span>
+        <span class="n">figure</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">output_file</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">ax0</span><span class="p">,</span> <span class="n">ax1</span><span class="p">],</span> <span class="n">gs</span></div>
+
+
+<div class="viewcode-block" id="rpn_model"><a class="viewcode-back" href="../../PUMI.html#PUMI.utils.rpn_model">[docs]</a><span class="k">def</span> <span class="nf">rpn_model</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_obj</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f_obj</span><span class="p">)</span>
+    <span class="n">pipeline_steps</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># *** RobustScaler ***</span>
+    <span class="n">scaler</span> <span class="o">=</span> <span class="n">RobustScaler</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;RobustScaler&#39;</span><span class="p">][</span><span class="s1">&#39;init_params&#39;</span><span class="p">])</span>
+    <span class="n">center_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;RobustScaler&#39;</span><span class="p">][</span><span class="s1">&#39;model_params&#39;</span><span class="p">][</span><span class="s1">&#39;center_&#39;</span><span class="p">])</span>
+    <span class="n">scale_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;RobustScaler&#39;</span><span class="p">][</span><span class="s1">&#39;model_params&#39;</span><span class="p">][</span><span class="s1">&#39;scale_&#39;</span><span class="p">])</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">scaler</span><span class="p">,</span> <span class="s1">&#39;center_&#39;</span><span class="p">,</span> <span class="n">center_</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">scaler</span><span class="p">,</span> <span class="s1">&#39;scale_&#39;</span><span class="p">,</span> <span class="n">scale_</span><span class="p">)</span>
+    <span class="n">pipeline_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;scaler&#39;</span><span class="p">,</span> <span class="n">scaler</span><span class="p">))</span>
+
+    <span class="c1"># *** SelectKBest ***</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;SelectKBest&#39;</span><span class="p">][</span><span class="s1">&#39;init_params&#39;</span><span class="p">][</span><span class="s1">&#39;score_func&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_regression</span>
+    <span class="n">fsel</span> <span class="o">=</span> <span class="n">SelectKBest</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;SelectKBest&#39;</span><span class="p">][</span><span class="s1">&#39;init_params&#39;</span><span class="p">])</span>
+    <span class="n">scores_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;SelectKBest&#39;</span><span class="p">][</span><span class="s1">&#39;model_params&#39;</span><span class="p">][</span><span class="s1">&#39;scores_&#39;</span><span class="p">])</span>
+    <span class="n">pvalues_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;SelectKBest&#39;</span><span class="p">][</span><span class="s1">&#39;model_params&#39;</span><span class="p">][</span><span class="s1">&#39;pvalues_&#39;</span><span class="p">])</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">fsel</span><span class="p">,</span> <span class="s1">&#39;scores_&#39;</span><span class="p">,</span> <span class="n">scores_</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">fsel</span><span class="p">,</span> <span class="s1">&#39;pvalues_&#39;</span><span class="p">,</span> <span class="n">pvalues_</span><span class="p">)</span>
+    <span class="n">pipeline_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;fsel&#39;</span><span class="p">,</span> <span class="n">fsel</span><span class="p">))</span>
+
+    <span class="c1"># *** ElasticNet ***</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">ElasticNet</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;ElasticNet&#39;</span><span class="p">][</span><span class="s1">&#39;init_params&#39;</span><span class="p">])</span>
+    <span class="n">coef_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;ElasticNet&#39;</span><span class="p">][</span><span class="s1">&#39;model_params&#39;</span><span class="p">][</span><span class="s1">&#39;coef_&#39;</span><span class="p">])</span>
+    <span class="c1">#sparse_coef_ = csr_matrix(data[&#39;ElasticNet&#39;][&#39;model_params&#39;][&#39;sparse_coef_&#39;])</span>
+    <span class="n">intercept_</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ElasticNet&#39;</span><span class="p">][</span><span class="s1">&#39;model_params&#39;</span><span class="p">][</span><span class="s1">&#39;intercept_&#39;</span><span class="p">]</span>
+    <span class="n">n_iter_</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ElasticNet&#39;</span><span class="p">][</span><span class="s1">&#39;model_params&#39;</span><span class="p">][</span><span class="s1">&#39;n_iter_&#39;</span><span class="p">]</span>
+    <span class="n">dual_gap_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;ElasticNet&#39;</span><span class="p">][</span><span class="s1">&#39;model_params&#39;</span><span class="p">][</span><span class="s1">&#39;dual_gap_&#39;</span><span class="p">])</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;coef_&#39;</span><span class="p">,</span> <span class="n">coef_</span><span class="p">)</span>
+    <span class="c1"># setattr(step, &#39;sparse_coef_&#39;, sparse_coef_)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;intercept_&#39;</span><span class="p">,</span> <span class="n">intercept_</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;n_iter_&#39;</span><span class="p">,</span> <span class="n">n_iter_</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;dual_gap_&#39;</span><span class="p">,</span> <span class="n">dual_gap_</span><span class="p">)</span>
+    <span class="n">pipeline_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">model</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">Pipeline</span><span class="p">(</span><span class="n">pipeline_steps</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

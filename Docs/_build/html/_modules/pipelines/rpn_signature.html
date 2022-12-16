@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pipelines.rpn_signature &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>pipelines.rpn_signature</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pipelines.rpn_signature</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">nipype.interfaces.fsl</span> <span class="kn">import</span> <span class="n">Reorient2Std</span>
+<span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">BidsPipeline</span><span class="p">,</span> <span class="n">NestedNode</span> <span class="k">as</span> <span class="n">Node</span><span class="p">,</span> <span class="n">FuncPipeline</span><span class="p">,</span> <span class="n">GroupPipeline</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.anat.anat_proc</span> <span class="kn">import</span> <span class="n">anat_proc</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.func.compcor</span> <span class="kn">import</span> <span class="n">anat_noise_roi</span><span class="p">,</span> <span class="n">compcor</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.anat.func_to_anat</span> <span class="kn">import</span> <span class="n">bbr</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">utility</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.func.func_proc</span> <span class="kn">import</span> <span class="n">func_proc_despike_afni</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.func.timeseries_extractor</span> <span class="kn">import</span> <span class="n">pick_atlas</span><span class="p">,</span> <span class="n">extract_timeseries_nativespace</span>
+<span class="kn">from</span> <span class="nn">PUMI.utils</span> <span class="kn">import</span> <span class="n">mist_modules</span><span class="p">,</span> <span class="n">mist_labels</span>
+<span class="kn">import</span> <span class="nn">traits</span>
+
+<span class="n">ROOT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+
+<span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ROOT_DIR</span><span class="p">,</span> <span class="s1">&#39;data_in/bids&#39;</span><span class="p">)</span>  <span class="c1"># path where the bids data is located</span>
+<span class="c1">#input_dir = os.path.join(ROOT_DIR, &#39;data_in/pumi-unittest&#39;)  # path where the bids data is located</span>
+<span class="c1">#output_dir = os.path.join(ROOT_DIR, &#39;data_out&#39;)  # path for the folder with the results of this script</span>
+<span class="n">working_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ROOT_DIR</span><span class="p">,</span> <span class="s1">&#39;data_out&#39;</span><span class="p">)</span>  <span class="c1"># path for the workflow folder</span>
+
+
+<div class="viewcode-block" id="calculate_connectivity"><a class="viewcode-back" href="../../pipelines.html#pipelines.rpn_signature.calculate_connectivity">[docs]</a><span class="nd">@FuncPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ts_files&#39;</span><span class="p">,</span> <span class="s1">&#39;fd_files&#39;</span><span class="p">,</span> <span class="s1">&#39;scrub_threshold&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">calculate_connectivity</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># Calculate RPN-score: prediction of pain sensitivity</span>
+    <span class="k">def</span> <span class="nf">calc_connectivity</span><span class="p">(</span><span class="n">ts_files</span><span class="p">,</span> <span class="n">fd_files</span><span class="p">,</span> <span class="n">scrub_threshold</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">os</span>
+        <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+        <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+        <span class="kn">from</span> <span class="nn">PUMI.PAINTeR</span> <span class="kn">import</span> <span class="n">load_timeseries</span><span class="p">,</span> <span class="n">connectivity_matrix</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ts_files</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>  <span class="c1"># in this case we assume we have a string or path-like object</span>
+            <span class="n">ts_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">ts_files</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fd_files</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>  <span class="c1"># in this case we assume we have a string or path-like object</span>
+            <span class="n">fd_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">fd_files</span><span class="p">]</span>
+        <span class="n">FD</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">mean_FD</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">median_FD</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">max_FD</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">perc_scrubbed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fd_files</span><span class="p">:</span>
+            <span class="n">fd</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">fd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">FD</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fd</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+            <span class="n">mean_FD</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fd</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+            <span class="n">median_FD</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">fd</span><span class="p">))</span>
+            <span class="n">max_FD</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fd</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+            <span class="n">perc_scrubbed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">100</span> <span class="o">-</span> <span class="mi">100</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">fd</span><span class="p">[</span><span class="n">fd</span> <span class="o">&lt;=</span> <span class="n">scrub_threshold</span><span class="p">]))</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;ts_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ts_files</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;fd_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fd_files</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;meanFD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean_FD</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;medianFD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">median_FD</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;maxFD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_FD</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;perc_scrubbed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">perc_scrubbed</span>
+
+        <span class="n">ts</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">load_timeseries</span><span class="p">(</span><span class="n">ts_files</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">scrubbing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scrub_threshold</span><span class="o">=</span><span class="n">scrub_threshold</span><span class="p">)</span>
+        <span class="n">features</span><span class="p">,</span> <span class="n">cm</span> <span class="o">=</span> <span class="n">connectivity_matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ts</span><span class="p">))</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;motion.csv&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;42 -- path --&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">features</span><span class="p">,</span> <span class="n">path</span>
+
+    <span class="n">connectivity_wf</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ts_files&#39;</span><span class="p">,</span> <span class="s1">&#39;fd_files&#39;</span><span class="p">,</span> <span class="s1">&#39;scrub_threshold&#39;</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">],</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">calc_connectivity</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;connectivity_wf&quot;</span>
+    <span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;ts_files&#39;</span><span class="p">,</span> <span class="n">connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;ts_files&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;fd_files&#39;</span><span class="p">,</span> <span class="n">connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;fd_files&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">scrub_threshold</span><span class="p">,</span> <span class="n">traits</span><span class="o">.</span><span class="n">trait_base</span><span class="o">.</span><span class="n">_Undefined</span><span class="p">):</span>
+        <span class="n">connectivity_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">scrub_threshold</span> <span class="o">=</span> <span class="mf">.15</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;scrub_threshold&#39;</span><span class="p">,</span> <span class="n">connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;scrub_threshold&#39;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;features&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;connectivity&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="predict_pain_sensitivity"><a class="viewcode-back" href="../../pipelines.html#pipelines.rpn_signature.predict_pain_sensitivity">[docs]</a><span class="nd">@FuncPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;in_files&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pred_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">predict_pain_sensitivity</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">model_json</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If model_json is None -&gt; search for model_json file. Only works when used in PUMI node.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">in_files</span><span class="p">,</span> <span class="n">model_json</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">PUMI.utils</span> <span class="kn">import</span> <span class="n">rpn_model</span>
+        <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+        <span class="kn">import</span> <span class="nn">os</span>
+
+        <span class="k">if</span> <span class="n">model_json</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span><span class="o">.</span><span class="n">rindex</span><span class="p">(</span><span class="s1">&#39;PUMI/&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">5</span>
+            <span class="n">model_json</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()[</span><span class="mi">0</span><span class="p">:</span><span class="n">pos</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;data_in/rpn_model.json&#39;</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">rpn_model</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">model_json</span><span class="p">)</span>
+        <span class="n">predicted</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s1">&#39;rpn-prediction.csv&#39;</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">in_files</span><span class="p">]</span>  <span class="c1"># todo: originally: df[&#39;in_file&#39;] = in_files</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;RPN&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">predicted</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="n">predict_wf</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;in_files&#39;</span><span class="p">,</span> <span class="s1">&#39;model_json&#39;</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">],</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">predict</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;predict_wf&quot;</span>
+    <span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="n">predict_wf</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_files&#39;</span><span class="p">,</span> <span class="n">predict_wf</span><span class="p">,</span> <span class="s1">&#39;in_files&#39;</span><span class="p">)</span>
+    <span class="n">predict_wf</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">model_json</span> <span class="o">=</span> <span class="n">model_json</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">predict_wf</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;pred_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">predict_wf</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;rpn&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="collect_predictions"><a class="viewcode-back" href="../../pipelines.html#pipelines.rpn_signature.collect_predictions">[docs]</a><span class="k">def</span> <span class="nf">collect_predictions</span><span class="p">(</span><span class="n">wf</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+    <span class="kn">import</span> <span class="nn">glob</span>
+
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">wf</span><span class="o">.</span><span class="n">sink_dir</span> <span class="o">+</span> <span class="s1">&#39;/**/rpn-prediction.csv&#39;</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;42 -- &#39;</span><span class="p">,</span> <span class="n">wf</span><span class="o">.</span><span class="n">sink_dir</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">predictions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">other_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other_df</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">wf</span><span class="o">.</span><span class="n">sink_dir</span> <span class="o">+</span> <span class="s1">&#39;/predictions.csv&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@BidsPipeline</span><span class="p">(</span><span class="n">output_query</span><span class="o">=</span><span class="p">{</span>
+    <span class="s1">&#39;T1w&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;anat&#39;</span><span class="p">,</span>
+        <span class="n">extension</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;nii&#39;</span><span class="p">,</span> <span class="s1">&#39;nii.gz&#39;</span><span class="p">]</span>
+    <span class="p">),</span>
+    <span class="s1">&#39;bold&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;func&#39;</span><span class="p">,</span>
+        <span class="n">extension</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;nii&#39;</span><span class="p">,</span> <span class="s1">&#39;nii.gz&#39;</span><span class="p">]</span>
+    <span class="p">)</span>
+<span class="p">})</span>
+<span class="k">def</span> <span class="nf">rpn</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">reorient_struct_wf</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">Reorient2Std</span><span class="p">(</span><span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;NIFTI_GZ&#39;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;reorient_struct_wf&quot;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;T1w&#39;</span><span class="p">,</span> <span class="n">reorient_struct_wf</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">reorient_func_wf</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">Reorient2Std</span><span class="p">(</span><span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;NIFTI_GZ&#39;</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;reorient_func_wf&quot;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">reorient_func_wf</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">anatomical_preprocessing_wf</span> <span class="o">=</span> <span class="n">anat_proc</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;anatomical_preprocessing_wf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">reorient_struct_wf</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">anatomical_preprocessing_wf</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="n">bbr_wf</span> <span class="o">=</span> <span class="n">bbr</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;bbr_wf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">reorient_func_wf</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">anatomical_preprocessing_wf</span><span class="p">,</span> <span class="s1">&#39;brain&#39;</span><span class="p">,</span> <span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;head&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">anatomical_preprocessing_wf</span><span class="p">,</span> <span class="s1">&#39;probmap_wm&#39;</span><span class="p">,</span> <span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;anat_wm_segmentation&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">anatomical_preprocessing_wf</span><span class="p">,</span> <span class="s1">&#39;probmap_csf&#39;</span><span class="p">,</span> <span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;anat_csf_segmentation&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">anatomical_preprocessing_wf</span><span class="p">,</span> <span class="s1">&#39;probmap_gm&#39;</span><span class="p">,</span> <span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;anat_gm_segmentation&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">anatomical_preprocessing_wf</span><span class="p">,</span> <span class="s1">&#39;probmap_ventricle&#39;</span><span class="p">,</span> <span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;anat_ventricle_segmentation&#39;</span><span class="p">)</span>
+
+    <span class="n">compcor_roi_wf</span> <span class="o">=</span> <span class="n">anat_noise_roi</span><span class="p">(</span><span class="s1">&#39;compcor_roi_wf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;wm_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="n">compcor_roi_wf</span><span class="p">,</span> <span class="s1">&#39;wm_mask&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;ventricle_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="n">compcor_roi_wf</span><span class="p">,</span> <span class="s1">&#39;ventricle_mask&#39;</span><span class="p">)</span>
+
+    <span class="n">func_proc_wf</span> <span class="o">=</span> <span class="n">func_proc_despike_afni</span><span class="p">(</span><span class="s1">&#39;func_proc_wf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">reorient_func_wf</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">func_proc_wf</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">compcor_roi_wf</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">func_proc_wf</span><span class="p">,</span> <span class="s1">&#39;cc_noise_roi&#39;</span><span class="p">)</span>
+
+    <span class="n">pick_atlas_wf</span> <span class="o">=</span> <span class="n">pick_atlas</span><span class="p">(</span><span class="s1">&#39;pick_atlas_wf&#39;</span><span class="p">)</span>
+    <span class="n">mist_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;../data_in/atlas/MIST&quot;</span><span class="p">))</span>
+    <span class="n">pick_atlas_wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">labelmap</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mist_dir</span><span class="p">,</span> <span class="s1">&#39;Parcellations/MIST_122.nii.gz&#39;</span><span class="p">)</span>
+    <span class="n">pick_atlas_wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">modules</span> <span class="o">=</span> <span class="n">mist_modules</span><span class="p">(</span><span class="n">mist_directory</span><span class="o">=</span><span class="n">mist_dir</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;122&quot;</span><span class="p">)</span>
+    <span class="n">pick_atlas_wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">mist_labels</span><span class="p">(</span><span class="n">mist_directory</span><span class="o">=</span><span class="n">mist_dir</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="s2">&quot;122&quot;</span><span class="p">)</span>
+
+    <span class="n">extract_timeseries</span> <span class="o">=</span> <span class="n">extract_timeseries_nativespace</span><span class="p">(</span><span class="s1">&#39;extract_timeseries&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pick_atlas_wf</span><span class="p">,</span> <span class="s1">&#39;relabeled_atlas&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;atlas&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pick_atlas_wf</span><span class="p">,</span> <span class="s1">&#39;reordered_labels&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">pick_atlas_wf</span><span class="p">,</span> <span class="s1">&#39;reordered_modules&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;modules&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">anatomical_preprocessing_wf</span><span class="p">,</span> <span class="s1">&#39;brain&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;anat&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;anat_to_func_linear_xfm&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;inv_linear_reg_mtrx&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">anatomical_preprocessing_wf</span><span class="p">,</span> <span class="s1">&#39;mni2anat_warpfield&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;inv_nonlinear_reg_mtrx&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bbr_wf</span><span class="p">,</span> <span class="s1">&#39;gm_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;gm_mask&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">func_proc_wf</span><span class="p">,</span> <span class="s1">&#39;func_preprocessed&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">func_proc_wf</span><span class="p">,</span> <span class="s1">&#39;FD&#39;</span><span class="p">,</span> <span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;confounds&#39;</span><span class="p">)</span>
+
+    <span class="n">calculate_connectivity_wf</span> <span class="o">=</span> <span class="n">calculate_connectivity</span><span class="p">(</span><span class="s1">&#39;calculate_connectivity_wf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">extract_timeseries</span><span class="p">,</span> <span class="s1">&#39;timeseries&#39;</span><span class="p">,</span> <span class="n">calculate_connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;ts_files&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">func_proc_wf</span><span class="p">,</span> <span class="s1">&#39;FD&#39;</span><span class="p">,</span> <span class="n">calculate_connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;fd_files&#39;</span><span class="p">)</span>
+
+    <span class="n">predict_pain_sensitivity_wf</span> <span class="o">=</span> <span class="n">predict_pain_sensitivity</span><span class="p">(</span><span class="s1">&#39;predict_pain_sensitivity_wf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">calculate_connectivity_wf</span><span class="p">,</span> <span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="n">predict_pain_sensitivity_wf</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">predict_pain_sensitivity_wf</span><span class="p">,</span> <span class="s1">&#39;in_files&#39;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">write_graph</span><span class="p">(</span><span class="s1">&#39;rpn-signature.png&#39;</span><span class="p">)</span>
+
+<span class="n">run_args</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;plugin&#39;</span><span class="p">:</span><span class="s1">&#39;MultiProc&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plugin_args&#39;</span><span class="p">:{</span><span class="s1">&#39;n_procs&#39;</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="s1">&#39;memory_gb&#39;</span><span class="p">:</span><span class="mi">5</span><span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starting RPN-signature...&quot;</span><span class="p">)</span>
+    <span class="n">rpn_wf</span> <span class="o">=</span> <span class="n">rpn</span><span class="p">(</span><span class="s1">&#39;rpn&#39;</span><span class="p">,</span> <span class="n">bids_dir</span><span class="o">=</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">subjects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;001&#39;</span><span class="p">],</span> <span class="n">run_args</span><span class="o">=</span><span class="n">run_args</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

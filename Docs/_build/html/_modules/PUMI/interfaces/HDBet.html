@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.interfaces.HDBet &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.interfaces.HDBet</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.interfaces.HDBet</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">nipype.interfaces.base</span> <span class="kn">import</span> <span class="n">CommandLineInputSpec</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">TraitedSpec</span><span class="p">,</span> <span class="n">traits_extension</span><span class="p">,</span> <span class="n">traits</span><span class="p">,</span> <span class="n">CommandLine</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+
+
+<div class="viewcode-block" id="HDBetInputSpec"><a class="viewcode-back" href="../../../PUMI.interfaces.html#PUMI.interfaces.HDBet.HDBetInputSpec">[docs]</a><span class="k">class</span> <span class="nc">HDBetInputSpec</span><span class="p">(</span><span class="n">CommandLineInputSpec</span><span class="p">):</span>
+    <span class="n">in_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;file to skull strip&#39;</span><span class="p">,</span>
+        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">argstr</span><span class="o">=</span><span class="s1">&#39;--input=</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">hash_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">copyfile</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;filename of the output containing the extracted brain (the skull stripped file)&#39;</span><span class="p">,</span>
+        <span class="n">exists</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">mandatory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">argstr</span><span class="o">=</span><span class="s1">&#39;--output=</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">hash_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">position</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;mode can be either </span><span class="se">\&#39;</span><span class="s1">fast</span><span class="se">\&#39;</span><span class="s1"> or </span><span class="se">\&#39;</span><span class="s1">accurate</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">argstr</span><span class="o">=</span><span class="s1">&#39;-mode=</span><span class="si">%s</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Set which device should be used. Can be either </span><span class="se">\&#39;</span><span class="s1">cpu</span><span class="se">\&#39;</span><span class="s1"> to run on cpu or a GPU ID&#39;</span><span class="p">,</span>
+        <span class="n">argstr</span><span class="o">=</span><span class="s1">&#39;-device=</span><span class="si">%s</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="n">tta</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;set to </span><span class="se">\&#39;</span><span class="s1">1</span><span class="se">\&#39;</span><span class="s1"> to use test time data augmentation, otherwise set to </span><span class="se">\&#39;</span><span class="s1">0</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">argstr</span><span class="o">=</span><span class="s1">&#39;-tta=</span><span class="si">%i</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="n">postprocessing</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;set to </span><span class="se">\&#39;</span><span class="s1">1</span><span class="se">\&#39;</span><span class="s1"> to do postprocessing, otherwise set to </span><span class="se">\&#39;</span><span class="s1">0</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">argstr</span><span class="o">=</span><span class="s1">&#39;-pp=</span><span class="si">%i</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="n">save_mask</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;set to </span><span class="se">\&#39;</span><span class="s1">1</span><span class="se">\&#39;</span><span class="s1"> to save the brain mask, otherwise set to </span><span class="se">\&#39;</span><span class="s1">0</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">argstr</span><span class="o">=</span><span class="s1">&#39;-s=</span><span class="si">%i</span><span class="s1">&#39;</span>
+    <span class="p">)</span>
+    <span class="n">overwrite_existing</span> <span class="o">=</span> <span class="n">traits</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span>
+        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;set to </span><span class="se">\&#39;</span><span class="s1">1</span><span class="se">\&#39;</span><span class="s1"> to overwrite existing predictions, otherwise set to </span><span class="se">\&#39;</span><span class="s1">0</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">argstr</span><span class="o">=</span><span class="s1">&#39;--overwrite_existing=</span><span class="si">%i</span><span class="s1">&#39;</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HDBetOutputSpec"><a class="viewcode-back" href="../../../PUMI.interfaces.html#PUMI.interfaces.HDBet.HDBetOutputSpec">[docs]</a><span class="k">class</span> <span class="nc">HDBetOutputSpec</span><span class="p">(</span><span class="n">TraitedSpec</span><span class="p">):</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">&#39;the skull stripped file&#39;</span><span class="p">)</span>
+    <span class="n">mask_file</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">desc</span><span class="o">=</span><span class="s1">&#39;brain mask (if generated)&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HDBet"><a class="viewcode-back" href="../../../PUMI.interfaces.html#PUMI.interfaces.HDBet.HDBet">[docs]</a><span class="k">class</span> <span class="nc">HDBet</span><span class="p">(</span><span class="n">CommandLine</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    HD-Bet wrapper.</span>
+<span class="sd">    For more information about HD-Bet: https://github.com/MIC-DKFZ/HD-BET</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_cmd</span> <span class="o">=</span> <span class="s1">&#39;hd-bet&#39;</span>
+    <span class="n">input_spec</span> <span class="o">=</span> <span class="n">HDBetInputSpec</span>
+    <span class="n">output_spec</span> <span class="o">=</span> <span class="n">HDBetOutputSpec</span>
+
+    <span class="k">def</span> <span class="nf">_list_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out_file_filename</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">save_mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;mask_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_file_filename</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">outputs</span>
+
+    <span class="k">def</span> <span class="nf">_out_file_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates the filename for &#39;out_file&#39; and returns the absolute path to the file.</span>
+<span class="sd">        The returned path leads to the same folder where the input file is located.</span>
+
+<span class="sd">        If an output filename was specified (e.g. &#39;extracted_brain&#39; or &#39;extracted_brain.nii.gz&#39;) and the input file</span>
+<span class="sd">        is in the folder &#39;/home/data_in&#39;, the filename would be simply &#39;/home/data_in/extracted_brain.nii.gz.&#39;</span>
+
+<span class="sd">        If no output filename is specified, &#39;_bet&#39; is appended to the input filename.</span>
+<span class="sd">        Example: If the input was &#39;/home/data_in/sub-001_T1w.nii.gz&#39;, the output name would be</span>
+<span class="sd">                 &#39;/home/data_in/sub-001_T1w_bet.nii.gz&#39;.</span>
+
+<span class="sd">        Note: HD-Bet works only with .nii.gz files!</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">traits_extension</span><span class="o">.</span><span class="n">isdefined</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">out_file</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">out_file</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.nii.gz&#39;</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">+=</span> <span class="s1">&#39;.nii.gz&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span><span class="o">.</span><span class="n">rindex</span><span class="p">(</span><span class="s1">&#39;.nii.gz&#39;</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[:</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_bet.nii.gz&#39;</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_mask_file_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates the filename for &#39;mask_file&#39; and returns the absolute path to the file.</span>
+<span class="sd">        The returned path leads to the same folder where the input file is located.</span>
+
+<span class="sd">        If &#39;out_file&#39; was defined, then &#39;_mask&#39; is appended to it.</span>
+<span class="sd">        Example: If out_file is &#39;extracted_brain.nii.gz&#39; and the input is in the folder &#39;/home/data_in&#39; the result would</span>
+<span class="sd">                 be &#39;/home/data_in/extracted_brain_mask.nii.gz&#39;.</span>
+
+<span class="sd">        If &#39;out_file&#39; is not specified, &#39;_mask&#39; is appended to the filename of the extracted brain.</span>
+<span class="sd">        Example: If the skull stripped file is called &#39;sub-001_T1w_bet.nii.gz&#39; and located in the folder</span>
+<span class="sd">                 &#39;/home/data_in&#39;, the output filename would be &#39;/home/data_in/sub-001_T1w_bet_mask.nii.gz&#39;.</span>
+
+<span class="sd">        Note: HD-Bet works only with .nii.gz files!</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">traits_extension</span><span class="o">.</span><span class="n">isdefined</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">out_file</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">out_file</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.nii.gz&#39;</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s1">&#39;_mask.nii.gz&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">rindex</span><span class="p">(</span><span class="s1">&#39;.nii.gz&#39;</span><span class="p">)</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[:</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_mask.nii.gz&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">in_file</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out_file_filename</span><span class="p">()</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">rindex</span><span class="p">(</span><span class="s1">&#39;.nii.gz&#39;</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">filename</span><span class="p">[:</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_mask.nii.gz&#39;</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

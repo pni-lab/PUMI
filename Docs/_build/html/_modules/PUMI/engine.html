@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.engine &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.engine</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.engine</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">configparser</span> <span class="kn">import</span> <span class="n">SafeConfigParser</span>
+
+<span class="kn">from</span> <span class="nn">nipype.pipeline.engine.workflows</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">nipype.pipeline.engine.nodes</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">nipype.interfaces.utility</span> <span class="k">as</span> <span class="nn">utility</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">BIDSDataGrabber</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces.io</span> <span class="kn">import</span> <span class="n">DataSink</span>
+<span class="kn">from</span> <span class="nn">nipype</span> <span class="kn">import</span> <span class="n">IdentityInterface</span><span class="p">,</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">nipype.utils.filemanip</span> <span class="kn">import</span> <span class="n">list_to_filename</span>
+<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha1</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+
+<span class="k">def</span> <span class="nf">_parameterization_dir</span><span class="p">(</span><span class="n">param</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns</span>
+<span class="sd">        the directory name for the given parameterization string as follows:</span>
+<span class="sd">        - If the parameterization is longer than 32 characters, then</span>
+<span class="sd">          return the SHA-1 hex digest.</span>
+<span class="sd">        - Otherwise, return the parameterization unchanged.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">param</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">32</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sha1</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">param</span>
+
+
+<div class="viewcode-block" id="NestedNode"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.NestedNode">[docs]</a><span class="k">class</span> <span class="nc">NestedNode</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="c1"># costumizing directories</span>
+<div class="viewcode-block" id="NestedNode.output_dir"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.NestedNode.output_dir">[docs]</a>    <span class="k">def</span> <span class="nf">output_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the location of the output directory for the node&quot;&quot;&quot;</span>
+        <span class="c1"># Output dir is cached</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span>
+
+        <span class="c1"># Calculate &amp; cache otherwise</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_dir</span> <span class="o">=</span> <span class="n">mkdtemp</span><span class="p">()</span>
+        <span class="n">outputdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dir</span>
+
+        <span class="c1"># todo: maybe does not work with multiple mapnodes/iterables</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameterization</span><span class="p">:</span>
+            <span class="n">params_str</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameterization</span><span class="p">]</span>
+            <span class="c1"># regexp magic to make subject handling more BIDS-like:</span>
+            <span class="c1">#params_str = [re.sub(&#39;^_subject_&#39;, &#39;sub-&#39;, param) for param in params_str]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">str2bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">][</span><span class="s2">&quot;parameterize_dirs&quot;</span><span class="p">]):</span>
+                <span class="n">params_str</span> <span class="o">=</span> <span class="p">[</span><span class="n">_parameterization_dir</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params_str</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hierarchy</span><span class="p">:</span>  <span class="c1"># top level remains outside</span>
+                <span class="n">outputdir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outputdir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hierarchy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">outputdir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outputdir</span><span class="p">,</span> <span class="o">*</span><span class="n">params_str</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hierarchy</span><span class="p">:</span>  <span class="c1"># subworkflows go inside</span>
+                <span class="n">outputdir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outputdir</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_hierarchy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hierarchy</span><span class="p">:</span>
+            <span class="n">outputdir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outputdir</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_hierarchy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outputdir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface</span><span class="p">,</span> <span class="n">DataSink</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameterization</span><span class="p">:</span>
+                <span class="n">params_str</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameterization</span><span class="p">]</span>
+                <span class="c1"># regexp magic to make subject handling more BIDS-like:</span>
+                <span class="n">params_str</span> <span class="o">=</span> <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;^_subject_&#39;</span><span class="p">,</span> <span class="s1">&#39;sub-&#39;</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params_str</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">str2bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;execution&quot;</span><span class="p">][</span><span class="s2">&quot;parameterize_dirs&quot;</span><span class="p">]):</span>
+                    <span class="n">params_str</span> <span class="o">=</span> <span class="p">[</span><span class="n">_parameterization_dir</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params_str</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">params_str</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span></div></div>
+
+
+<div class="viewcode-block" id="NestedMapNode"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.NestedMapNode">[docs]</a><span class="k">class</span> <span class="nc">NestedMapNode</span><span class="p">(</span><span class="n">MapNode</span><span class="p">,</span> <span class="n">NestedNode</span><span class="p">):</span>
+    <span class="c1"># costumizing directories</span>
+    <span class="c1"># output_dir() is from NestedNode</span>
+<div class="viewcode-block" id="NestedMapNode.output_dir"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.NestedMapNode.output_dir">[docs]</a>    <span class="k">def</span> <span class="nf">output_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">output_dir</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="NestedWorkflow"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.NestedWorkflow">[docs]</a><span class="k">class</span> <span class="nc">NestedWorkflow</span><span class="p">(</span><span class="n">Workflow</span><span class="p">):</span>
+    <span class="c1"># input/output filed naming is convenient: no need for &#39;inputspec.in_file&#39; but simply &#39;in_file&#39; (as if it was a node)</span>
+    <span class="c1"># this is realized by tweaking the inputs of connect</span>
+
+    <span class="c1"># plus: connect accepts names instead of objects (for using the pre-specified in/outpoutspec nodes)</span>
+
+<div class="viewcode-block" id="NestedWorkflow.connect"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.NestedWorkflow.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Todo docs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># we convert the input to handle the subworkflow-shortcuts</span>
+        <span class="c1"># (i.e. adding &#39;inoutspec.&#39; and &#39;outputspec.&#39; when needed)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">connection_list</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">connection_list</span> <span class="o">=</span> <span class="p">[(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">args</span><span class="p">[</span><span class="mi">3</span><span class="p">])])]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;connect() takes either 4 arguments, or 1 list of&quot;</span>
+                <span class="s2">&quot; connection tuples (</span><span class="si">%d</span><span class="s2"> args given)&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">connection_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">connection_list</span><span class="p">))</span>
+
+        <span class="c1"># 1. Handle shortcut</span>
+        <span class="k">for</span> <span class="n">i_conn_list</span><span class="p">,</span> <span class="p">(</span><span class="n">srcnode</span><span class="p">,</span> <span class="n">destnode</span><span class="p">,</span> <span class="n">connects</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">connection_list</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">srcnode</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">connection_list</span><span class="p">[</span><span class="n">i_conn_list</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">srcnode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="n">srcnode</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">destnode</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">connection_list</span><span class="p">[</span><span class="n">i_conn_list</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">destnode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="n">destnode</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">i_connects</span><span class="p">,</span> <span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">connects</span><span class="p">):</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                    <span class="c1"># handles the case that source is specified</span>
+                    <span class="c1"># with a function</span>
+                    <span class="n">sourcename</span> <span class="o">=</span> <span class="n">source</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)):</span>
+                    <span class="n">sourcename</span> <span class="o">=</span> <span class="n">source</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                        <span class="p">(</span>
+                            <span class="s2">&quot;Unknown source specification in &quot;</span>
+                            <span class="s2">&quot;connection from output of </span><span class="si">%s</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+                        <span class="o">%</span> <span class="n">srcnode</span><span class="o">.</span><span class="n">name</span>
+                    <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">sourcename</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">srcnode</span><span class="o">.</span><span class="n">_check_outputs</span><span class="p">(</span><span class="n">sourcename</span><span class="p">):</span>
+                    <span class="n">outputspec_source</span> <span class="o">=</span> <span class="s1">&#39;outputspec.&#39;</span> <span class="o">+</span> <span class="n">sourcename</span>
+                    <span class="k">if</span> <span class="n">srcnode</span><span class="o">.</span><span class="n">_check_outputs</span><span class="p">(</span><span class="n">outputspec_source</span><span class="p">):</span>
+                        <span class="n">connection_list</span><span class="p">[</span><span class="n">i_conn_list</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="n">i_connects</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">outputspec_source</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">destnode</span><span class="o">.</span><span class="n">_check_inputs</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+                    <span class="n">inputspec_dest</span> <span class="o">=</span> <span class="s1">&#39;inputspec.&#39;</span> <span class="o">+</span> <span class="n">dest</span>
+                    <span class="k">if</span> <span class="n">destnode</span><span class="o">.</span><span class="n">_check_inputs</span><span class="p">(</span><span class="n">inputspec_dest</span><span class="p">):</span>
+                        <span class="n">src</span> <span class="o">=</span> <span class="n">connection_list</span><span class="p">[</span><span class="n">i_conn_list</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="n">i_connects</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">connection_list</span><span class="p">[</span><span class="n">i_conn_list</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="n">i_connects</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">inputspec_dest</span><span class="p">)</span>
+        <span class="c1"># connect nodes</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">connection_list</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># decorator class</span>
+<div class="viewcode-block" id="PumiPipeline"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.PumiPipeline">[docs]</a><span class="k">class</span> <span class="nc">PumiPipeline</span><span class="p">:</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     # Todo docs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputspec_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">regexp_sub</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">outputspec_fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">outputspec_fields</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">inputspec_fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inputspec_fields</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">regexp_sub</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">regexp_sub</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputspec_fields</span> <span class="o">=</span> <span class="n">inputspec_fields</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputspec_fields</span> <span class="o">=</span> <span class="n">outputspec_fields</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regexp_sub</span> <span class="o">=</span> <span class="n">regexp_sub</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipeline_fun</span><span class="p">):</span>
+
+        <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">pipeline_fun</span><span class="p">)</span> <span class="c1"># So that decorated functions can be documented properly</span>
+        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">base_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">sink_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">qc_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+            <span class="n">cfg_parser</span> <span class="o">=</span> <span class="n">SafeConfigParser</span><span class="p">()</span>
+            <span class="n">cfg_parser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;settings.ini&#39;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">sink_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">default_sink_dir</span> <span class="o">=</span> <span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SINKING&#39;</span><span class="p">,</span> <span class="s1">&#39;sink_dir&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;derivatives&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">default_sink_dir</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+                    <span class="n">sink_dir</span> <span class="o">=</span> <span class="n">default_sink_dir</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sink_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">default_sink_dir</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">qc_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">default_qc_dir</span> <span class="o">=</span> <span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SINKING&#39;</span><span class="p">,</span> <span class="s1">&#39;qc_dir&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;derivatives/qc&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">default_qc_dir</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+                    <span class="n">qc_dir</span> <span class="o">=</span> <span class="n">default_qc_dir</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">qc_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">default_qc_dir</span><span class="p">)</span>
+
+            <span class="n">wf</span> <span class="o">=</span> <span class="n">NestedWorkflow</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">)</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">sink_dir</span> <span class="o">=</span> <span class="n">sink_dir</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">qc_dir</span> <span class="o">=</span> <span class="n">qc_dir</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span> <span class="o">=</span> <span class="n">cfg_parser</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputspec_fields</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">inputspec</span> <span class="o">=</span> <span class="n">NestedNode</span><span class="p">(</span>
+                    <span class="n">utility</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
+                        <span class="n">fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inputspec_fields</span><span class="p">,</span>
+                        <span class="n">mandatory_inputs</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputspec&#39;</span>
+                <span class="p">)</span>
+                <span class="n">wf</span><span class="o">.</span><span class="n">add_nodes</span><span class="p">([</span><span class="n">inputspec</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputspec_fields</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">outputspec</span> <span class="o">=</span> <span class="n">NestedNode</span><span class="p">(</span>
+                    <span class="n">utility</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
+                        <span class="n">fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">outputspec_fields</span><span class="p">,</span>
+                        <span class="n">mandatory_inputs</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;outputspec&#39;</span>
+                <span class="p">)</span>
+                <span class="n">wf</span><span class="o">.</span><span class="n">add_nodes</span><span class="p">([</span><span class="n">outputspec</span><span class="p">])</span>
+
+            <span class="n">sinker</span> <span class="o">=</span> <span class="n">NestedNode</span><span class="p">(</span>
+                <span class="n">DataSink</span><span class="p">(),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sinker&#39;</span>
+            <span class="p">)</span>
+            <span class="n">sinker</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">base_directory</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">qc_dir</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">QcPipeline</span><span class="p">)</span> <span class="k">else</span> <span class="n">wf</span><span class="o">.</span><span class="n">sink_dir</span>
+            <span class="n">sinker</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">regexp_substitutions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">regexp_sub</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">add_nodes</span><span class="p">([</span><span class="n">sinker</span><span class="p">])</span>
+
+            <span class="n">pipeline_fun</span><span class="p">(</span><span class="n">wf</span><span class="o">=</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="c1"># todo: should we do any post workflow checks</span>
+            <span class="c1"># e.g. is outputspec connected</span>
+            <span class="c1"># or unconnected nodes</span>
+
+            <span class="k">return</span> <span class="n">wf</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+
+    <span class="k">def</span> <span class="nf">_regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Regexp substitutions:&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">regexp_sub</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AnatPipeline"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.AnatPipeline">[docs]</a><span class="k">class</span> <span class="nc">AnatPipeline</span><span class="p">(</span><span class="n">PumiPipeline</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     # Todo docs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputspec_fields</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="p">,</span> <span class="n">regexp_sub</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_regexp_sub</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">regexp_sub</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">regexp_sub</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">regexp_sub</span>
+        <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">default_regexp_sub</span><span class="p">:</span>
+            <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">r</span><span class="s1">&#39;(.*\/)([^\/]+)\/([^\/]+)\/([^\/]+)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\g&lt;1&gt;\g&lt;3&gt;/\g&lt;4&gt;&#39;</span><span class="p">),</span>
+                             <span class="p">(</span><span class="s1">&#39;_subject_&#39;</span><span class="p">,</span> <span class="s1">&#39;sub-&#39;</span><span class="p">)]</span>
+        <span class="n">substitutions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">regexp_sub</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="p">,</span> <span class="n">substitutions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anat_fun</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">anat_fun</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QcPipeline"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.QcPipeline">[docs]</a><span class="k">class</span> <span class="nc">QcPipeline</span><span class="p">(</span><span class="n">PumiPipeline</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     # Todo docs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputspec_fields</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="p">,</span> <span class="n">regexp_sub</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_regexp_sub</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">regexp_sub</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">regexp_sub</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">regexp_sub</span>
+        <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">default_regexp_sub</span><span class="p">:</span>
+            <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">r</span><span class="s1">&#39;(.*\/)([^\/]+)\/([^\/]+)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\g&lt;1&gt;\g&lt;2&gt;.png&#39;</span><span class="p">),</span>
+                             <span class="p">(</span><span class="s1">&#39;_subject_&#39;</span><span class="p">,</span> <span class="s1">&#39;sub-&#39;</span><span class="p">)]</span>
+
+        <span class="n">substitutions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">regexp_sub</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="p">,</span> <span class="n">substitutions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qc_fun</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">qc_fun</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FuncPipeline"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.FuncPipeline">[docs]</a><span class="k">class</span> <span class="nc">FuncPipeline</span><span class="p">(</span><span class="n">PumiPipeline</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     # Todo docs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputspec_fields</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="p">,</span> <span class="n">regexp_sub</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_regexp_sub</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">regexp_sub</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">regexp_sub</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">regexp_sub</span>
+        <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">default_regexp_sub</span><span class="p">:</span>
+            <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">r</span><span class="s1">&#39;(.*\/)([^\/]+)\/([^\/]+)\/([^\/]+)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\g&lt;1&gt;\g&lt;3&gt;/\g&lt;4&gt;&#39;</span><span class="p">),</span>
+                             <span class="p">(</span><span class="s1">&#39;_subject_&#39;</span><span class="p">,</span> <span class="s1">&#39;sub-&#39;</span><span class="p">)]</span>
+
+        <span class="n">substitutions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">regexp_sub</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="p">,</span> <span class="n">substitutions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_fun</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">func_fun</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GroupPipeline"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.GroupPipeline">[docs]</a><span class="k">class</span> <span class="nc">GroupPipeline</span><span class="p">(</span><span class="n">PumiPipeline</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputspec_fields</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="p">,</span> <span class="n">regexp_sub</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_regexp_sub</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">regexp_sub</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">regexp_sub</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">regexp_sub</span>
+        <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">default_regexp_sub</span><span class="p">:</span>
+            <span class="n">substitutions</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">r</span><span class="s1">&#39;(.*\/)([^\/]+)\/([^\/]+)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\g&lt;1&gt;\g&lt;3&gt;&#39;</span><span class="p">)]</span>
+
+        <span class="n">substitutions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">regexp_sub</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="p">,</span> <span class="n">outputspec_fields</span><span class="p">,</span> <span class="n">substitutions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group_fun</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="n">group_fun</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BidsPipeline"><a class="viewcode-back" href="../../PUMI.html#PUMI.engine.BidsPipeline">[docs]</a><span class="k">class</span> <span class="nc">BidsPipeline</span><span class="p">(</span><span class="n">PumiPipeline</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    decorator for top-level pipelines, with BIDS input</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_query</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1">#regexp_sub = [] if regexp_sub is None else regexp_sub</span>
+        <span class="c1">#substitutions = []</span>
+        <span class="c1">#if default_regexp_sub:</span>
+        <span class="c1">#    substitutions = []  # not needed here probably?</span>
+        <span class="c1">#substitutions.extend(regexp_sub)</span>
+
+        <span class="k">if</span> <span class="n">output_query</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_query</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;T1w&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;anat&#39;</span><span class="p">,</span>
+                    <span class="n">extension</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;nii&#39;</span><span class="p">,</span> <span class="s1">&#39;nii.gz&#39;</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="c1">#&#39;rest&#39;: dict(   # todo: how to get rests only</span>
+                <span class="c1">#    datatype=&#39;func&#39;,</span>
+                <span class="c1">#    suffix=&#39;bold&#39;,</span>
+                <span class="c1">#    extension=[&#39;nii&#39;, &#39;nii.gz&#39;]</span>
+                <span class="c1">#),</span>
+                <span class="s1">&#39;bold&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>  <span class="c1"># this should get all task, only</span>
+                    <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;func&#39;</span><span class="p">,</span>
+                    <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span>
+                    <span class="n">extension</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;nii&#39;</span><span class="p">,</span> <span class="s1">&#39;nii.gz&#39;</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="c1">#&#39;fmap&#39;: dict(</span>
+                <span class="c1">#    modality=&#39;fmap&#39;,</span>
+                <span class="c1">#    extension=[&#39;nii&#39;, &#39;nii.gz&#39;]</span>
+                <span class="c1">#)</span>
+                <span class="c1">#&#39;dwi&#39;: dict(</span>
+                <span class="c1">#    modality=&#39;dwi&#39;,</span>
+                <span class="c1">#    extension=[&#39;nii&#39;, &#39;nii.gz&#39;]</span>
+                <span class="c1">#)</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_query</span> <span class="o">=</span> <span class="n">output_query</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipeline_fun</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">bids_dir</span><span class="p">,</span> <span class="n">subjects</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">sink_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">qc_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            # Todo Docs</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="c1"># default: multiproc</span>
+            <span class="k">if</span> <span class="n">run_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">run_args</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;plugin&#39;</span><span class="p">:</span><span class="s1">&#39;MultiProc&#39;</span><span class="p">}</span>
+
+            <span class="n">cfg_parser</span> <span class="o">=</span> <span class="n">SafeConfigParser</span><span class="p">()</span>
+            <span class="n">cfg_parser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;settings.ini&#39;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">sink_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">default_sink_dir</span> <span class="o">=</span> <span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SINKING&#39;</span><span class="p">,</span> <span class="s1">&#39;sink_dir&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;derivatives&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">default_sink_dir</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+                    <span class="n">sink_dir</span> <span class="o">=</span> <span class="n">default_sink_dir</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sink_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">default_sink_dir</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Set default sink dir globally</span>
+                <span class="c1"># todo: implement override in configparser?</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Setting global sink_dir: Not yet implemented!</span><span class="se">\n</span><span class="s1">Modify settings.ini instead.&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">qc_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">default_qc_dir</span> <span class="o">=</span> <span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SINKING&#39;</span><span class="p">,</span> <span class="s1">&#39;qc_dir&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;derivatives/qc&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">default_qc_dir</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+                    <span class="n">qc_dir</span> <span class="o">=</span> <span class="n">default_qc_dir</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">qc_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">default_qc_dir</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Set default qc dir globally</span>
+                <span class="c1"># todo: implement override in configparser?</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Setting global qc_dir: Not yet implemented!</span><span class="se">\n</span><span class="s1">Modify settings.ini instead.&#39;</span><span class="p">)</span>
+
+            <span class="c1"># main workflow</span>
+            <span class="n">wf</span> <span class="o">=</span> <span class="n">NestedWorkflow</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">)</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">sink_dir</span> <span class="o">=</span> <span class="n">sink_dir</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">qc_dir</span> <span class="o">=</span> <span class="n">qc_dir</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span> <span class="o">=</span> <span class="n">cfg_parser</span>
+
+            <span class="c1"># instead of inputspec, we need a bidsgrabber</span>
+
+            <span class="k">if</span> <span class="n">subjects</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># parse all subjects</span>
+                <span class="n">subjects</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">glob</span><span class="p">(</span><span class="n">bids_dir</span> <span class="o">+</span> <span class="s1">&#39;/sub-*&#39;</span><span class="p">):</span>
+                    <span class="n">subjects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;sub-&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="c1"># Create a subroutine (subgraph) for every subject</span>
+            <span class="n">subject_iterator</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">utility</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;subject&#39;</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;subject_iterator&#39;</span><span class="p">)</span>
+            <span class="n">subject_iterator</span><span class="o">.</span><span class="n">iterables</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;subject&#39;</span><span class="p">,</span> <span class="n">subjects</span><span class="p">)]</span>
+
+            <span class="c1"># create a BIDS-node</span>
+            <span class="n">bids_grabber</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">BIDSDataGrabber</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;bids_grabber&#39;</span><span class="p">)</span>
+            <span class="n">bids_grabber</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">base_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">bids_dir</span><span class="p">)</span>
+            <span class="n">bids_grabber</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">output_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_query</span>
+
+            <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">subject_iterator</span><span class="p">,</span> <span class="s1">&#39;subject&#39;</span><span class="p">,</span> <span class="n">bids_grabber</span><span class="p">,</span> <span class="s1">&#39;subject&#39;</span><span class="p">)</span>
+
+            <span class="n">inputspec</span> <span class="o">=</span> <span class="n">NestedNode</span><span class="p">(</span>
+                <span class="n">utility</span><span class="o">.</span><span class="n">IdentityInterface</span><span class="p">(</span>
+                    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_query</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;inputspec&#39;</span>
+            <span class="p">)</span>
+
+            <span class="c1"># &#39;Unpack&#39; list from bids_grabber</span>
+            <span class="c1"># bids_grabber returns a list with a string (path to the anat image of a subject),</span>
+            <span class="c1"># but most other nodes do not take a list as input file</span>
+            <span class="k">for</span> <span class="n">bids_modality</span> <span class="ow">in</span> <span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_query</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">bids_modality</span><span class="p">)</span>
+                <span class="n">path_extractor</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+                    <span class="n">Function</span><span class="p">(</span>
+                        <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;filelist&quot;</span><span class="p">],</span>
+                        <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="n">bids_modality</span><span class="p">],</span>
+                        <span class="n">function</span><span class="o">=</span><span class="n">list_to_filename</span>
+                    <span class="p">),</span>
+                    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;path_extractor_&quot;</span> <span class="o">+</span> <span class="n">bids_modality</span>
+                <span class="p">)</span>
+                <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bids_grabber</span><span class="p">,</span> <span class="n">bids_modality</span><span class="p">,</span> <span class="n">path_extractor</span><span class="p">,</span> <span class="s1">&#39;filelist&#39;</span><span class="p">)</span>
+                <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">path_extractor</span><span class="p">,</span> <span class="n">bids_modality</span><span class="p">,</span> <span class="n">inputspec</span><span class="p">,</span> <span class="n">bids_modality</span><span class="p">)</span>
+
+            <span class="c1"># there is no outputspec, this pipeline should not be nested!</span>
+
+            <span class="c1"># in case it&#39;s needed:</span>
+            <span class="n">sinker</span> <span class="o">=</span> <span class="n">NestedNode</span><span class="p">(</span>
+                <span class="n">DataSink</span><span class="p">(),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sinker&#39;</span>
+            <span class="p">)</span>
+            <span class="n">sinker</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">base_directory</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">qc_dir</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">QcPipeline</span><span class="p">)</span> <span class="k">else</span> <span class="n">wf</span><span class="o">.</span><span class="n">sink_dir</span>
+            <span class="n">sinker</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">regexp_substitutions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">regexp_sub</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">add_nodes</span><span class="p">([</span><span class="n">sinker</span><span class="p">])</span>
+
+            <span class="n">pipeline_fun</span><span class="p">(</span><span class="n">wf</span><span class="o">=</span><span class="n">wf</span><span class="p">,</span> <span class="n">bids_dir</span><span class="o">=</span><span class="n">bids_dir</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="c1"># todo: should we do any post workflow checks</span>
+            <span class="c1"># e.g. is outputspec connected</span>
+            <span class="c1"># or unconnected nodes</span>
+
+            <span class="n">wf</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="o">**</span><span class="n">run_args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">wf</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
