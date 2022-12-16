@@ -208,5 +208,6 @@ run_args = {
 }
 
 
-print("Starting RPN-signature...")
-rpn_wf = rpn('rpn', bids_dir=input_dir, subjects=['001'], run_args=run_args)
+if __name__ == '__main__':
+    print("Starting RPN-signature...")
+    rpn_wf = rpn('rpn', bids_dir=input_dir, subjects=['001'], run_args=run_args)
