@@ -6,6 +6,14 @@
 Welcome to PUMI's documentation!
 ================================
 
+Developer Documentation
+-----------------------
+
+`Developing the Documentation <dev_docs.html>`_
+
+API
+---
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
