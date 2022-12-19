@@ -1,0 +1,102 @@
+<h1 id="system-setup-for-pumi-development-on-windows">System setup for PUMI development on Windows 2</h1>
+<p>If you want to run and develop PUMI in a Docker container, and your OS is Windows, you will need to follow the steps listed in this document.</p>
+<h2 id="option-1-go-remote-with-docker">OPTION 1: Go remote with Docker</h2>
+<p><strong>Benefits:</strong> No need to install locally all the dependencies to run and develop PUMI. The Docker container takes care of it.</p>
+<h3 id="1-install-linux-on-windows-with-wsl">1. <strong>Install Linux on Windows with WSL</strong></h3>
+<p><em>Why?</em> This is the first requirement to install Docker in Windows: </p>
+<h4 id="steps"><strong>STEPS:</strong></h4>
+<ul>
+<li>Open your command prompt as administrator and type: <strong>wsl --install</strong></li>
+</ul>
+<img alt="wsl_install" src="w1.png"/>
+
+<ul>
+<li>Restart your computer </li>
+<li>To see a list of available Linux distributions available for download, enter: <strong>wsl --list –online</strong></li>
+</ul>
+<img alt="wsl_list" src="w2.png"/>
+
+<ul>
+<li>Install Ubuntu 20.04 LTS, for example, using: <strong>wsl --install -d Ubuntu-20.04</strong> </li>
+<li>Once the process of installing your Linux distribution with WSL is complete, open the distribution (Ubuntu in this case) using the Start menu. You will be asked to create a Username and Password for your Linux distribution.</li>
+</ul>
+<img alt="ubuntu" src="w3.png"/>
+
+<p><em>Note: nothing will appear on screen when you type the password. It’s called blind typing and is completely normal :)</em></p>
+<ul>
+<li>Download and install the Linux kernel update package </li>
+<li>In the PowerShell or Windows Command Prompt, type: <strong>wsl --set-default-version 2</strong></li>
+</ul>
+<img alt="wsl_2" src="w4.png"/>
+
+<h3 id="2-install-docker-desktop-on-windows-and-pull-the-pumi-container-from-dockerhub">2. <strong>Install Docker Desktop on Windows and pull the PUMI container from DockerHub</strong></h3>
+<h4 id="steps-1"><strong>STEPS:</strong></h4>
+<ul>
+<li>Download Docker Desktop for Windows</li>
+<li>Run the installer. It typically downloads to your Downloads folder, or you can run it from the recent downloads bar at the bottom of your web browser.</li>
+<li>When prompted, ensure the Use WSL 2 instead of Hyper-V option on the Configuration page is selected or not depending on your choice of backend. If your system only supports one of the two options, you will not be able to select which backend to use.</li>
+<li>Follow the instructions on the installation wizard to authorize the installer and proceed with the installation. When the installation is successful, click Close to complete the installation process.</li>
+</ul>
+<p><em>Note: if your admin account is different to your user account, you must add the user to the docker-users group. Run Computer Management as an administrator and navigate to Local Users and Groups &rarr; Groups &rarr; docker-users. Right-click to add the user to the group. Log out and log back in for the changes to take effect.</em></p>
+<ul>
+<li><p>Start Docker Desktop and set up your account.</p>
+</li>
+<li><p>To pull and run the PUMI container, type in the command line: <strong>docker run pnilab/pumi</strong>
+You will see how the images are downloaded:</p>
+</li>
+</ul>
+<img alt="docker_pull" src="w5.png"/>
+
+<ul>
+<li>Once the pull is completed, you can check that the container appears in Docker Desktop:</li>
+</ul>
+<img alt="docker_container" src="w6.png"/>
+
+<ul>
+<li>To be able to connect the container to Pycharm later, go to Settings and check the box marked with the red rectangle:</li>
+</ul>
+<img alt="docker_daemon" src="w7.png"/>
+
+<h3 id="3----install-pycharm-and-pull-the-pumi-repository-from-github">3.    <strong>Install Pycharm and pull the PUMI repository from GitHub</strong></h3>
+<h4 id="steps-2"><strong>STEPS:</strong></h4>
+<ul>
+<li><p>Install the Professional version of Pycharm. You can obtain the license using a student email address.</p>
+</li>
+<li><p>After you install Pycharm, open it, and select <em>Get from VCS</em>:</p>
+</li>
+</ul>
+<img alt="pycharm_project" src="w8.png"/>
+
+<ul>
+<li>Paste the link of the github PUMI repository and click <em>Clone</em>:</li>
+</ul>
+<img alt="pull_project" src="w9.png"/>
+
+<p>The link can be obtained from pni-lab GitHub:</p>
+<img alt="project_link" src="w10.png"/>
+
+<ul>
+<li>After  you cloned the repository with the PUMI source code, go to <em>File</em> &rarr; <em>Settings</em> &rarr; <em>Build, Execution, Deployment</em> &rarr; <em>Docker</em>:</li>
+</ul>
+<img alt="connect_docker" src="w11.png"/>
+
+<ul>
+<li>Now, go to <em>File</em> &rarr; <em>Settings</em> &rarr; <em>Project: PUMI</em> &rarr; <em>Python Interpreter</em>, and click <em>Add interpreter</em> &rarr; <em>Docker</em>:</li>
+</ul>
+<img alt="interpreter" src="w12.png"/>
+
+<ul>
+<li>Choose <em>Image: Pull</em> and write <strong>pnilab/pumi</strong> in the image tag. Then, click <em>Next</em> twice:</li>
+</ul>
+<img alt="interpreter2" src="w13.png"/>
+
+<img alt="interpreter3" src="w14.png"/>
+
+<p>The available interpreter will appear in the next window. Click <em>Create</em>:</p>
+<img alt="interpreter4" src="w15.png"/>
+
+<img alt="interpreter5" src="w16.png"/>
+
+<p><em>Now you are ready to start developing PUMI!</em></p>
+
+
