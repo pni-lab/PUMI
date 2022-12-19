@@ -11,7 +11,7 @@ Developer Documentation
 
 `Developing the Documentation <dev_docs.html>`_
 
-`Developer guide <windows_setup.html>`_
+`Developer guide <windows_setup.md>`_
 
 API
 ---
