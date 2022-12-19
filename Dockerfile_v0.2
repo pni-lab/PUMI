@@ -1,0 +1,58 @@
+FROM pnilab/pumi:0.1
+
+ENV C3DPATH="/opt/convert3d-1.0.0" \
+    PATH="/opt/convert3d-1.0.0/bin:$PATH"
+
+RUN conda install -y  --name base \
+           "python=3.8" \
+           "pytest" \
+           "jupyter" \
+           "jupyterlab" \
+           "jupyter_contrib_nbextensions" \
+           "traits" \
+           "pandas" \
+           "matplotlib" \
+           "scikit-learn" \
+           "scikit-image" \
+           "seaborn" \
+           "nbformat" \
+           "nb_conda" \
+           "numpy>=1.21.1" \
+           "scipy>=1.7.1" \
+           "numpydoc>=1.1.0" \
+           "nbsphinx>=0.8.6" \
+           "pytest>=7.1.2" \
+           "nipype>=1.8.1" \
+           "graphviz>=0.17" \
+           "nilearn>=0.9.1" \
+           "seaborn>=0.11.2" \
+           "tensorflow" \
+           "graphviz" \
+           "numpydoc" \
+           "nbsphinx" \
+           "dot2tex"
+
+RUN python -m pip install --no-cache-dir  \
+             "pybids>=0.15.1" \
+             "pydeface>=2.0.0" \
+             "datalad[full]" \
+             "nipy" \
+             "duecredit" \
+             "nbval" \
+             "templateflow" \
+    && sync && conda clean --all --yes && sync
+
+RUN python -m pip install  git+https://github.com/MIC-DKFZ/HD-BET.git
+
+RUN apt-get update -qq \
+    && apt-get install -y -q --no-install-recommends \
+           ca-certificates \
+           curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Downloading Convert3D ..." \
+    && mkdir -p /opt/convert3d-1.0.0 \
+    && curl -fsSL https://sourceforge.net/projects/c3d/files/c3d/1.0.0/c3d-1.0.0-Linux-x86_64.tar.gz/download \
+    | tar -xz -C /opt/convert3d-1.0.0 --strip-components 1
+
+ENV C3DPATH="/opt/convert3d-1.0.0" \
+    PATH="/opt/convert3d-1.0.0/bin:$PATH"

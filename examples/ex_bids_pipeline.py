@@ -3,7 +3,7 @@ from PUMI.engine import NestedNode as Node
 from nipype import Function
 
 # experiment specific parameters:
-input_dir = 'data_in/pumi_test_data'  # place where the bids data is located
+input_dir = 'data_in/bids'  # place where the bids data is located
 output_dir = 'data_out'  # place where the folder 'BET' will be created for the results of this script
 working_dir = 'data_out'  # place where the folder 'bet_iter_wf' will be created for the workflow
 

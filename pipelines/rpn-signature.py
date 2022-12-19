@@ -95,8 +95,9 @@ def predict_pain_sensitivity(wf, model_json=None, **kwargs):
         import os
 
         if model_json is None:
-            pos = os.getcwd().rindex('PUMI/') + 5
-            model_json = os.getcwd()[0:pos] + 'data_in/rpn_model.json'
+            #pos = os.getcwd().rindex('PUMI/') + 5
+            #model_json = os.getcwd()[0:pos] + 'data_in/rpn_model.json'
+            model_json = '/opt/project/data_in/rpn_model.json'  # hard coded for docker, todo: fix
 
         model = rpn_model(file=model_json)
         predicted = model.predict(X)
