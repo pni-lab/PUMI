@@ -1,4 +1,4 @@
-#How to contribute to the documentation of PUMI:
+## How to contribute to the documentation of PUMI:
 
 1. Check out the branch `docs-test`.
 2. Modify the contents of the Docs folder.
