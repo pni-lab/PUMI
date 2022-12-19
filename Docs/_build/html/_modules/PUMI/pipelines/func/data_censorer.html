@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.pipelines.func.data_censorer &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.pipelines.func.data_censorer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.pipelines.func.data_censorer</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">utility</span>
+
+<span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">FuncPipeline</span><span class="p">,</span> <span class="n">NestedNode</span> <span class="k">as</span> <span class="n">Node</span><span class="p">,</span> <span class="n">QcPipeline</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.multimodal.image_manipulation</span> <span class="kn">import</span> <span class="n">timecourse2png</span>
+<span class="kn">from</span> <span class="nn">PUMI.utils</span> <span class="kn">import</span> <span class="n">get_indx</span><span class="p">,</span> <span class="n">scrub_image</span><span class="p">,</span> <span class="n">above_threshold</span>
+
+
+<div class="viewcode-block" id="qc_datacens"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.data_censorer.qc_datacens">[docs]</a><span class="nd">@QcPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;scrubbed_image&#39;</span><span class="p">],</span>
+            <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">qc_datacens</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">censored_timeseries</span> <span class="o">=</span> <span class="n">timecourse2png</span><span class="p">(</span><span class="s1">&#39;censored_timeseries&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;scrubbed_image&#39;</span><span class="p">,</span> <span class="n">censored_timeseries</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">censored_timeseries</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;qc_censored_timeseries&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="datacens_workflow_threshold"><a class="viewcode-back" href="../../../../PUMI.pipelines.func.html#PUMI.pipelines.func.data_censorer.datacens_workflow_threshold">[docs]</a><span class="nd">@FuncPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="s1">&#39;FD&#39;</span><span class="p">,</span> <span class="s1">&#39;threshold&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;scrubbed_image&#39;</span><span class="p">,</span> <span class="s1">&#39;FD_scrubbed&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">datacens_workflow_threshold</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">ex_before</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ex_after</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Do the data censoring on the 4D functional data.</span>
+<span class="sd">    First, it calculates the framewise displacement according to Power&#39;s method.</span>
+<span class="sd">    Second, it indexes the volumes which FD is in the upper part in percent (determined by the threshold variable which</span>
+<span class="sd">    is 5% by default).</span>
+<span class="sd">    Thirdly, it excludes those volumes and one volume before and 2 volumes after the indexed volume.</span>
+<span class="sd">    The workflow returns a 4D scrubbed functional data.</span>
+
+<span class="sd">    CAUTION: Name in the old PUMI was datacens_workflow_threshold</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        func (str): The reoriented,motion occrected, nuissance removed and bandpass filtered functional file.</span>
+<span class="sd">        FD (str): the frame wise displacement calculated by the MotionCorrecter.py script</span>
+<span class="sd">        threshold (str): threshold of FD volumes which should be excluded</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        scrubbed_image (str)</span>
+<span class="sd">        FD_scrubbed (str)</span>
+
+<span class="sd">    Sinking</span>
+<span class="sd">        -</span>
+
+<span class="sd">    Acknowledgements:</span>
+<span class="sd">        Adapted from Balint Kincses (2018).</span>
+
+<span class="sd">        Modified version of</span>
+<span class="sd">        CPAC.scrubbing.scrubbing</span>
+<span class="sd">        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/scrubbing/scrubbing.py),</span>
+<span class="sd">        CPAC.generate_motion_statistics.generate_motion_statistics</span>
+<span class="sd">        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py),</span>
+<span class="sd">        CPAC.func_preproc.func_preproc</span>
+<span class="sd">        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py)</span>
+
+<span class="sd">        [1] Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L., &amp; Petersen, S. E. (2012). Spurious</span>
+<span class="sd">            but systematic correlations in functional connectivity MRI networks arise from subject motion. NeuroImage, 59(3),</span>
+<span class="sd">            2142-2154. doi:10.1016/j.neuroimage.2011.10.018</span>
+<span class="sd">        [2] Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L., &amp; Petersen, S. E. (2012). Steps</span>
+<span class="sd">            toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp.</span>
+<span class="sd">            NeuroImage. doi:10.1016/j.neuroimage.2012.03.017</span>
+<span class="sd">        [3] Jenkinson, M., Bannister, P., Brady, M., Smith, S., 2002. Improved optimization for the robust</span>
+<span class="sd">            and accurate linear registration and motion correction of brain images. Neuroimage 17, 825-841.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># todo: test if everything that should be sinked is sinked</span>
+
+    <span class="k">if</span> <span class="n">wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">threshold</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.2</span>
+
+
+    <span class="n">above_thr</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="s1">&#39;threshold&#39;</span><span class="p">,</span> <span class="s1">&#39;frames_before&#39;</span><span class="p">,</span> <span class="s1">&#39;frames_after&#39;</span><span class="p">],</span>
+                        <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;frames_in_idx&#39;</span><span class="p">,</span> <span class="s1">&#39;frames_out_idx&#39;</span><span class="p">,</span> <span class="s1">&#39;percentFD&#39;</span><span class="p">,</span> <span class="s1">&#39;percent_scrubbed_file&#39;</span><span class="p">,</span>
+                                      <span class="s1">&#39;fd_scrubbed_file&#39;</span><span class="p">,</span> <span class="s1">&#39;nvol&#39;</span><span class="p">],</span>
+                        <span class="n">function</span><span class="o">=</span><span class="n">above_threshold</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;above_threshold&#39;</span>
+    <span class="p">)</span>
+    <span class="n">above_thr</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">frames_before</span> <span class="o">=</span> <span class="n">ex_before</span>
+    <span class="n">above_thr</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">frames_after</span> <span class="o">=</span> <span class="n">ex_after</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;FD&#39;</span><span class="p">,</span> <span class="n">above_thr</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;threshold&#39;</span><span class="p">,</span> <span class="n">above_thr</span><span class="p">,</span> <span class="s1">&#39;threshold&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Generate the weird input for the scrubbing procedure which is done in afni</span>
+    <span class="n">craft_scrub_input</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;scrub_input&#39;</span><span class="p">,</span> <span class="s1">&#39;frames_in_1D_file&#39;</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;scrub_input_string&#39;</span><span class="p">],</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">get_indx</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;scrubbing_craft_input_string&#39;</span>
+    <span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">above_thr</span><span class="p">,</span> <span class="s1">&#39;frames_in_idx&#39;</span><span class="p">,</span> <span class="n">craft_scrub_input</span><span class="p">,</span> <span class="s1">&#39;frames_in_1D_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="n">craft_scrub_input</span><span class="p">,</span> <span class="s1">&#39;scrub_input&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Scrub the image</span>
+    <span class="n">scrubbed_preprocessed</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span>
+        <span class="n">utility</span><span class="o">.</span><span class="n">Function</span><span class="p">(</span>
+            <span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;scrub_input&#39;</span><span class="p">],</span>
+            <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;scrubbed_image&#39;</span><span class="p">],</span>
+            <span class="n">function</span><span class="o">=</span><span class="n">scrub_image</span>
+        <span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="s1">&#39;scrubbed_preprocessed&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">craft_scrub_input</span><span class="p">,</span> <span class="s1">&#39;scrub_input_string&#39;</span><span class="p">,</span> <span class="n">scrubbed_preprocessed</span><span class="p">,</span> <span class="s1">&#39;scrub_input&#39;</span><span class="p">)</span>
+
+    <span class="c1"># qc</span>
+    <span class="n">myqc</span> <span class="o">=</span> <span class="n">qc_datacens</span><span class="p">(</span><span class="s1">&#39;myqc_datacens&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">scrubbed_preprocessed</span><span class="p">,</span> <span class="s1">&#39;scrubbed_image&#39;</span><span class="p">,</span> <span class="n">myqc</span><span class="p">,</span> <span class="s1">&#39;scrubbed_image&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">scrubbed_preprocessed</span><span class="p">,</span> <span class="s1">&#39;scrubbed_image&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;scrubbed_image&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">above_thr</span><span class="p">,</span> <span class="s1">&#39;fd_scrubbed_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;FD_scrubbed&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Save a few files</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">scrubbed_preprocessed</span><span class="p">,</span> <span class="s1">&#39;scrubbed_image&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;scrubbed_image&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">above_thr</span><span class="p">,</span> <span class="s1">&#39;fd_scrubbed_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;FD_scrubbed&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">above_thr</span><span class="p">,</span> <span class="s1">&#39;percent_scrubbed_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;percentFD&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

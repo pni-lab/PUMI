@@ -54,4 +54,5 @@ def my_func_proc(wf, **kwargs):
     wf.write_graph('despike_graph.png')
 
 
-my_func_proc('my_func_proc', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])
+if __name__ == '__main__':
+    my_func_proc('my_func_proc', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])

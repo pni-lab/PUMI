@@ -1,6 +1,6 @@
 import os
 from PUMI.engine import BidsPipeline
-from pipelines.func.deconfound import despiking_afni
+from PUMI.pipelines.func.deconfound import despiking_afni
 
 ROOT_DIR = os.path.dirname(os.getcwd())
 
@@ -31,4 +31,5 @@ def despiking_wf(wf, **kwargs):
     wf.write_graph('despike_graph.png')
 
 
-despiking_ex_wf = despiking_wf('despiking_ex_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])
+if __name__ == '__main__':
+    despiking_ex_wf = despiking_wf('despiking_ex_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])

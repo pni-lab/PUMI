@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.plot.carpet_plot &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.plot.carpet_plot</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.plot.carpet_plot</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="plot_carpet"><a class="viewcode-back" href="../../../PUMI.plot.html#PUMI.plot.carpet_plot.plot_carpet">[docs]</a><span></span><span class="k">def</span> <span class="nf">plot_carpet</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_carpet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span>
+                <span class="n">detrend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">standardize</span><span class="o">=</span><span class="s1">&#39;zscore&#39;</span><span class="p">,</span>
+                <span class="n">clean_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_carpet</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    - X-axis: timeframes (bottom to top along z axis).</span>
+<span class="sd">    - Y-axis: voxels.</span>
+<span class="sd">    - Color: voxel intensity.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        img (Niimg-like object):</span>
+<span class="sd">            4D functional image.</span>
+<span class="sd">        mask (3d binary image (brain mask) or a float between 0 and 1):</span>
+<span class="sd">            Fractional intensity threshold, i.e. ignoring all voxels being smaller than the min+mask*(max-min).</span>
+<span class="sd">            Default = 0.1</span>
+<span class="sd">        cmap (str) :</span>
+<span class="sd">            The color map that will be used to color the carpet.</span>
+<span class="sd">            Default = &#39;gray&#39;</span>
+<span class="sd">        detrend (bool) :</span>
+<span class="sd">            Weather data will be detrended or not. Default = True</span>
+<span class="sd">        standardize :{&#39;zscore&#39;, &#39;psc&#39;, False}.</span>
+<span class="sd">            Strategy to standardize the signal. Default = &#39;zscore&#39;</span>
+<span class="sd">        clean_data (bool):</span>
+<span class="sd">            Remove voxels that stay 0 through time.</span>
+<span class="sd">            Default = True.</span>
+<span class="sd">        show_carpet (bool):</span>
+<span class="sd">            Show the generated carpet plot after generating it.</span>
+<span class="sd">        output_file (str):</span>
+<span class="sd">            Absolute Path in which the carpet plot should be saved</span>
+<span class="sd">            If the value is None, carpet will be stored in the cwd.</span>
+<span class="sd">        save_carpet (bool):</span>
+<span class="sd">            Save generated carpet in the path output_file.</span>
+<span class="sd">            In case output_file is None: carpet will be stored in the current working directory.</span>
+<span class="sd">            Note: if output_file was provide save_carpet will be set to True automatically.</span>
+
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Matplotlib Axes: The plot itself.</span>
+
+
+<span class="sd">    Adapted from: https://github.com/poldracklab/niworkflows</span>
+<span class="sd">    Plot an image representation of voxel intensities across time also known</span>
+<span class="sd">    as the &quot;carpet plot&quot; or &quot;Power plot&quot;. See Jonathan Power Neuroimage</span>
+<span class="sd">    2017 Jul 1; 154:150-158.</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># todo: support &#39;atlas&#39; and &#39;confounds&#39; parameter in carpet plot</span>
+
+
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+    <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">gridspec</span> <span class="k">as</span> <span class="n">mgs</span>
+    <span class="kn">from</span> <span class="nn">nilearn._utils</span> <span class="kn">import</span> <span class="n">check_niimg_4d</span>
+    <span class="kn">from</span> <span class="nn">nilearn._utils.niimg</span> <span class="kn">import</span> <span class="n">_safe_get_data</span>
+    <span class="kn">from</span> <span class="nn">nilearn.signal</span> <span class="kn">import</span> <span class="n">clean</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+
+    <span class="c1"># actually load data</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+    <span class="n">img_name</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+
+    <span class="n">img_nii</span> <span class="o">=</span> <span class="n">check_niimg_4d</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+    <span class="n">func_data</span> <span class="o">=</span> <span class="n">_safe_get_data</span><span class="p">(</span><span class="n">img_nii</span><span class="p">,</span> <span class="n">ensure_finite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Get data from the image</span>
+
+    <span class="n">minimum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">func_data</span><span class="p">)</span>
+    <span class="n">maximum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">func_data</span><span class="p">)</span>
+    <span class="n">myrange</span> <span class="o">=</span> <span class="n">maximum</span> <span class="o">-</span> <span class="n">minimum</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mi">1981981</span><span class="p">)</span>
+
+    <span class="c1"># Define TR(Time of Repation) and number of frames</span>
+    <span class="c1"># Time between collecting a slice in one volume, and that same slice in the next one</span>
+    <span class="n">tr</span> <span class="o">=</span> <span class="n">img_nii</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">get_zooms</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">ntsteps</span> <span class="o">=</span> <span class="n">func_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># get number of timeframes.</span>
+    <span class="c1"># Convert func_data from 4d Array to 2d</span>
+    <span class="c1"># in the second dim there will be ntsteps(timeframes) items.</span>
+    <span class="n">data_2d</span> <span class="o">=</span> <span class="n">func_data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ntsteps</span><span class="p">)</span>  <span class="c1"># changes for each voxel through all timeframes.</span>
+    <span class="n">voxels_count</span> <span class="o">=</span> <span class="n">data_2d</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Check if a mask was given as parameter</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Mask has to be 3 dimensional&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">func_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">!=</span> <span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;fMRI and mask must be in the same space!&#39;</span><span class="p">)</span>
+        <span class="n">reshaped_mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># From 3d to 1d</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ntsteps</span><span class="p">):</span>
+            <span class="n">data_2d</span><span class="p">[:,</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_2d</span><span class="p">[:,</span>
+                            <span class="n">n</span><span class="p">]</span> <span class="o">*</span> <span class="n">reshaped_mask</span>  <span class="c1"># multiply 3d images with mask one at a time</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="mf">0.1</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">mask</span> <span class="ow">or</span> <span class="n">mask</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Mask can only be a 3d binary image or a float between 0 and 1.&#39;</span><span class="p">)</span>
+        <span class="n">data_2d</span> <span class="o">=</span> <span class="n">func_data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ntsteps</span><span class="p">)</span>  <span class="c1"># changes for each voxel through all timeframes.</span>
+        <span class="n">threshhold</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minimum</span> <span class="o">+</span> <span class="n">mask</span> <span class="o">*</span> <span class="p">(</span><span class="n">maximum</span> <span class="o">-</span> <span class="n">minimum</span><span class="p">))</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_2d</span> <span class="o">&gt;</span> <span class="n">threshhold</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">data_2d</span> <span class="o">=</span> <span class="n">data_2d</span> <span class="o">*</span> <span class="n">mask</span>  <span class="c1"># apply mask</span>
+
+
+
+    <span class="c1"># Remove voxels which are 0 throughout all time-points</span>
+    <span class="k">if</span> <span class="n">clean_data</span><span class="p">:</span>
+        <span class="c1"># print(&#39;Data shape before cleaning : &#39;, data_2d.shape)</span>
+        <span class="n">data_2d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data_2d</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># print(&#39;Data shape before cleaning :&#39;, data_2d.shape)</span>
+
+
+
+    <span class="n">subplot</span> <span class="o">=</span> <span class="n">mgs</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">0</span><span class="p">:]</span>
+    <span class="n">wratios</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">mgs</span><span class="o">.</span><span class="n">GridSpecFromSubplotSpec</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">subplot_spec</span><span class="o">=</span><span class="n">subplot</span><span class="p">,</span>
+                                     <span class="n">width_ratios</span><span class="o">=</span><span class="n">wratios</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># size of the columns</span>
+                                     <span class="n">wspace</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+
+    <span class="c1"># Detrend data</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">detrend</span><span class="p">:</span>
+        <span class="n">data_2d</span> <span class="o">=</span> <span class="n">clean</span><span class="p">(</span><span class="n">data_2d</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">t_r</span><span class="o">=</span><span class="n">tr</span><span class="p">,</span> <span class="n">standardize</span><span class="o">=</span><span class="n">standardize</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># T = Transform of the array</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Carpet plot</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="c1"># print(&#39;There are {} Voxels and {} timeframes(Volumes).&#39;.format(voxels_count, ntsteps))</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data_2d</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span>
+               <span class="n">vmin</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vmax</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="s1">&#39;intensity range: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">myrange</span><span class="p">),</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.02</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s1">&#39;axes fraction&#39;</span><span class="p">,</span>
+        <span class="n">textcoords</span><span class="o">=</span><span class="s1">&#39;offset points&#39;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+        <span class="n">bbox</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;boxstyle&#39;</span><span class="p">:</span> <span class="s1">&#39;round&#39;</span><span class="p">,</span> <span class="s1">&#39;fc&#39;</span><span class="p">:</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="s1">&#39;ec&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span>
+              <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;lw&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;alpha&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+
+    <span class="c1"># Set 10 frame markers in X axis</span>
+    <span class="n">interval</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">data_2d</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">10</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">data_2d</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">xticks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data_2d</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">ntsteps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">interval</span><span class="p">])</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">xticks</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;time (s)&#39;</span><span class="p">)</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">tr</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xticks</span><span class="p">))</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%.02f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">labels</span><span class="o">.</span><span class="n">tolist</span><span class="p">()],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+
+
+
+    <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()),</span> <span class="n">img_name</span> <span class="o">+</span> <span class="s1">&#39;_carpet.png&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">output_file</span> <span class="ow">is</span> <span class="kc">None</span> \
+        <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">img_name</span> <span class="o">+</span> <span class="s1">&#39;_carpet.png&#39;</span><span class="p">)</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">save_carpet</span> <span class="ow">or</span> <span class="n">output_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Carpet will be saved in &#39;</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output_file</span><span class="p">)</span>
+
+
+    <span class="k">if</span> <span class="n">show_carpet</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ax1</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">random</span>
+
+    <span class="c1"># Test Mask</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">94</span><span class="p">,</span> <span class="mi">94</span><span class="p">,</span> <span class="mi">38</span><span class="p">))</span>
+    <span class="n">ROOT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+    <span class="n">input_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ROOT_DIR</span><span class="p">,</span> <span class="s1">&#39;data_in/bids&#39;</span><span class="p">)</span>  <span class="c1"># path where the bids data is located</span>
+    <span class="n">plot_carpet</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="s1">&#39;sub-001/func/sub-001_task-rest_bold.nii.gz&#39;</span><span class="p">),</span>
+                <span class="n">save_carpet</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_carpet</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">arr</span><span class="p">)</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    # Test default mask (default mask = 0.1)</span>
+<span class="sd">    arr = random.randint(2, size=(94, 94, 38))</span>
+<span class="sd">    ROOT_DIR = os.path.dirname(os.getcwd())</span>
+<span class="sd">    input_dir = os.path.join(ROOT_DIR, &#39;data_in/bids&#39;)  # path where the bids data is located</span>
+<span class="sd">    plot_carpet(os.path.join(ROOT_DIR, input_dir, &#39;sub-001/func/sub-001_task-rest_bold.nii.gz&#39;))</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

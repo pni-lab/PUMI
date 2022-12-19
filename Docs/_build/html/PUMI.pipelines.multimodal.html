@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.pipelines.multimodal package &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PUMI.plot package" href="PUMI.plot.html" />
+    <link rel="prev" title="PUMI.pipelines.func.info package" href="PUMI.pipelines.func.info.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">PUMI</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="PUMI.html">PUMI package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="PUMI.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="PUMI.interfaces.html">PUMI.interfaces package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="PUMI.pipelines.html">PUMI.pipelines package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="PUMI.plot.html">PUMI.plot package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.html#module-PUMI.engine">PUMI.engine module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.html#module-PUMI.utils">PUMI.utils module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.html#module-PUMI">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html">examples package</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">examples package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipelines.html">pipelines package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">PUMI</a> &raquo;</li>
+          <li><a href="PUMI.html">PUMI package</a> &raquo;</li>
+          <li><a href="PUMI.pipelines.html">PUMI.pipelines package</a> &raquo;</li>
+      <li>PUMI.pipelines.multimodal package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/PUMI.pipelines.multimodal.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pumi-pipelines-multimodal-package">
+<h1>PUMI.pipelines.multimodal package<a class="headerlink" href="#pumi-pipelines-multimodal-package" title="Permalink to this headline"></a></h1>
+<section id="module-PUMI.pipelines.multimodal.image_manipulation">
+<span id="pumi-pipelines-multimodal-image-manipulation-module"></span><h2>PUMI.pipelines.multimodal.image_manipulation module<a class="headerlink" href="#module-PUMI.pipelines.multimodal.image_manipulation" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.multimodal.image_manipulation.get_info">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.multimodal.image_manipulation.</span></span><span class="sig-name descname"><span class="pre">get_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volume</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'first'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/multimodal/image_manipulation.html#get_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.multimodal.image_manipulation.get_info" title="Permalink to this definition"></a></dt>
+<dd><p>Adapted from C-PAC (<a class="reference external" href="https://github.com/FCP-INDI/C-PAC">https://github.com/FCP-INDI/C-PAC</a>)
+Function to get the right index, from which the slicing requested by the user, starts.</p>
+<ul class="simple">
+<li><p>In case no value was given, the first volume will be returned.</p></li>
+<li><p>In case of a non-valid value, a ValueException will be thrown.</p></li>
+<li><p>Beaware : This function will be called only if the volume != ‘mean’</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_file</strong> (<em>str</em>) – Path to input functional run.</p></li>
+<li><p><strong>volume</strong> (<em>str</em>) – The volume specified by the user.
+Possible Values: (first | middle | last | mean | arbitrary number)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The index in the 4d-sequence, from which we start slicing.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>start_idx (integer)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.multimodal.image_manipulation.pick_volume">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.multimodal.image_manipulation.</span></span><span class="sig-name descname"><span class="pre">pick_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volume</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'middle'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/multimodal/image_manipulation.html#pick_volume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.multimodal.image_manipulation.pick_volume" title="Permalink to this definition"></a></dt>
+<dd><p>Sub-Workflow that deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wf</strong> (<em>str</em>) – Name of the workflow.</p></li>
+<li><p><strong>volume</strong> (<em>str</em>) – The volume specified by the user.
+- Possible Values : (first | middle | last | mean | arbitrary number).
+- In case no value was given, the first volume will be returned.
+- In case of a non-valid value, a ValueException will be thrown.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The sub-workflow itself.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>wf(Workflow)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.multimodal.image_manipulation.timecourse2png">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.multimodal.image_manipulation.</span></span><span class="sig-name descname"><span class="pre">timecourse2png</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sink</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/multimodal/image_manipulation.html#timecourse2png"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.multimodal.image_manipulation.timecourse2png" title="Permalink to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>plot_type: ‘all’: nothing to specify, will input everything greater than zero</dt><dd><p>‘vox’: use ‘x’, ‘y’, ‘z’ fields for voxel then
+‘roi’: use ‘mask’ for roi</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.multimodal.image_manipulation.vol2png">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.multimodal.image_manipulation.</span></span><span class="sig-name descname"><span class="pre">vol2png</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/multimodal/image_manipulation.html#vol2png"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.multimodal.image_manipulation.vol2png" title="Permalink to this definition"></a></dt>
+<dd><p># Todo Docs</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="PUMI.pipelines.func.info.html" class="btn btn-neutral float-left" title="PUMI.pipelines.func.info package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="PUMI.plot.html" class="btn btn-neutral float-right" title="PUMI.plot package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

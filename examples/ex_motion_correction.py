@@ -25,4 +25,7 @@ def mc_wf(wf, **kwargs):
 
     wf.write_graph('despike_graph.png')
 
-mc_ex_wf = mc_wf('mc_ex_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])
+
+
+if __name__ == '__main__':
+    mc_ex_wf = mc_wf('mc_ex_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])

@@ -4,7 +4,6 @@ from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import bbr
 import os
-
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels
@@ -72,4 +71,5 @@ def rpn_preproc(wf, **kwargs):
     wf.write_graph('rpn_preproc.png')
 
 
-rpn_preproc('rpn_preproc', base_dir=output_dir, bids_dir=input_dir, subjects=['001', '002'])
+if __name__ == '__main__':
+    rpn_preproc('rpn_preproc', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])

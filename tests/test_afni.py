@@ -16,10 +16,19 @@ class TestDespike(unittest.TestCase):
         def despike(wf, **kwargs):
             despike = despiking_afni('despike')
             wf.connect('inputspec', "bold", despike, "in_file")
+
+            func_proc_wf = func_proc_despike_afni('func_proc_wf')
+            wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
+            wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
+
         wf = despike('unuttest_afni_despike',
                      base_dir=os.path.join(project_root, '../data_out'),
                      bids_dir=os.path.join(project_root, '../data_in/pumi-unittest'))
         self.assertIsInstance(wf, NestedWorkflow)
+
+
+
+
 
 
 if __name__ == '__main__':

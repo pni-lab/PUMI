@@ -52,4 +52,5 @@ def my_compcor(wf, **kwargs):
     wf.write_graph('despike_graph.png')
 
 
-my_compcor('compcor_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])
+if __name__ == '__main__':
+    my_compcor('compcor_wf', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])

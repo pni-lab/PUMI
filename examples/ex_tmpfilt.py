@@ -33,4 +33,6 @@ def my_tmpfilt(wf, **kwargs):
     wf.write_graph('despike_graph.png')
 
 
-my_tmpfilt('my_tmpfilt', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])
+
+if __name__ == '__main__':
+    my_tmpfilt('my_tmpfilt', base_dir=output_dir, bids_dir=input_dir, subjects=['001'])

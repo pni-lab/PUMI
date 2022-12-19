@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.pipelines.func package &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PUMI.pipelines.func.info package" href="PUMI.pipelines.func.info.html" />
+    <link rel="prev" title="PUMI.pipelines.dwi package" href="PUMI.pipelines.dwi.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">PUMI</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="PUMI.html">PUMI package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="PUMI.interfaces.html">PUMI.interfaces package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="PUMI.pipelines.html">PUMI.pipelines package</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="PUMI.pipelines.anat.html">PUMI.pipelines.anat package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="PUMI.pipelines.dwi.html">PUMI.pipelines.dwi package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">PUMI.pipelines.func package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="PUMI.pipelines.multimodal.html">PUMI.pipelines.multimodal package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.plot.html">PUMI.plot package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.html#module-PUMI.engine">PUMI.engine module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="PUMI.html#module-PUMI.utils">PUMI.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pipelines.html">pipelines package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html">examples package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">PUMI</a> &raquo;</li>
+          <li><a href="PUMI.html">PUMI package</a> &raquo;</li>
+          <li><a href="PUMI.pipelines.html">PUMI.pipelines package</a> &raquo;</li>
+      <li>PUMI.pipelines.func package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/PUMI.pipelines.func.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pumi-pipelines-func-package">
+<h1>PUMI.pipelines.func package<a class="headerlink" href="#pumi-pipelines-func-package" title="Permalink to this headline"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="PUMI.pipelines.func.info.html">PUMI.pipelines.func.info package</a></li>
+</ul>
+</div>
+</section>
+<section id="module-PUMI.pipelines.func.compcor">
+<span id="pumi-pipelines-func-compcor-module"></span><h2>PUMI.pipelines.func.compcor module<a class="headerlink" href="#module-PUMI.pipelines.func.compcor" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.compcor.anat_noise_roi">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.compcor.</span></span><span class="sig-name descname"><span class="pre">anat_noise_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/compcor.html#anat_noise_roi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.compcor.anat_noise_roi" title="Permalink to this definition"></a></dt>
+<dd><p>Creates an anatomical noise ROI for use with compcor.
+Inputs are awaited from the (BBR-based) func2anat registration and are already transformed to functional space.</p>
+<p>CAUTION: Name in the old PUMI was create_anat_noise_roi_workflow</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>wm_mask (str): Path to white matter mask
+ventricle_mask (str): Path to ventricle mask</p>
+</dd>
+<dt>Outputs:</dt><dd><p>out_file (str): Path to noise ROI</p>
+</dd>
+</dl>
+<p>Sinking:</p>
+<dl class="simple">
+<dt>Acknowledgements</dt><dd><p>Adapted from Tamas Spisak (2018)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.compcor.compcor">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.compcor.</span></span><span class="sig-name descname"><span class="pre">compcor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/compcor.html#compcor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.compcor.compcor" title="Permalink to this definition"></a></dt>
+<dd><p>Component based noise reduction method (Behzadi et al.,2007): Regressing out principal components from noise ROIs.
+Here the aCompCor is used.</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>func_aligned (str): Reoriented and realigned functional image
+mask_files (str): Mask files which determine ROI(s)</p>
+</dd>
+<dt>Outputs:</dt><dd><p>out_file (str): Path to text file containing the noise components</p>
+</dd>
+<dt>Sinking:</dt><dd><ul class="simple">
+<li><p>Text file containing the noise components</p></li>
+<li><p>Mask files which determine ROI(s)</p></li>
+</ul>
+</dd>
+<dt>Acknowledgements:</dt><dd><p>Adapted from Balint Kincses (2018)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.compcor.compcor_qc">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.compcor.</span></span><span class="sig-name descname"><span class="pre">compcor_qc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/compcor.html#compcor_qc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.compcor.compcor_qc" title="Permalink to this definition"></a></dt>
+<dd><p>Save quality check images for mcflirt motion-correction</p>
+<dl class="simple">
+<dt>Inputs</dt><dd><p>func_aligned (str): Reoriented and realigned functional image
+mask_file (str): Mask files which determine ROI(s)</p>
+</dd>
+</dl>
+<p>Outputs:</p>
+<dl class="simple">
+<dt>Sinking</dt><dd><ul class="simple">
+<li><p>compcor qc image</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-PUMI.pipelines.func.concat">
+<span id="pumi-pipelines-func-concat-module"></span><h2>PUMI.pipelines.func.concat module<a class="headerlink" href="#module-PUMI.pipelines.func.concat" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.concat.concat">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.concat.</span></span><span class="sig-name descname"><span class="pre">concat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'parfiles.txt'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/concat.html#concat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.concat.concat" title="Permalink to this definition"></a></dt>
+<dd><p>Concatenate up to 10 nuissance regressors in one txt file. Inputs should be ‘txt’ files.</p>
+<blockquote>
+<div><p># todo docs</p>
+</div></blockquote>
+</dd></dl>
+
+</section>
+<section id="module-PUMI.pipelines.func.data_censorer">
+<span id="pumi-pipelines-func-data-censorer-module"></span><h2>PUMI.pipelines.func.data_censorer module<a class="headerlink" href="#module-PUMI.pipelines.func.data_censorer" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.data_censorer.datacens_workflow_threshold">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.data_censorer.</span></span><span class="sig-name descname"><span class="pre">datacens_workflow_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ex_before</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ex_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/data_censorer.html#datacens_workflow_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.data_censorer.datacens_workflow_threshold" title="Permalink to this definition"></a></dt>
+<dd><p>Do the data censoring on the 4D functional data.
+First, it calculates the framewise displacement according to Power’s method.
+Second, it indexes the volumes which FD is in the upper part in percent (determined by the threshold variable which
+is 5% by default).
+Thirdly, it excludes those volumes and one volume before and 2 volumes after the indexed volume.
+The workflow returns a 4D scrubbed functional data.</p>
+<p>CAUTION: Name in the old PUMI was datacens_workflow_threshold</p>
+<p>Parameters:</p>
+<dl>
+<dt>Inputs:</dt><dd><p>func (str): The reoriented,motion occrected, nuissance removed and bandpass filtered functional file.
+FD (str): the frame wise displacement calculated by the MotionCorrecter.py script
+threshold (str): threshold of FD volumes which should be excluded</p>
+</dd>
+<dt>Outputs:</dt><dd><p>scrubbed_image (str)
+FD_scrubbed (str)</p>
+</dd>
+<dt>Sinking</dt><dd><ul class="simple">
+<li></li>
+</ul>
+</dd>
+<dt>Acknowledgements:</dt><dd><p>Adapted from Balint Kincses (2018).</p>
+<p>Modified version of
+CPAC.scrubbing.scrubbing
+(<a class="reference external" href="https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/scrubbing/scrubbing.py">https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/scrubbing/scrubbing.py</a>),
+CPAC.generate_motion_statistics.generate_motion_statistics
+(<a class="reference external" href="https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py">https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py</a>),
+CPAC.func_preproc.func_preproc
+(<a class="reference external" href="https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py">https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py</a>)</p>
+<dl class="simple">
+<dt>[1] Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L., &amp; Petersen, S. E. (2012). Spurious</dt><dd><p>but systematic correlations in functional connectivity MRI networks arise from subject motion. NeuroImage, 59(3),
+2142-2154. doi:10.1016/j.neuroimage.2011.10.018</p>
+</dd>
+<dt>[2] Power, J. D., Barnes, K. A., Snyder, A. Z., Schlaggar, B. L., &amp; Petersen, S. E. (2012). Steps</dt><dd><p>toward optimizing motion artifact removal in functional connectivity MRI; a reply to Carp.
+NeuroImage. doi:10.1016/j.neuroimage.2012.03.017</p>
+</dd>
+<dt>[3] Jenkinson, M., Bannister, P., Brady, M., Smith, S., 2002. Improved optimization for the robust</dt><dd><p>and accurate linear registration and motion correction of brain images. Neuroimage 17, 825-841.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.data_censorer.qc_datacens">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.data_censorer.</span></span><span class="sig-name descname"><span class="pre">qc_datacens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/data_censorer.html#qc_datacens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.data_censorer.qc_datacens" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-PUMI.pipelines.func.deconfound">
+<span id="pumi-pipelines-func-deconfound-module"></span><h2>PUMI.pipelines.func.deconfound module<a class="headerlink" href="#module-PUMI.pipelines.func.deconfound" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.deconfound.despiking_afni">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.deconfound.</span></span><span class="sig-name descname"><span class="pre">despiking_afni</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/deconfound.html#despiking_afni"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.deconfound.despiking_afni" title="Permalink to this definition"></a></dt>
+<dd><p>Removes ‘spikes’ from functional 3d+time images.</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>in_file (str): Path to the 4d image.</p>
+</dd>
+<dt>Outputs:</dt><dd><p>out_file (str): 4d Image with spikes removed.</p>
+</dd>
+<dt>Sinking:</dt><dd><ul class="simple">
+<li><p>The output image</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.deconfound.motion_correction_mcflirt">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.deconfound.</span></span><span class="sig-name descname"><span class="pre">motion_correction_mcflirt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_vol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'middle'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FD_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Power'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/deconfound.html#motion_correction_mcflirt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.deconfound.motion_correction_mcflirt" title="Permalink to this definition"></a></dt>
+<dd><p>Use FSL MCFLIRT to do the motion correction of the 4D functional data and use the 6df rigid body motion parameters
+to calculate friston24 parameters for later nuissance regression step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reference_vol</strong> (<em>str</em>) – Either “first”, “middle”, “last”, “mean”, or the index of the volume which the rigid body
+registration (motion correction) will use as reference.
+Default is ‘middle’.</p></li>
+<li><p><strong>FD_mode</strong> – Either “Power” or “Jenkinson”</p></li>
+</ul>
+</dd>
+</dl>
+<dl>
+<dt>Inputs:</dt><dd><p>in_file (str): Reoriented functional file</p>
+</dd>
+<dt>Outputs:</dt><dd><p>func_out_file (str): Path to motion-corrected timeseries
+mat_file (str): Path to motion-correction transformation matrices
+mc_par_file (str): Path to file with motion parameters
+friston24_file (str): Path to file with friston24 parameters
+FD_file (str): Path to file with FD</p>
+</dd>
+<dt>Sinking:</dt><dd><ul class="simple">
+<li><p>motion-corrected timeseries</p></li>
+<li><p>motion-correction transformation matrices</p></li>
+<li><p>absolute and relative displacement parameters</p></li>
+<li><p>friston24 parameters</p></li>
+<li><p>FD</p></li>
+<li><p>FDmax</p></li>
+<li><p>quality check images (FD/rotations/translations and timeseries plot)</p></li>
+</ul>
+</dd>
+<dt>Acknowledgements:</dt><dd><p>Adapted from Balint Kincses (2018)</p>
+<p>Modified version of PAC.func_preproc.func_preproc
+(<a class="reference external" href="https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py">https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/func_preproc/func_preproc.py</a>)
+and CPAC.generate_motion_statistics.generate_motion_statistics
+(<a class="reference external" href="https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py">https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/generate_motion_statistics/generate_motion_statistics.py</a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.deconfound.nuisance_removal">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.deconfound.</span></span><span class="sig-name descname"><span class="pre">nuisance_removal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/deconfound.html#nuisance_removal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.deconfound.nuisance_removal" title="Permalink to this definition"></a></dt>
+<dd><p>Perform nuisance removal.</p>
+<p>CAUTION: Name in the old PUMI was nuissremov_workflow</p>
+<p>Parameters:</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>in_file (str): Path to reoriented motion corrected functional data.
+design_file (str): Path to matrix which contains all the nuissance regressors (motion + compcor noise + …).</p>
+</dd>
+<dt>Outputs:</dt><dd><ul class="simple">
+<li><p>Path to the filtered data</p></li>
+</ul>
+</dd>
+<dt>Sinking:</dt><dd><ul class="simple">
+<li><p>Filtered data</p></li>
+</ul>
+</dd>
+<dt>Acknowledgements:</dt><dd><p>Adapted from Balint Kincses (2018)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.deconfound.qc">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.deconfound.</span></span><span class="sig-name descname"><span class="pre">qc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/deconfound.html#qc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.deconfound.qc" title="Permalink to this definition"></a></dt>
+<dd><p>Creates carpet plot after dispiking.</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>in_file (str): Path to dispiked 4d image.</p>
+</dd>
+<dt>Outputs:</dt><dd><p>out_file (Axes): Matplotlib Axes to be used in composite figures.</p>
+</dd>
+<dt>Sinking:</dt><dd><p>Carpet plot as png image.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.deconfound.qc_motion_correction_mcflirt">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.deconfound.</span></span><span class="sig-name descname"><span class="pre">qc_motion_correction_mcflirt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/deconfound.html#qc_motion_correction_mcflirt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.deconfound.qc_motion_correction_mcflirt" title="Permalink to this definition"></a></dt>
+<dd><p>Save quality check images for mcflirt motion-correction</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>func (str):
+motion_correction (str):
+plot_motion_trans (str):
+FD_figure (str):</p>
+</dd>
+<dt>Sinking:</dt><dd><ul class="simple">
+<li><p>rotations plot</p></li>
+<li><p>translations plot</p></li>
+<li><p>FD plot</p></li>
+<li><p>timeseries</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.deconfound.qc_nuisance_removal">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.deconfound.</span></span><span class="sig-name descname"><span class="pre">qc_nuisance_removal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/deconfound.html#qc_nuisance_removal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.deconfound.qc_nuisance_removal" title="Permalink to this definition"></a></dt>
+<dd><p>Create quality check images for nuisance removal.</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>in_file (str): Filtered data</p>
+</dd>
+<dt>Outputs:</dt><dd><p>out_file (str): Path to quality check image</p>
+</dd>
+<dt>Sinking:</dt><dd><ul class="simple">
+<li><p>The quality check image</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-PUMI.pipelines.func.func_proc">
+<span id="pumi-pipelines-func-func-proc-module"></span><h2>PUMI.pipelines.func.func_proc module<a class="headerlink" href="#module-PUMI.pipelines.func.func_proc" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.func_proc.func_proc_despike_afni">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.func_proc.</span></span><span class="sig-name descname"><span class="pre">func_proc_despike_afni</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdrefvol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'middle'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fwhm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">carpet_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/func_proc.html#func_proc_despike_afni"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.func_proc.func_proc_despike_afni" title="Permalink to this definition"></a></dt>
+<dd><p>Performs processing of functional (resting-state) images:
+Images should be already reoriented, e.g. with fsl fslreorient2std (see scripts/ex_pipeline.py)
+Workflow inputs:</p>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">param func</dt>
+<dd class="field-odd"><p>The functional image file.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Tamas Spisak
+<a class="reference external" href="mailto:tamas&#46;spisak&#37;&#52;&#48;uk-essen&#46;de">tamas<span>&#46;</span>spisak<span>&#64;</span>uk-essen<span>&#46;</span>de</a>
+2018</p>
+</dd></dl>
+
+</section>
+<section id="module-PUMI.pipelines.func.temporal_filtering">
+<span id="pumi-pipelines-func-temporal-filtering-module"></span><h2>PUMI.pipelines.func.temporal_filtering module<a class="headerlink" href="#module-PUMI.pipelines.func.temporal_filtering" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.temporal_filtering.qc_temporal_filtering">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.temporal_filtering.</span></span><span class="sig-name descname"><span class="pre">qc_temporal_filtering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/temporal_filtering.html#qc_temporal_filtering"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.temporal_filtering.qc_temporal_filtering" title="Permalink to this definition"></a></dt>
+<dd><p>Create quality check images for temporal filtering.</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>in_file (str): Temporal filtered data (e. g. result of afni 3dBandpass)</p>
+</dd>
+<dt>Outputs:</dt><dd><p>out_file (str): Path to quality check image</p>
+</dd>
+</dl>
+<p>Sinking:
+- quality check image</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="PUMI.pipelines.func.temporal_filtering.temporal_filtering">
+<span class="sig-prename descclassname"><span class="pre">PUMI.pipelines.func.temporal_filtering.</span></span><span class="sig-name descname"><span class="pre">temporal_filtering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wf</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PUMI/pipelines/func/temporal_filtering.html#temporal_filtering"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PUMI.pipelines.func.temporal_filtering.temporal_filtering" title="Permalink to this definition"></a></dt>
+<dd><p>Creates a slice time corrected functional image.</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><p>func (str): The reoriented functional file.
+highpass (str): The highpass filter in Hz (e. g. 0.008)
+lowpass (str): The lowpass filter in Hz (e. g. 0.08)</p>
+</dd>
+<dt>Outputs:</dt><dd><p>out_file (str): Temporal filtered data</p>
+</dd>
+<dt>Acknowledgements:</dt><dd><p>Adapted from Balint Kincses (2018)
+Modified version of porcupine generated temporal filtering code.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="PUMI.pipelines.dwi.html" class="btn btn-neutral float-left" title="PUMI.pipelines.dwi package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="PUMI.pipelines.func.info.html" class="btn btn-neutral float-right" title="PUMI.pipelines.func.info package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

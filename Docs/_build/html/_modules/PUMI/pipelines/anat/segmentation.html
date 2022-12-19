@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUMI.pipelines.anat.segmentation &mdash; PUMI 1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> PUMI
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">PUMI</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">PUMI</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>PUMI.pipelines.anat.segmentation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PUMI.pipelines.anat.segmentation</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">AnatPipeline</span><span class="p">,</span> <span class="n">QcPipeline</span>
+<span class="kn">from</span> <span class="nn">PUMI.interfaces.HDBet</span> <span class="kn">import</span> <span class="n">HDBet</span>
+<span class="kn">from</span> <span class="nn">PUMI.utils</span> <span class="kn">import</span> <span class="n">create_segmentation_qc</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces</span> <span class="kn">import</span> <span class="n">fsl</span>
+<span class="kn">from</span> <span class="nn">nipype.interfaces.utility</span> <span class="kn">import</span> <span class="n">Split</span>
+<span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">LinearSegmentedColormap</span>
+<span class="kn">from</span> <span class="nn">nipype</span> <span class="kn">import</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">AnatPipeline</span>
+<span class="kn">from</span> <span class="nn">PUMI.engine</span> <span class="kn">import</span> <span class="n">NestedNode</span> <span class="k">as</span> <span class="n">Node</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">PUMI.pipelines.multimodal.image_manipulation</span> <span class="kn">import</span> <span class="n">pick_volume</span>
+
+
+<div class="viewcode-block" id="qc_segmentation"><a class="viewcode-back" href="../../../../PUMI.pipelines.anat.html#PUMI.pipelines.anat.segmentation.qc_segmentation">[docs]</a><span class="nd">@QcPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;background&#39;</span><span class="p">,</span> <span class="s1">&#39;overlay&#39;</span><span class="p">],</span>
+            <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">qc_segmentation</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Create quality check images for background extraction workflows</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        background (str): Path to the extracted brain.</span>
+<span class="sd">        overlay (str): Path to the overlay.</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        out_file (str): Path to the quality check image</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">    -   The quality check image</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plot</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;overlay&#39;</span><span class="p">,</span> <span class="s1">&#39;bg_img&#39;</span><span class="p">,</span> <span class="s1">&#39;cmap&#39;</span><span class="p">],</span>
+                         <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">],</span>
+                         <span class="n">function</span><span class="o">=</span><span class="n">create_segmentation_qc</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;plot&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;background&#39;</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="s1">&#39;bg_img&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;overlay&#39;</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="s1">&#39;overlay&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;qc_segmentation&#39;</span><span class="p">)</span>
+
+    <span class="c1"># output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="qc_tissue_segmentation"><a class="viewcode-back" href="../../../../PUMI.pipelines.anat.html#PUMI.pipelines.anat.segmentation.qc_tissue_segmentation">[docs]</a><span class="nd">@QcPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+            <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">qc_tissue_segmentation</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Create quality check images for tissue segmentation workflows</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        in_file (str): Path to the partial volume map</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        out_file (str): Path to the quality check image</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">    -   The quality check image</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plot</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;overlay&#39;</span><span class="p">,</span> <span class="s1">&#39;cmap&#39;</span><span class="p">],</span>
+                         <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">],</span>
+                         <span class="n">function</span><span class="o">=</span><span class="n">create_segmentation_qc</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;plot&#39;</span><span class="p">)</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;#00A859&#39;</span><span class="p">,</span> <span class="s1">&#39;#FFCC29&#39;</span><span class="p">,</span> <span class="s1">&#39;#3E4095&#39;</span><span class="p">]</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">cmap</span> <span class="o">=</span> <span class="n">LinearSegmentedColormap</span><span class="o">.</span><span class="n">from_list</span><span class="p">(</span><span class="s1">&#39;tissue_segmentation_colors&#39;</span><span class="p">,</span> <span class="n">colors</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="s1">&#39;overlay&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;qc_tissue_segmentation&#39;</span><span class="p">)</span>
+
+    <span class="c1"># output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="bet_fsl"><a class="viewcode-back" href="../../../../PUMI.pipelines.anat.html#PUMI.pipelines.anat.segmentation.bet_fsl">[docs]</a><span class="nd">@AnatPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;brain_mask&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">bet_fsl</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">fmri</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="s1">&#39;middle&#39;</span><span class="p">,</span> <span class="n">light</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Performs Brain extraction of a 3d-vloume.</span>
+<span class="sd">    User can choose the position of the 3d-volume</span>
+
+<span class="sd">    Parameter:</span>
+<span class="sd">        fmri(bool):</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        in_file(str): Path to the functional 4d-image.</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        out_file(str):</span>
+<span class="sd">        brain_mask(str):</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># bet</span>
+    <span class="n">bet</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">BET</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;bet&#39;</span><span class="p">)</span>
+    <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">vertical_gradient</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">getfloat</span><span class="p">(</span><span class="s1">&#39;FSL&#39;</span><span class="p">,</span> <span class="s1">&#39;bet_vertical_gradient&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=-</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fmri</span><span class="p">:</span>
+        <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">frac</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">getfloat</span><span class="p">(</span><span class="s1">&#39;FSL&#39;</span><span class="p">,</span> <span class="s1">&#39;bet_frac_func&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">functional</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">bet_vol</span> <span class="o">=</span> <span class="n">pick_volume</span><span class="p">(</span><span class="s1">&#39;bet_vol&#39;</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">volume</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;mask_file&#39;</span><span class="p">,</span> <span class="n">bet_vol</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+        <span class="n">apply_mask</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">fsl</span><span class="o">.</span><span class="n">ApplyMask</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;apply_mask&quot;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet_vol</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">apply_mask</span><span class="p">,</span> <span class="s1">&#39;mask_file&#39;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">apply_mask</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">frac</span> <span class="o">=</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">getfloat</span><span class="p">(</span><span class="s1">&#39;FSL&#39;</span><span class="p">,</span> <span class="s1">&#39;bet_frac_anat&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">robust</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># quality check</span>
+    <span class="n">qc</span> <span class="o">=</span> <span class="n">qc_segmentation</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;qc_segmentation&#39;</span><span class="p">,</span> <span class="n">qc_dir</span><span class="o">=</span><span class="n">wf</span><span class="o">.</span><span class="n">qc_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fmri</span><span class="p">:</span>
+        <span class="n">qc_overlay</span> <span class="o">=</span> <span class="n">pick_volume</span><span class="p">(</span><span class="s1">&#39;qc_overlay&#39;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">apply_mask</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc_overlay</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">qc_overlay</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="s1">&#39;background&#39;</span><span class="p">)</span>
+
+        <span class="n">qc_background</span> <span class="o">=</span> <span class="n">pick_volume</span><span class="p">(</span><span class="s1">&#39;qc_background&#39;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">qc_background</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">qc_background</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="s1">&#39;overlay&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="s1">&#39;overlay&#39;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="s1">&#39;background&#39;</span><span class="p">)</span>
+
+        <span class="c1"># sinking</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;mask_file&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;mask_file&#39;</span><span class="p">)</span>
+
+    <span class="c1"># output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;mask_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;brain_mask&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fmri</span><span class="p">:</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">apply_mask</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="bet_hd"><a class="viewcode-back" href="../../../../PUMI.pipelines.anat.html#PUMI.pipelines.anat.segmentation.bet_hd">[docs]</a><span class="nd">@AnatPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;brain_mask&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">bet_hd</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Does brain extraction with HD-Bet.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># bet</span>
+    <span class="n">bet</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">HDBet</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;bet&#39;</span><span class="p">)</span>
+    <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">,</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HD-Bet&#39;</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;accurate&#39;</span><span class="p">))</span>
+    <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;device&#39;</span><span class="p">,</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;HD-Bet&#39;</span><span class="p">,</span> <span class="s1">&#39;device&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;0&#39;</span><span class="p">))</span>
+    <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">tta</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tta&#39;</span><span class="p">,</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">getint</span><span class="p">(</span><span class="s1">&#39;HD-Bet&#39;</span><span class="p">,</span> <span class="s1">&#39;tta&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">postprocessing</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;postprocessing&#39;</span><span class="p">,</span>
+                                           <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">getint</span><span class="p">(</span><span class="s1">&#39;HD-Bet&#39;</span><span class="p">,</span> <span class="s1">&#39;postprocessing&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">save_mask</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;save_mask&#39;</span><span class="p">,</span> <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">getint</span><span class="p">(</span><span class="s1">&#39;HD-Bet&#39;</span><span class="p">,</span> <span class="s1">&#39;save_mask&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">bet</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">overwrite_existing</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;overwrite_existing&#39;</span><span class="p">,</span>
+                                               <span class="n">wf</span><span class="o">.</span><span class="n">cfg_parser</span><span class="o">.</span><span class="n">getint</span><span class="p">(</span><span class="s1">&#39;HD-Bet&#39;</span><span class="p">,</span> <span class="s1">&#39;overwrite_existing&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="c1"># quality check</span>
+    <span class="n">qc</span> <span class="o">=</span> <span class="n">qc_segmentation</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;qc_segmentation&#39;</span><span class="p">,</span> <span class="n">qc_dir</span><span class="o">=</span><span class="n">wf</span><span class="o">.</span><span class="n">qc_dir</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="s1">&#39;background&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="s1">&#39;overlay&#39;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bet</span><span class="p">,</span> <span class="s1">&#39;mask_file&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;brain_mask&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tissue_segmentation_fsl"><a class="viewcode-back" href="../../../../PUMI.pipelines.anat.html#PUMI.pipelines.anat.segmentation.tissue_segmentation_fsl">[docs]</a><span class="nd">@AnatPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;brain&#39;</span><span class="p">,</span> <span class="s1">&#39;stand2anat_xfm&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;probmap_csf&#39;</span><span class="p">,</span> <span class="s1">&#39;probmap_gm&#39;</span><span class="p">,</span> <span class="s1">&#39;probmap_wm&#39;</span><span class="p">,</span> <span class="s1">&#39;mixeltype&#39;</span><span class="p">,</span> <span class="s1">&#39;parvol_csf&#39;</span><span class="p">,</span> <span class="s1">&#39;parvol_gm&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;parvol_wm&#39;</span><span class="p">,</span> <span class="s1">&#39;partial_volume_map&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">tissue_segmentation_fsl</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="n">priormap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Perform segmentation of a brain extracted T1w image.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        priormap (bool): Set to True if you want to use prior probability maps.</span>
+<span class="sd">                         In that case the stand2anat_xfm input is needed (otherwise not).</span>
+
+<span class="sd">    Inputs:</span>
+<span class="sd">        brain (str): Path to the brain which should be segmented.</span>
+<span class="sd">        stand2anat_xfm (str): Path to standard2input matrix calculated by FSL FLIRT.</span>
+<span class="sd">                              Only necessary when using prior probability maps!</span>
+
+<span class="sd">    Outputs:</span>
+<span class="sd">        probmap_csf (str): Path to csf probability map.</span>
+<span class="sd">        probmap_gm (str): Path to gm probability map.</span>
+<span class="sd">        probmap_wm (str): Path to wm probability map</span>
+<span class="sd">        mixeltype (str): Path to mixeltype volume file</span>
+<span class="sd">        parvol_csf (str): Path to csf partial volume file</span>
+<span class="sd">        parvol_gm (str): Path to gm partial volume file</span>
+<span class="sd">        parvol_wm (str): Path to wm partial volume file</span>
+<span class="sd">        partial_volume_map (str): Path to partial volume map</span>
+
+<span class="sd">    Sinking:</span>
+<span class="sd">    - The probability maps for csf, gm and wm.</span>
+
+<span class="sd">    Acknowledgements:</span>
+<span class="sd">        Modified version of CPAC.seg_preproc.seg_preproc (https://github.com/FCP-INDI/C-PAC) and Balint Kinces code (2018)</span>
+
+<span class="sd">    For a deeper insight:</span>
+<span class="sd">        - https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST</span>
+<span class="sd">        - https://nipype.readthedocs.io/en/latest/api/generated/nipype.interfaces.fsl.preprocess.html</span>
+
+<span class="sd">     &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">priormap</span><span class="p">:</span>
+        <span class="n">priorprob_csf</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FSLDIR&#39;</span><span class="p">],</span> <span class="s1">&#39;/data/standard/tissuepriors/avg152T1_csf.hdr&#39;</span><span class="p">)</span>
+        <span class="n">priorprob_gm</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FSLDIR&#39;</span><span class="p">],</span> <span class="s1">&#39;/data/standard/tissuepriors/avg152T1_gray.hdr&#39;</span><span class="p">)</span>
+        <span class="n">priorprob_wm</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FSLDIR&#39;</span><span class="p">],</span> <span class="s1">&#39;/data/standard/tissuepriors/avg152T1_white.hdr&#39;</span><span class="p">)</span>
+
+    <span class="n">fast</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">fsl</span><span class="o">.</span><span class="n">FAST</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fast&#39;</span><span class="p">)</span>
+    <span class="n">fast</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">img_type</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">fast</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">segments</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">fast</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">probability_maps</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">fast</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">out_basename</span> <span class="o">=</span> <span class="s1">&#39;fast&#39;</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;brain&#39;</span><span class="p">,</span> <span class="n">fast</span><span class="p">,</span> <span class="s1">&#39;in_files&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">priormap</span><span class="p">:</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;stand2anat_xfm&#39;</span><span class="p">,</span> <span class="n">fast</span><span class="p">,</span> <span class="s1">&#39;init_transform&#39;</span><span class="p">)</span>
+
+    <span class="n">split_probability_maps</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">Split</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;split_probability_maps&#39;</span><span class="p">)</span>
+    <span class="n">split_probability_maps</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">split_probability_maps</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">squeeze</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fast</span><span class="p">,</span> <span class="s1">&#39;probability_maps&#39;</span><span class="p">,</span> <span class="n">split_probability_maps</span><span class="p">,</span> <span class="s1">&#39;inlist&#39;</span><span class="p">)</span>
+
+    <span class="n">split_partial_volume_files</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">Split</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;split_partial_volume_files&#39;</span><span class="p">)</span>
+    <span class="n">split_partial_volume_files</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">splits</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">split_partial_volume_files</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">squeeze</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fast</span><span class="p">,</span> <span class="s1">&#39;partial_volume_files&#39;</span><span class="p">,</span> <span class="n">split_partial_volume_files</span><span class="p">,</span> <span class="s1">&#39;inlist&#39;</span><span class="p">)</span>
+
+    <span class="n">qc</span> <span class="o">=</span> <span class="n">qc_tissue_segmentation</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;qc&#39;</span><span class="p">,</span> <span class="n">qc_dir</span><span class="o">=</span><span class="n">wf</span><span class="o">.</span><span class="n">qc_dir</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fast</span><span class="p">,</span> <span class="s1">&#39;partial_volume_map&#39;</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">)</span>
+
+    <span class="c1"># sinking</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_probability_maps</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;fast_csf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_probability_maps</span><span class="p">,</span> <span class="s1">&#39;out2&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;fast_gm&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_probability_maps</span><span class="p">,</span> <span class="s1">&#39;out3&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;fast_wm&#39;</span><span class="p">)</span>
+
+    <span class="c1"># output</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;outputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">probmap_csf</span> <span class="o">=</span> <span class="n">priorprob_csf</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;outputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">probmap_gm</span> <span class="o">=</span> <span class="n">priorprob_gm</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;outputspec&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">probmap_wm</span> <span class="o">=</span> <span class="n">priorprob_wm</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fast</span><span class="p">,</span> <span class="s1">&#39;mixeltype&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;mixeltype&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fast</span><span class="p">,</span> <span class="s1">&#39;partial_volume_map&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;partial_volume_map&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_probability_maps</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;probmap_csf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_probability_maps</span><span class="p">,</span> <span class="s1">&#39;out2&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;probmap_gm&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_probability_maps</span><span class="p">,</span> <span class="s1">&#39;out3&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;probmap_wm&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_partial_volume_files</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;parvol_csf&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_partial_volume_files</span><span class="p">,</span> <span class="s1">&#39;out2&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;parvol_gm&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">split_partial_volume_files</span><span class="p">,</span> <span class="s1">&#39;out3&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;parvol_wm&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="pydeface_wrapper"><a class="viewcode-back" href="../../../../PUMI.pipelines.anat.html#PUMI.pipelines.anat.segmentation.pydeface_wrapper">[docs]</a><span class="k">def</span> <span class="nf">pydeface_wrapper</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">force</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Workaround to store the defaced image in the correct place with useful name</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">pydeface</span> <span class="kn">import</span> <span class="n">utils</span>
+
+
+    <span class="n">outfile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s1">&#39;defaced_&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">infile</span><span class="p">))</span>
+    <span class="n">warped_mask_img</span><span class="p">,</span> <span class="n">warped_mask</span><span class="p">,</span> <span class="n">template_reg</span><span class="p">,</span> <span class="n">template_reg_mat</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">deface_image</span><span class="p">(</span><span class="n">infile</span><span class="o">=</span><span class="n">infile</span><span class="p">,</span>
+                                                                                      <span class="n">outfile</span><span class="o">=</span><span class="n">outfile</span><span class="p">,</span>
+                                                                                      <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">warped_mask</span></div>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Pipline for defacing anatomical images</span>
+
+<span class="sd">in_file : String</span>
+<span class="sd">    Path to anat image</span>
+
+<span class="sd">outfile : String</span>
+<span class="sd">    Path to anat image</span>
+<span class="sd">    If not specified, the output will be stored in the folder of the input.</span>
+
+<span class="sd">deface_mask : String</span>
+<span class="sd">    Path to defacing mask</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<div class="viewcode-block" id="defacing"><a class="viewcode-back" href="../../../../PUMI.pipelines.anat.html#PUMI.pipelines.anat.segmentation.defacing">[docs]</a><span class="nd">@AnatPipeline</span><span class="p">(</span><span class="n">inputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;in_file&#39;</span><span class="p">],</span>
+              <span class="n">outputspec_fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;out_file&#39;</span><span class="p">,</span> <span class="s1">&#39;deface_mask&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">defacing</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pipeline for defacing anatomical images.</span>
+<span class="sd">    Also creates quality check images</span>
+
+<span class="sd">    Inputs</span>
+<span class="sd">        in_file(str): Path to anat image.</span>
+
+<span class="sd">    Outputs</span>
+<span class="sd">        out_file(nii.gz) : Defaced anatomical image</span>
+
+<span class="sd">        deface_mask(str): Path to the defacing mask.</span>
+
+<span class="sd">    Sinker</span>
+<span class="sd">    -   Defaced anatomical image</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">deface_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;infile&#39;</span><span class="p">,</span> <span class="s1">&#39;force&#39;</span><span class="p">],</span>
+                                <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;warped_mask_img&#39;</span><span class="p">,</span> <span class="s1">&#39;warped_mask&#39;</span><span class="p">],</span>
+                                <span class="n">function</span><span class="o">=</span><span class="n">pydeface_wrapper</span><span class="p">,</span>
+                                <span class="n">imports</span><span class="o">=</span><span class="p">[</span>
+                                    <span class="s1">&#39;import sys&#39;</span><span class="p">,</span> <span class="s1">&#39;import shutil&#39;</span><span class="p">,</span> <span class="s1">&#39;from nipype.interfaces import fsl&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;from pydeface.utils import initial_checks, output_checks, generate_tmpfiles&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;from pydeface.utils import cleanup_files, get_outfile_type, generate_tmpfiles&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;from nibabel import load, Nifti1Image&#39;</span><span class="p">,</span> <span class="s1">&#39;import os&#39;</span><span class="p">]</span>
+                                <span class="p">),</span>
+                       <span class="n">name</span><span class="o">=</span><span class="s1">&#39;deface_node&#39;</span><span class="p">)</span>
+
+    <span class="c1"># If set to True, the previous defaced img will be overwritten</span>
+    <span class="n">deface_node</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">force</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">deface_node</span><span class="p">,</span> <span class="s1">&#39;infile&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Quality Check</span>
+    <span class="n">defacing_qc</span> <span class="o">=</span> <span class="n">qc_segmentation</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;defacing_qc&#39;</span><span class="p">,</span> <span class="n">qc_dir</span><span class="o">=</span><span class="n">wf</span><span class="o">.</span><span class="n">qc_dir</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;inputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;in_file&#39;</span><span class="p">,</span> <span class="n">defacing_qc</span><span class="p">,</span> <span class="s1">&#39;background&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">deface_node</span><span class="p">,</span> <span class="s1">&#39;warped_mask&#39;</span><span class="p">,</span> <span class="n">defacing_qc</span><span class="p">,</span> <span class="s1">&#39;overlay&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Sink defaced image</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;deface_node&#39;</span><span class="p">,</span> <span class="s1">&#39;warped_mask_img&#39;</span><span class="p">,</span> <span class="s1">&#39;sinker&#39;</span><span class="p">,</span> <span class="s1">&#39;defaced&#39;</span><span class="p">)</span>
+
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;deface_node&#39;</span><span class="p">,</span> <span class="s1">&#39;warped_mask_img&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;out_file&#39;</span><span class="p">)</span>
+    <span class="n">wf</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;deface_node&#39;</span><span class="p">,</span> <span class="s1">&#39;warped_mask&#39;</span><span class="p">,</span> <span class="s1">&#39;outputspec&#39;</span><span class="p">,</span> <span class="s1">&#39;deface_mask&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, PUMI.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
