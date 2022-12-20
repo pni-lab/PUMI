@@ -78,11 +78,11 @@ The link can be obtained from [pni-lab GitHub](https://github.com/pni-lab/PUMI):
 
 ###### STEPS:
 
-- After you cloned the repository in Pycharm with the PUMI source code, go to _File_ &rarr; _Settings_ &rarr; _Build, Execution, Deployment_ &rarr; _Docker_:
+- After you cloned the repository in Pycharm with the PUMI source code, go to _File_ &rarr; _Settings_ &rarr; _Build, Execution, Deployment_ &rarr; _Docker_. Choose the TCP socket option to connect to Docker, and type the API URL shown in Docker when performing the last step in the second section of this tutorial:
 
 ![connect_docker](images/w11.png)
 
-- Now, go to *File* &rarr; *Settings* &rarr; *Project: PUMI* &rarr; *Python Interpreter*, and click *Add interpreter* &rarr; *Docker*:
+- Now, you need to specify the interpreter for your project. Go to *File* &rarr; *Settings* &rarr; *Project: PUMI* &rarr; *Python Interpreter*, and click *Add interpreter* &rarr; *Docker*:
 
 ![interpreter](images/w12.png)
 
@@ -96,7 +96,7 @@ The available interpreter will appear in the next window. Click *Create*:
 
 ![interpreter4](images/w15.png)
 
-You should see a similar window, with the remote Docker interpreter name, and a list of all the packages available in it:
+You should see a similar window, with the name of the remote Docker interpreter and a list of all the packages available in it:
 
 ![interpreter5](images/w16.png)
 
