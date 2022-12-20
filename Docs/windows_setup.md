@@ -1,6 +1,6 @@
 # System set up for PUMI development on Windows
 
-This document contains the instructions to set up your Windows environment so that you can develop PUMI without installing locally all the required dependencies. Three elements are needed for that purpose: the PUMI source code (available on GitHub), a Python IDE (this tutorial uses Pycharm), and a Docker container that provides an isolated environment with all the necessary dependencies to run PUMI. 
+This document contains the instructions to set up your Windows environment so that you can develop PUMI without installing all the required dependencies locally. Three elements are needed for that purpose: the PUMI source code (available on GitHub), a Python IDE (this tutorial uses Pycharm), and a Docker container that provides an isolated environment with all the necessary dependencies to run PUMI. 
 
 ## 1. **Install Linux on Windows with WSL2**
 
@@ -48,6 +48,8 @@ You will see how the container images are downloaded:
 - Once the pull is completed, you can check that the container appears in Docker Desktop:
 
 ![docker_container](images/w6.png)
+
+*Note: If you do not specify a name, Docker assigns random names to the containers. To change it, type in the command line: **docker rename <old_name> <new_name>***
 
 - Go to Settings and check the box marked with the red rectangle. This is necessary to connect the container to Pycharm.
 
