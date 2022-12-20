@@ -10,7 +10,7 @@ If you want to run and develop PUMI in a Docker container, and your OS is Window
 
 *Why?* This is the first requirement to install  [Docker in Windows](https://docs.docker.com/desktop/install/windows-install/). 
 
-#### **STEPS:** 
+###### **STEPS:**
 
 - Open your command prompt as administrator and type: **wsl --install**
 
@@ -37,7 +37,7 @@ _Note: nothing will appear on screen when you type the password. It’s called b
 
 ### 2. **Install Docker Desktop on Windows and pull the PUMI container from DockerHub**
 
-#### **STEPS:**
+###### **STEPS:**
 
 - Download [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
 - Run the installer. It typically downloads to your Downloads folder, or you can run it from the recent downloads bar at the bottom of your web browser.
@@ -65,7 +65,7 @@ Visit the [installation guide by Docker](https://docs.docker.com/desktop/install
 
 ### 3.	**Install Pycharm and pull the PUMI repository from GitHub**
 
-#### **STEPS:**
+###### **STEPS:**
 - Install the [Professional version of Pycharm](https://www.jetbrains.com/pycharm/download/#section=windows). You can obtain the license using a student email address.
 
 - After you install Pycharm, open it, and select *Get from VCS*:
@@ -82,7 +82,7 @@ The link can be obtained from [pni-lab GitHub](https://github.com/pni-lab/PUMI):
 
 - After  you cloned the repository with the PUMI source code, go to _File_ &rarr; _Settings_ &rarr; _Build, Execution, Deployment_ &rarr; _Docker_:
 
-<img alt="connect_docker" src="w11.png"/>
+![connect_docker](w11.png)
 
 - Now, go to *File* &rarr; *Settings* &rarr; *Project: PUMI* &rarr; *Python Interpreter*, and click *Add interpreter* &rarr; *Docker*:
 
