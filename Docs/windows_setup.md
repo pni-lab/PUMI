@@ -1,6 +1,10 @@
-# System set up for PUMI development on Windows
+# System set up for PUMI development on Windows (via Docker)
 
 This document contains the instructions to set up your Windows environment so that you can develop PUMI without installing all the required dependencies locally. Three elements are needed for that purpose: the PUMI source code (available on GitHub), a Python IDE (this tutorial uses Pycharm), and a Docker container that provides an isolated environment with all the necessary dependencies to run PUMI. 
+
+To set up a Docker-based development environment on Linux: install [docker](https://docs.docker.com/desktop/install/ubuntu/) and go directly to [step 3](#step3).
+
+***Note:** Some of the following steps might change with newer versions of WSL, Docker and PyCharm. In case of trouble, refer to the original documentations (links below).*
 
 ## 1. **Install Linux on Windows with WSL2**
 
@@ -17,7 +21,7 @@ This document contains the instructions to set up your Windows environment so th
 
 ![wsl_list](images/w2.png)
 
-- Install Ubuntu 20.04 LTS, for example, using: **wsl --install -d Ubuntu-20.04** 
+- Install Ubuntu 22.04 LTS, for example, using: **wsl --install -d Ubuntu-22.04** 
 - Once the process of installing your Linux distribution with WSL is complete, open the distribution (Ubuntu in this case) using the Start menu. You will be asked to create a Unix Username and Password.
 
 ![ubuntu](images/w3.png)
@@ -57,7 +61,7 @@ You will see how the container images are downloaded:
 
 Visit the [installation guide by Docker](https://docs.docker.com/desktop/install/windows-install/) if you encounter any problem.
 
-## 3.	**Install Pycharm and pull the PUMI repository from GitHub**
+## <a name="step3"></a>3.	**Install Pycharm and pull the PUMI repository from GitHub**
 
 ###### STEPS:
 - Install the [Professional version of Pycharm](https://www.jetbrains.com/pycharm/download/#section=windows). You can obtain the license using a student email address.
