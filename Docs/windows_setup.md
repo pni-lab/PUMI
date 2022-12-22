@@ -104,13 +104,15 @@ You should see a similar window, with the name of the remote Docker interpreter 
 
 ![interpreter5](images/w16.png)
 
-- Finally, on the bottom part of the screen, go to *Services*. Press the green arrow on the left to connect the Docker container:
+*Now you are ready to start developing PUMI!*
+
+*Note: If you need to check the status of the Docker container, you can do it on the bottom part of the screen, in *Services*. If Docker is not connected, press the green arrow on the left:*
 
 ![Docker_connect](images/w17.png)
 
-You should be able to see the PUMI container. Press start to run it:
+*You should be able to see the PUMI container and press start to run it:*
 
 ![Pumi_run](images/w18.png)
 
-*Now you are ready to start developing PUMI!*
+
 
