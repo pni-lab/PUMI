@@ -104,7 +104,7 @@ You should see a similar window, with the name of the remote Docker interpreter 
 
 ![interpreter5](images/w16.png)
 
-*Now you are ready to start developing PUMI!*
+**Now you are ready to start developing PUMI!**
 
 *Note: If you need to check the status of the Docker container, you can do it on the bottom part of the screen, in *Services*. If Docker is not connected, press the green arrow on the left:*
 
