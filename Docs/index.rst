@@ -9,7 +9,11 @@ Welcome to PUMI's documentation!
 Developer Documentation
 -----------------------
 
+`Start developing PUMI on Windows <windows_setup.html>`_
+
 `Developing the Documentation <dev_docs.html>`_
+
+
 
 API
 ---
