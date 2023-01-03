@@ -1,10 +1,22 @@
-import os
 from PUMI.pipelines.multimodal.atlas import *
 
-ROOT_DIR = os.path.dirname(os.getcwd())
+atlas_nilearn = ['aal','destrieux','difumo','harvard_oxford','juelich','msdl','pauli','schaefer','talairach','yeo']
+for name in atlas_nilearn:
+    print(name)
+    if name == 'harvard_oxford':
+        name = [name, 'cort-maxprob-thr0-2mm']
+    elif name == 'juelich':
+        name = [name, 'maxprob-thr0-2mm']
+    elif name == 'MIST':
+        name = [name,'122']
+    elif name == 'talairach':
+        name = [name,'lobe']
+    elif name == 'yeo':
+        name = [name,'thin_17']
+    else:
+        name = [name]
+    fetch_atlas(name)
+print ('nilearn atlases: Done')
 
-input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # path where the bids data is located
-output_dir = os.path.join(ROOT_DIR, 'data_out')  # path for the folder with the results of this script
-working_dir = os.path.join(ROOT_DIR, 'data_out')  # path for the workflow folder
-
-fetch_atlas('MIST')
+fetch_atlas(['MIST'])
+print ('MIST atlas: Done')
