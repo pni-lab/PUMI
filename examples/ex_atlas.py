@@ -4,19 +4,19 @@ atlas_nilearn = ['aal','destrieux','difumo','harvard_oxford','juelich','msdl','p
 for name in atlas_nilearn:
     print(name)
     if name == 'harvard_oxford':
-        name = [name, 'cort-maxprob-thr0-2mm']
+        params = {'atlas_name':'cort-maxprob-thr0-2mm'}
     elif name == 'juelich':
-        name = [name, 'maxprob-thr0-2mm']
+        params = {'atlas_name':'maxprob-thr0-2mm'}
     elif name == 'MIST':
-        name = [name,'122']
+        params = {'resolution':'122'}
     elif name == 'talairach':
-        name = [name,'lobe']
+        params = {'level_name':'ba'}
     elif name == 'yeo':
-        name = [name,'thin_17']
+        params = {'key':'thin_17'}
     else:
-        name = [name]
-    fetch_atlas(name)
-print ('nilearn atlases: Done')
+        params = []
 
-fetch_atlas(['MIST'])
-print ('MIST atlas: Done')
+    if params:
+        fetch_atlas(name,**params)
+    else:
+        fetch_atlas(name)
