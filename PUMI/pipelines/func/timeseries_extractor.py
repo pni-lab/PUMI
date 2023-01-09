@@ -3,6 +3,7 @@ from nipype.interfaces import afni
 import nipype.interfaces.utility as utility
 from PUMI.engine import GroupPipeline, FuncPipeline, NestedNode as Node, QcPipeline
 from PUMI.utils import relabel_atlas, get_reference, TsExtractor, plot_carpet_ts
+from PUMI.pipelines.multimodal.atlas import fetch_atlas
 
 
 @QcPipeline(inputspec_fields=['timeseries', 'modules', 'atlas'],
@@ -113,3 +114,53 @@ def pick_atlas(wf, reorder=True, **kwargs):
     else:
         wf.connect('inputspec', 'labels', 'outputspec', 'reordered_labels')
         wf.connect('inputspec', 'modules', 'outputspec', 'reordered_modules')
+
+@GroupPipeline(inputspec_fields=['name_atlas', 'atlas_args', 'atlas_dir', 'atlas_params'],
+              outputspec_fields=['labels', 'labelmap'])
+def fetch_atlas_module(wf, **kwargs):
+
+    fetch_atlas_ = Node(
+        interface=utility.Function(
+            input_names=['name_atlas', 'atlas_args', 'atlas_dir', 'atlas_params'],
+            output_names=['labels','labelmap'],
+            function=fetch_atlas
+        ), # What is the correct way of parsing the parameters?
+        name='fetch_atlas'
+    )
+
+    resample_atlas = Node(
+        interface=afni.Resample(
+            outputtype='NIFTI_GZ',
+            master=get_reference(wf, 'brain'),
+        ),
+        name='resample_atlas'
+    )
+
+    wf.connect('inputspec', 'name_atlas', fetch_atlas_, 'name_atlas')
+    wf.connect('inputspec', 'atlas_params', fetch_atlas_, 'atlas_params')
+    wf.connect('inputspec', 'atlas_args', fetch_atlas_, 'atlas_args')
+    wf.connect('inputspec', 'atlas_dir', fetch_atlas_, 'atlas_dir')
+
+    wf.connect(fetch_atlas_, 'labelmap', resample_atlas, 'in_file')
+
+    # Sinking
+    wf.connect(resample_atlas, 'out_file', 'sinker', 'atlas')
+    wf.connect(fetch_atlas_, 'labels', 'sinker', 'atlas_labels')
+
+    # Output
+    wf.connect(resample_atlas, 'out_file', 'outputspec', 'labelmap')
+    wf.connect(fetch_atlas_, 'labels', 'outputspec', 'labels')
+
+    wf.write_graph('fetch_atlas_wf.png')
+
+@GroupPipeline(inputspec_fields=['labels', 'labelmap', 'modules_labels', 'modules_labelmap'],
+              outputspec_fields=['reordered_labels', 'reordered_modules', 'relabeled_labelmap'])
+def modularize_atlas(wf, **kwargs):
+
+    mask_ROI = Node(
+        interface=atlas.fetch_atlas(
+            input_names=['name_atlas', 'atlas_dir', 'atlas_params'],
+            output_names=['labels', 'labelmap'],
+        ),
+        name='resample_atlas'
+    )

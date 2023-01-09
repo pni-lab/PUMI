@@ -1,18 +1,10 @@
-from PUMI.engine import GroupPipeline
-from nilearn.datasets import atlas as nlatlas
-from fnmatch import fnmatch
-import numpy as np
-import pandas as pd
-import nibabel as nib
-import os
-
-def fetch_atlas(atlasname, atlas_dir=None, **kwargs):
+def fetch_atlas(name_atlas, atlas_dir=None, **kwargs):
     """
     Determines which atlas to fetch.
 
         Parameters
         ----------
-        atlasname : str or list
+        name_atlas : str or list
             Input string can be for: 'aal,'destrieux','difumo','harvard_oxford','juelich','msdl',
                                      'MIST','pauli','schaefer','talairach','yeo'
         atlas_dir : str, optional
@@ -22,7 +14,7 @@ def fetch_atlas(atlasname, atlas_dir=None, **kwargs):
 
         Returns
         -------
-        str, list or None
+        dataframe or None
             The atlas labelmap and the accompanying labels
 
         Raises
@@ -31,61 +23,119 @@ def fetch_atlas(atlasname, atlas_dir=None, **kwargs):
             Raised when the atlas is not formatted correctly or if there is no
             match found.
         """
+    import numpy as np
+    import pandas as pd
+    import os
 
-    # get atlas
-    if not atlas_dir:
-        if atlasname == 'MIST':
-            mist_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "../data_in/atlas/MIST"))
-            labelmap_dir = mist_dir + '/Parcellations/MIST_' + kwargs['resolution'] + '.nii.gz'
-            labelmap = nib.load(labelmap_dir)
-            labels_dir = mist_dir + '/Parcel_Information/MIST_' + kwargs['resolution'] + '.csv'
-            labels = pd.read_csv(labels_dir, delimiter=";")
-            labels = labels['label'].values.tolist()
-        else:
-            function_name = [x for x in dir(nlatlas) if fnmatch(x, "fetch_atlas_" + atlasname + "*")]
-            if function_name:
-                function_name = str(function_name[0])
-                atlas_function = getattr(nlatlas, function_name)
-                if atlasname in {'destrieux','difumo'}:
-                    kwargs = {'legacy_format':False}
+    print(kwargs)
+    if kwargs:
+        map_args = kwargs['atlas_args']
+        kwargs = kwargs['atlas_params']
 
-                if kwargs and atlasname != 'yeo':
-                    atlas = atlas_function(**kwargs)
-                else:
-                    atlas = atlas_function()
+    # Check if the requested atlas is a custom or nilearn atlas
+    if atlas_dir:
 
-                if atlasname == 'yeo':
-                    labelmap = atlas[kwargs['key']]
-                    if '17' in kwargs['key']:
-                        labels = pd.read_csv(atlas['colors_17'], sep=r'\s+')['NONE'].tolist()
-                    else:
-                        labels = pd.read_csv(atlas['colors_7'], sep=r'\s+')['NONE'].tolist()
-                else:
-                    labelmap = atlas['maps']
-                    labels = atlas['labels']
-                    if atlasname == 'schaefer':
-                        labels = np.insert(atlas['labels'], 0, 'Background')
-            else:
-                raise ValueError('No atlas detected. Check query string')
-    else:
+        # Access custom atlas file
         if os.path.exists(atlas_dir):
-            labelmap = atlas_dir + '/Parcellations/' + atlasname + '.nii.gz'
-            labels_file = atlas_dir + '/Parcel_information/' + atlasname + '.csv'
+            # Get labelmap and labels
+            labelmap = atlas_dir + '/Parcellations/' + name_atlas + '.nii.gz'
+            labels_file = atlas_dir + '/Parcel_information/' + name_atlas + '.csv'
             labels = pd.read_csv(labels_file, sep=";")
             labels = labels.values.tolist()
         else:
             raise ValueError('No atlas detected. Check query or atlas directory')
 
-    labels_out = os.path.join(os.getcwd(), atlasname + 'newlabels.tsv')
-    if isinstance(labels, pd.DataFrame):
-        labels = labels.values.tolist()
-
-    df = pd.DataFrame({'Labels': labels})
-    if atlasname == 'aal':
-        df.index = atlas['indices'] # corresponding to region IDs
     else:
-        df.index += 1  # indexing from 1
-    df.to_csv(labels_out,sep='\t')
-    print(df.head())
+        from nilearn.datasets import atlas as nl_atlas
+        from fnmatch import fnmatch
 
-    return labelmap, labels
+        # Obtain the name of the nilearn atlas function
+        function_name = [x for x in dir(nl_atlas) if fnmatch(x, "fetch_atlas_" + name_atlas + "*")]
+
+        if function_name:
+            # Get atlas
+            function_name = str(function_name[0])
+            atlas_function = getattr(nl_atlas, function_name)
+            atlas = atlas_function(**kwargs)
+
+            # Required considerations for specific atlases
+            if name_atlas == 'allen':
+                # Get labelmap
+                labelmap = atlas['maps']
+                # Get indices that map the network names to the map indices
+                rsn_ids = atlas['rsn_indices']
+                df = pd.DataFrame.from_records(rsn_ids, columns=['Networks', 'Region_id'])
+                labels = np.concatenate(atlas['networks'])
+                indices = np.concatenate(df['Region_id'])
+
+            elif name_atlas == 'basc':
+                # Get labelmap with the specified resolution
+                scale = [x for x in dir(atlas) if map_args[0] in x][0]
+                labelmap = atlas[scale]
+                # Get labels
+                mist_dir = os.path.dirname(os.getcwd())+'/data_in/atlas/MIST'
+                labels_dir = mist_dir + '/Parcel_Information/MIST_' + map_args[0] + '.csv'
+                labels = pd.read_csv(labels_dir, delimiter=";")
+                labels = labels['label'].values.tolist()
+
+            elif name_atlas in {'harvard_oxford','juelich'}:
+                # Get labelmap and labels
+                labelmap = atlas.filename
+                labels = atlas['labels']
+
+            elif name_atlas == 'surf_destrieux':
+                # Get labelmap of the specified hemisphere
+                labelmap = atlas['map_' + map_args[0]]
+                # Get labels
+                labels = atlas['labels']
+
+            elif name_atlas == 'yeo':
+                # Get labelmap
+                labelmap = atlas[map_args[0]]
+                # Get labels
+                if '17' in map_args:
+                    # Labels for the 17 Yeo networks
+                    labels = ['Visual Central (Visual A)', 'Visual Peripheral (Visual B)', 'Somatomotor A',
+                              'Somatomotor B', '	Dorsal Attention A', '	Dorsal Attention B',
+                              'Salience / Ventral Attention A', 'Salience / Ventral Attention B',
+                              'Limbic A', 'Limbic B', 'Control C', 'Control A', 'Control B', 'Temporal Parietal',
+                              'Default C', 'Default A', 'Default B']
+                else:
+                    # Labels for the 7 Yeo networks
+                    labels = ['Visual', 'Somatomotor', 'Dorsal Attention', 'Salience / Ventral Attention',
+                              'Limbic', 'Control', 'Default']
+
+            else:
+                # Get labelmap and labels
+                labelmap = atlas['maps']
+                labels = atlas['labels']
+
+                # Add 'Background' label for Schaefer and Pauli's atlases
+                if name_atlas in {'schaefer','pauli'}:
+                    labels = np.insert(atlas['labels'], 0, 'Background')
+                # Convert rec.arrays to DataFrame for DiFuMo and Destrieux atlases
+                elif name_atlas in {'difumo', 'destrieux'}:
+                    labels = pd.DataFrame.from_records(labels)
+                    labels = labels.iloc[:, 1]
+
+        else:
+            raise ValueError('No atlas detected. Check query string')
+
+    # Prepare output label file as DataFrame
+    output_labels = pd.DataFrame({'Labels': labels})
+
+    # Substitute DataFrame index by region indices for AAL and Allen atlases
+    if name_atlas == 'aal':
+        output_labels.index = atlas['indices']
+    elif name_atlas == 'allen':
+        output_labels.index = indices
+    # Increase index by 1 unit for atlases without Background label
+    elif name_atlas in {'basc','difumo','msdl','yeo'}:
+        output_labels.index += 1  # indexing from 1
+
+    # Store label dataframes
+    labels_out = os.path.join(os.getcwd(), name_atlas + '_labels.tsv') #os.path.join(os.getcwd(), 'atlas_files/' + name_atlas + '_labels.tsv')
+    output_labels.to_csv(labels_out, sep='\t')
+    print(output_labels)
+
+    return labels, labelmap
