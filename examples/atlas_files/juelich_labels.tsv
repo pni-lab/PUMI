@@ -1,0 +1,64 @@
+	Labels
+0	Background
+1	GM Amygdala_centromedial group
+2	GM Amygdala_laterobasal group
+3	GM Amygdala_superficial group
+4	GM Anterior intra-parietal sulcus hIP1
+5	GM Anterior intra-parietal sulcus hIP2
+6	GM Anterior intra-parietal sulcus hIP3
+7	GM Broca's area BA44
+8	GM Broca's area BA45
+9	GM Hippocampus cornu ammonis
+10	GM Hippocampus dentate gyrus
+11	GM Hippocampus entorhinal cortex
+12	GM Hippocampus hippocampal-amygdaloid transition area
+13	GM Hippocampus subiculum
+14	GM Inferior parietal lobule PF
+15	GM Inferior parietal lobule PFcm
+16	GM Inferior parietal lobule PFm
+17	GM Inferior parietal lobule PFop
+18	GM Inferior parietal lobule PFt
+19	GM Inferior parietal lobule PGp
+20	GM Inferior parietal lobule Pga
+21	GM Insula Id1
+22	GM Insula Ig1
+23	GM Insula Ig2
+24	GM Lateral geniculate body
+25	GM Mamillary body
+26	GM Medial geniculate body
+27	GM Premotor cortex BA6
+28	GM Primary auditory cortex TE1.0
+29	GM Primary auditory cortex TE1.1
+30	GM Primary auditory cortex TE1.2
+31	GM Primary motor cortex BA4a
+32	GM Primary motor cortex BA4p
+33	GM Primary somatosensory cortex BA1
+34	GM Primary somatosensory cortex BA2
+35	GM Primary somatosensory cortex BA3a
+36	GM Primary somatosensory cortex BA3b
+37	GM Secondary somatosensory cortex / Parietal operculum OP1
+38	GM Secondary somatosensory cortex / Parietal operculum OP2
+39	GM Secondary somatosensory cortex / Parietal operculum OP3
+40	GM Secondary somatosensory cortex / Parietal operculum OP4
+41	GM Superior parietal lobule 5Ci
+42	GM Superior parietal lobule 5L
+43	GM Superior parietal lobule 5M
+44	GM Superior parietal lobule 7A
+45	GM Superior parietal lobule 7M
+46	GM Superior parietal lobule 7P
+47	GM Superior parietal lobule 7PC
+48	GM Visual cortex V1 BA17
+49	GM Visual cortex V2 BA18
+50	GM Visual cortex V3V
+51	GM Visual cortex V4
+52	GM Visual cortex V5
+53	WM Acoustic radiation
+54	WM Callosal body
+55	WM Cingulum
+56	WM Corticospinal tract
+57	WM Fornix
+58	WM Inferior occipito-frontal fascicle
+59	WM Optic radiation
+60	WM Superior longitudinal fascicle
+61	WM Superior occipito-frontal fascicle
+62	WM Uncinate fascicle

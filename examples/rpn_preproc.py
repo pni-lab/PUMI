@@ -6,7 +6,7 @@ from PUMI.pipelines.anat.func_to_anat import bbr
 import os
 
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
-from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
+from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace, fetch_atlas_module
 from PUMI.utils import mist_modules, mist_labels
 
 ROOT_DIR = os.path.dirname(os.getcwd())
@@ -58,6 +58,16 @@ def rpn_preproc(wf, **kwargs):
     pick_atlas_wf.get_node('inputspec').inputs.modules = mist_modules(mist_directory=mist_dir, resolution="122")
     pick_atlas_wf.get_node('inputspec').inputs.labels = mist_labels(mist_directory=mist_dir, resolution="122")
 
+    fetch_atlas_wf = fetch_atlas_module('fetch_atlas_wf')
+    fetch_atlas_wf.get_node('inputspec').inputs.name_atlas = 'harvard_oxford'
+    fetch_atlas_wf.get_node('inputspec').inputs.atlas_params = {'atlas_name':'sub-maxprob-thr0-2mm','symmetric_split':'True'}
+
+    if modularize:
+        fetch_atlas_wf_2 = fetch_atlas_module('fetch_atlas_wf_2')
+        fetch_atlas_wf_2.get_node('inputspec').inputs.name_atlas = 'yeo'
+        fetch_atlas_wf.get_node('inputspec').inputs.atlas_args = ('thin_7',)
+        fetch_atlas_wf.get_node('inputspec').inputs.atlas_params = {}
+
     extract_timeseries = extract_timeseries_nativespace('extract_timeseries')
     wf.connect(pick_atlas_wf, 'relabeled_atlas', extract_timeseries, 'atlas')
     wf.connect(pick_atlas_wf, 'reordered_labels', extract_timeseries, 'labels')
@@ -72,4 +82,4 @@ def rpn_preproc(wf, **kwargs):
     wf.write_graph('rpn_preproc.png')
 
 
-rpn_preproc('rpn_preproc', base_dir=output_dir, bids_dir=input_dir, subjects=['001', '002'])
+rpn_preproc('rpn_preproc', base_dir=output_dir, bids_dir=input_dir, subjects=['001', '002'], modularize=True)
