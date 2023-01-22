@@ -1,5 +1,7 @@
 from nipype.interfaces.fsl import Reorient2Std
-from PUMI.engine import BidsPipeline, NestedNode as Node, FuncPipeline, GroupPipeline
+
+import PUMI
+from PUMI.engine import BidsPipeline, NestedNode as Node, FuncPipeline, GroupPipeline, BidsApp
 from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import bbr
@@ -9,13 +11,6 @@ from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels
 import traits
-
-ROOT_DIR = os.path.dirname(os.getcwd())
-
-input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # path where the bids data is located
-#input_dir = os.path.join(ROOT_DIR, 'data_in/pumi-unittest')  # path where the bids data is located
-#output_dir = os.path.join(ROOT_DIR, 'data_out')  # path for the folder with the results of this script
-working_dir = os.path.join(ROOT_DIR, 'data_out')  # path for the workflow folder
 
 
 @FuncPipeline(inputspec_fields=['ts_files', 'fd_files', 'scrub_threshold'],
@@ -92,12 +87,13 @@ def predict_pain_sensitivity(wf, model_json=None, **kwargs):
     def predict(X, in_files, model_json):
         from PUMI.utils import rpn_model
         import pandas as pd
+        import PUMI
         import os
 
         if model_json is None:
             #pos = os.getcwd().rindex('PUMI/') + 5
             #model_json = os.getcwd()[0:pos] + 'data_in/rpn_model.json'
-            model_json = '/opt/project/data_in/rpn_model.json'  # hard coded for docker, todo: fix
+            model_json = os.path.dirname(PUMI.__file__) + '/../data_in/rpn_model.json'
 
         model = rpn_model(file=model_json)
         predicted = model.predict(X)
@@ -203,12 +199,9 @@ def rpn(wf, **kwargs):
 
     wf.write_graph('rpn-signature.png')
 
-run_args = {
-    'plugin':'MultiProc',
-    'plugin_args':{'n_procs':4,'memory_gb':5}
-}
 
-
-if __name__ == '__main__':
-    print("Starting RPN-signature...")
-    rpn_wf = rpn('rpn', bids_dir=input_dir, subjects=['001'], run_args=run_args)
+rpn_app = BidsApp(
+    pipeline=rpn,
+    name='rpn',
+    bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
+).run()
