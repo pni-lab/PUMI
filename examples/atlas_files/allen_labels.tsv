@@ -1,29 +1,76 @@
-	Labels
-21	Basal Ganglia
-17	Auditory
-7	Sensorimotor
-23	Sensorimotor
-24	Sensorimotor
-38	Sensorimotor
-56	Sensorimotor
-29	Sensorimotor
-46	Visual
-64	Visual
-67	Visual
-48	Visual
-39	Visual
-59	Visual
-50	Default-Mode
-53	Default-Mode
-25	Default-Mode
-68	Default-Mode
-34	Attentional
-60	Attentional
-52	Attentional
-72	Attentional
-71	Attentional
-55	Attentional
-42	Frontal
-20	Frontal
-47	Frontal
-49	Frontal
+Label	Region
+0	Background
+1	Component 1
+2	Component 2
+3	Component 3
+4	Component 4
+5	Component 5
+6	Component 6
+7	Sensorimotor_IC7
+8	Component 8
+9	Component 9
+10	Component 10
+11	Component 11
+12	Component 12
+13	Component 13
+14	Component 14
+15	Component 15
+16	Component 16
+17	Auditory_IC17
+18	Component 18
+19	Component 19
+20	Frontal_IC20
+21	Basal Ganglia_IC21
+22	Component 22
+23	Sensorimotor_IC23
+24	Sensorimotor_IC24
+25	Default-Mode_IC25
+26	Component 26
+27	Component 27
+28	Component 28
+29	Sensorimotor_IC29
+30	Component 30
+32	Component 32
+33	Component 33
+34	Attentional_IC34
+35	Component 35
+36	Component 36
+37	Component 37
+38	Sensorimotor_IC38
+39	Visual_IC39
+40	Component 40
+41	Component 41
+42	Frontal_IC42
+43	Component 43
+44	Component 44
+45	Component 45
+46	Visual_IC46
+47	Frontal_IC47
+48	Visual_IC48
+49	Frontal_IC49
+50	Default-Mode_IC50
+51	Component 51
+52	Attentional_IC52
+53	Default-Mode_IC53
+54	Component 54
+55	Attentional_IC55
+56	Sensorimotor_IC56
+57	Component 57
+58	Component 58
+59	Visual_IC59
+60	Attentional_IC60
+61	Component 61
+62	Component 62
+63	Component 63
+64	Visual_IC64
+65	Component 65
+66	Component 66
+67	Visual_IC67
+68	Default-Mode_IC68
+69	Component 69
+70	Component 70
+71	Attentional_IC71
+72	Attentional_IC72
+73	Component 73
+74	Component 74
+75	Component 75

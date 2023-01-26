@@ -1,65 +1,66 @@
-	Labels
-1	Superior frontal sulcus
-2	Fusiform gyrus
-3	Calcarine cortex posterior
-4	Cingulate cortex posterior
-5	Parieto-occipital sulcus superior
-6	Insula antero-superior
-7	Superior temporal sulcus with angular gyrus
-8	Planum temporale
-9	Cerebellum Crus II
-10	Superior parts of Postcentral and Precentral gyri
-11	Transverse sinus
-12	Paracentral gyrus RH
-13	Superior occipital gyrus
-14	Cingulate gyrus mid-posterior
-15	ventricles
-16	Fusiform gyrus posterior
-17	Superior frontal gyrus medial
-18	Precuneus superior
-19	Planum polare
-20	Parieto-occipital sulcus middle
-21	Cerebellum I-V
-22	Superior fornix and isthmus
-23	Anterior Cingulate Cortex
-24	Descending occipital gyrus
-25	Putamen
-26	Cingulate gyrus mid-anterior
-27	Superior parietal lobule posterior
-28	Paracentral lobule
-29	Inferior occipital gyrus
-30	Superior rostral gyrus
-31	Calcarine sulcus anterior
-32	Intraparietal sulcus
-33	Superior parietal lobule anterior
-34	Precentral gyrus medial
-35	Lingual gyrus anterior
-36	Angular gyrus superior
-37	Supramarginal gyrus
-38	Intraparietal sulcus LH
-39	Dorsomedial prefrontal cortex antero-superior
-40	Precentral gyrus superior
-41	Postcentral gyrus inferior
-42	Lateral occipital cortex
-43	Callosomarginal sulcus
-44	Paracentral lobule superior
-45	Heschl’s gyrus
-46	Occipital pole
-47	Thalamus
-48	Intraparietal sulcus RH
-49	Inferior frontal sulcus
-50	Postcentral gyrus LH
-51	Middle frontal gyrus
-52	Inferior frontal gyrus
-53	Parieto-occipital sulcus anterior
-54	Precuneus anterior
-55	Lingual gyrus
-56	Superior occipital sulcus
-57	Superior parietal lobule
-58	Middle frontal gyrus anterior
-59	Angular gyrus inferior
-60	Cuneus
-61	Middle temporal gyrus
-62	Superior frontal gyrus
-63	Central sulcus
-64	Caudate
+Label	Region	yeo_networks7	yeo_networks17
+0	Background	No network found	No network found
+1	Superior frontal sulcus	DefaultB	DefaultA
+2	Fusiform gyrus	No network found	No network found
+3	Calcarine cortex posterior	VisCent	VisPeri
+4	Cingulate cortex posterior	DefaultB	DefaultA
+5	Parieto-occipital sulcus superior	ContA	ContC
+6	Insula antero-superior	SalVentAttnA	SalVentAttnB
+7	Superior temporal sulcus with angular gyrus	DefaultB	TempPar
+8	Planum temporale	SomMotA	SomMotB
+9	Cerebellum Crus II	No network found	No network found
+10	Superior parts of Postcentral and Precentral gyri	SomMotA	DorsAttnB
+11	Transverse sinus	No network found	No network found
+12	Paracentral gyrus RH	SomMotA	SomMotA
+13	Superior occipital gyrus	VisCent	VisPeri
+14	Cingulate gyrus mid-posterior	DefaultB	ContC
+15	ventricles	No network found	No network found
+16	Fusiform gyrus posterior	VisCent	VisCent
+17	Superior frontal gyrus medial	SalVentAttnA	SalVentAttnA
+18	Precuneus superior	DorsAttnB	ContC
+19	Planum polare	SalVentAttnA	SomMotB
+20	Parieto-occipital sulcus middle	VisCent	VisPeri
+21	Cerebellum I-V	No network found	No network found
+22	Superior fornix and isthmus	No network found	DefaultC
+23	Anterior Cingulate Cortex	DefaultB	SalVentAttnB
+24	Descending occipital gyrus	VisCent	VisCent
+25	Putamen	No network found	No network found
+26	Cingulate gyrus mid-anterior	SalVentAttnA	SalVentAttnA
+27	Superior parietal lobule posterior	DorsAttnB	DorsAttnA
+28	Paracentral lobule	SomMotA	SomMotA
+29	Inferior occipital gyrus	VisCent	VisCent
+30	Superior rostral gyrus	DefaultB	DefaultA
+31	Calcarine sulcus anterior	VisCent	VisPeri
+32	Intraparietal sulcus	ContA	ContA
+33	Superior parietal lobule anterior	DorsAttnB	DorsAttnB
+34	Precentral gyrus medial	SomMotA	SomMotA
+35	Lingual gyrus anterior	VisCent	VisPeri
+36	Angular gyrus superior	DefaultB	ContB
+37	Supramarginal gyrus	SalVentAttnA	SalVentAttnA
+38	Intraparietal sulcus LH	DorsAttnB	ContA
+39	Dorsomedial prefrontal cortex antero-superior	DefaultB	DefaultB
+40	Precentral gyrus superior	DorsAttnB	DorsAttnB
+41	Postcentral gyrus inferior	SomMotA	SomMotB
+42	Lateral occipital cortex	VisCent	DorsAttnA
+43	Callosomarginal sulcus	SalVentAttnA	SalVentAttnA
+44	Paracentral lobule superior	SomMotA	SomMotA
+45	Heschl’s gyrus	SomMotA	SomMotB
+46	Occipital pole	VisCent	VisCent
+47	Thalamus	No network found	No network found
+48	Intraparietal sulcus RH	ContA	ContA
+49	Inferior frontal sulcus	ContA	ContA
+50	Postcentral gyrus LH	SomMotA	DorsAttnB
+51	Middle frontal gyrus	ContA	ContB
+52	Inferior frontal gyrus	ContA	ContA
+53	Parieto-occipital sulcus anterior	DefaultB	DefaultC
+54	Precuneus anterior	DorsAttnB	ContC
+55	Lingual gyrus	VisCent	VisCent
+56	Superior occipital sulcus	DorsAttnB	DorsAttnA
+57	Superior parietal lobule	DorsAttnB	DorsAttnA
+58	Middle frontal gyrus anterior	SalVentAttnA	SalVentAttnB
+59	Angular gyrus inferior	DefaultB	DefaultA
+60	Cuneus	VisCent	VisPeri
+61	Middle temporal gyrus	DefaultB	DefaultB
+62	Superior frontal gyrus	DefaultB	DefaultB
+63	Central sulcus	SomMotA	SomMotB
+64	Caudate	No network found	No network found
