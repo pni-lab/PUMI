@@ -1,3 +1,5 @@
+import argparse
+from PUMI._version import get_versions
 import os
 from glob import glob
 import warnings
@@ -464,3 +466,76 @@ class BidsPipeline(PumiPipeline):
             return wf
 
         return wrapper
+
+class BidsApp:
+
+    def __init__(self, pipeline, name, bids_dir=None, output_dir=None, analysis_level=None, participant_label=None,
+                 working_dir=None, run_args=None, description=None, **kwargs):
+
+        if description is None:
+            self.parser = argparse.ArgumentParser()
+        else:
+            self.parser = argparse.ArgumentParser(description=description)
+
+        self.parser.add_argument('--bids_dir', required=False, help='Root directory of the BIDS-compliant input dataset.')
+        self.parser.add_argument('--output_dir', required=False, help='Directory where the results will be stored.')
+        self.parser.add_argument('--analysis_level', required=False, choices=['participant'],
+                                 help='Level of the analysis that will be performed. Default is participant.')
+        self.parser.add_argument('--participant_label', required=False,
+                                 help='Space delimited list of participant-label(s) (e.g. "001 002 003"). '
+                                 'Perform the tool on the given participants or if this parameter is not '
+                                 'provided then perform the procedure on all subjects.',
+                                 nargs="+")
+        self.parser.add_argument('--version', action='version', version='Version {}'.format(get_versions()['version']),
+                                 help='Print version of PUMI')
+        self.parser.add_argument('--working_dir', type=str,
+                                 help='Directory where temporary data will be stored. Default is the current working directory.')
+
+        self.pipeline = pipeline  # mandatory via script
+        self.name = name  # mandatory via script
+        self.bids_dir = bids_dir
+        self.output_dir = output_dir
+        self.analysis_level = analysis_level
+        self.participant_label = participant_label
+        self.working_dir = working_dir
+        self.run_args = run_args
+        self.kwargs = kwargs
+
+    def run(self):
+        cli_args = self.parser.parse_args()
+        bids_specified = ['bids_dir', 'output_dir', 'analysis_level', 'participant_label', 'version', 'working_dir']
+        pipeline_specific_arguments = {key:dict(vars(cli_args))[key] for key in dict(vars(cli_args)).keys() if key not in bids_specified}
+
+
+        if (cli_args.bids_dir is None) and (self.bids_dir is None):
+            raise ValueError('The argument "bids_dir" has to be set!')
+        else:
+            self.bids_dir = cli_args.bids_dir if (cli_args.bids_dir is not None) else self.bids_dir
+
+        if (cli_args.output_dir is None) and (self.output_dir is None):
+            self.output_dir = './derivatives/'
+        else:
+            self.output_dir = cli_args.output_dir if (cli_args.output_dir is not None) else self.output_dir
+
+        if (cli_args.analysis_level is None) and (self.analysis_level is None):
+            self.output_dir = 'participant'
+        else:
+            self.output_dir = cli_args.analysis_level if (cli_args.analysis_level is not None) else self.analysis_level
+
+        if (cli_args.participant_label is None) and (self.participant_label is None):
+            self.output_dir = None
+        else:
+            self.output_dir = cli_args.participant_label if (cli_args.participant_label is not None) else self.participant_label
+
+        if (cli_args.working_dir is None) and (self.working_dir is None):
+            self.output_dir = '.'
+        else:
+            self.output_dir = cli_args.working_dir if (cli_args.working_dir is not None) else self.working_dir
+
+        if self.run_args is None:
+            self.pipeline(self.name, bids_dir=self.bids_dir, output_dir=self.output_dir, working_dir=self.working_dir,
+                          subjects=self.participant_label, **pipeline_specific_arguments, **self.kwargs)
+        else:
+            self.pipeline(self.name, bids_dir=self.bids_dir, output_dir=self.output_dir, working_dir=self.working_dir,
+                          subjects=self.participant_label, run_args=self.run_args, **pipeline_specific_arguments,
+                          **self.kwargs)

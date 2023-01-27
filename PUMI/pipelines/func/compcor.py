@@ -140,9 +140,9 @@ def compcor(wf, **kwargs):
     wf.connect(compcor, 'components_file', drop_first_line, 'in_file')
 
     # qc
-    qc = compcor_qc('qc')
-    wf.connect('inputspec', 'func_aligned', qc, 'func_aligned')
-    wf.connect('inputspec', 'mask_file', qc, 'mask_file')
+    #qc = compcor_qc('qc')  # todo: fix compcor_qc
+    #wf.connect('inputspec', 'func_aligned', qc, 'func_aligned')
+    #wf.connect('inputspec', 'mask_file', qc, 'mask_file')
 
     # output
     wf.connect(drop_first_line, 'out_file', 'outputspec', 'out_file')

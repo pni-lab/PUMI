@@ -58,11 +58,11 @@ def extract_timeseries_nativespace(wf, global_signal=True, **kwargs):
 
     wf.connect(extract_timeseries, 'out_file', 'sinker', 'regional_timeseries')
 
-    # QC
-    timeseries_qc = extract_timeseries_nativespace_qc('extract_timeseries_nativespace_qc')
-    wf.connect('inputspec', 'modules', timeseries_qc, 'modules')
-    wf.connect('inputspec', 'atlas', timeseries_qc, 'atlas')
-    wf.connect(extract_timeseries, 'out_file', timeseries_qc, 'timeseries')
+    # QC # todo: fix timeseries_qc
+    #timeseries_qc = extract_timeseries_nativespace_qc('extract_timeseries_nativespace_qc')
+    #wf.connect('inputspec', 'modules', timeseries_qc, 'modules')
+    #wf.connect('inputspec', 'atlas', timeseries_qc, 'atlas')
+    #wf.connect(extract_timeseries, 'out_file', timeseries_qc, 'timeseries')
 
     wf.connect(extract_timeseries, 'out_file', 'outputspec', 'timeseries')
     wf.connect(extract_timeseries, 'out_gm_label', 'outputspec', 'out_gm_label')
