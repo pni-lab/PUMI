@@ -78,11 +78,16 @@ def compcor_qc(wf, volume='first', **kwargs):
 
 @FuncPipeline(inputspec_fields=['func_aligned', 'mask_file'],
               outputspec_fields=['out_file'])
-def compcor(wf, **kwargs):
+def compcor(wf, volume='first', **kwargs):
     """
 
     Component based noise reduction method (Behzadi et al.,2007): Regressing out principal components from noise ROIs.
     Here the aCompCor is used.
+
+    Parameters:
+        volume (str): Select which volume of the functional image should be used for the quality check image(s).
+                      Can be either 'first', 'middle', 'last', 'mean' or an arbitrary number
+
 
     Inputs:
         func_aligned (str): Reoriented and realigned functional image
@@ -149,7 +154,7 @@ def compcor(wf, **kwargs):
     wf.connect(compcor, 'components_file', drop_first_line, 'in_file')
 
     # qc
-    qc = compcor_qc('qc')
+    qc = compcor_qc('qc', volume=volume)
     wf.connect('inputspec', 'func_aligned', qc, 'func_aligned')
     wf.connect('inputspec', 'mask_file', qc, 'mask_file')
 
