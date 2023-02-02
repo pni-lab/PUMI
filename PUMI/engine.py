@@ -494,7 +494,7 @@ class BidsApp:
                                  help='Nipype plugin (e.g. MultiProc, Slurm). If not set, MultiProc is used.')
 
         self.parser.add_argument('--n_procs', type=int,
-                                 help='Amount of threads to executed in parallel.'
+                                 help='Amount of threads to execute in parallel.'
                                       + 'If not set, the amount of CPU cores is used.'
                                       + 'Caution: Does only work with the MultiProc-plugin!')
 
