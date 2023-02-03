@@ -6,13 +6,13 @@ from PUMI.utils import plot_roi
 import os
 
 @GroupPipeline(inputspec_fields=['atlas', 'atlas_params', 'labelmap_params', 'atlas_dir', 'modules_atlas', 'modules_params', 'modules_labelmap_params','modules_dir'],
-              outputspec_fields=['labels','labelmap'])
+              outputspec_fields=['labels','modules','labelmap'])
 def atlas_selection(wf,modularize=False,**kwargs):
     """
     Workflow to fetch an atlas and, optionally, perform a modularization step using another atlas.
 
     Decorator parameters:
-        Input parameters:
+        Input fields:
             atlas: str
                 Name of the atlas to be fetched. It can be a nilearn atlas ('aal','allen','basc',
                 'craddock','destrieux','difumo','harvard_oxford','juelich','msdl','pauli','schaefer','surf_destrieux',
@@ -31,7 +31,7 @@ def atlas_selection(wf,modularize=False,**kwargs):
                 Nilearn atlas return data keys for 'modules_atlas'
             modules_dir: str
                 Path to custom 'modules_atlas'
-        Output parameters:
+        Output fields:
             labels: Dataframe
                 Labelmap labels with their associated region names
             labelmap: str
@@ -57,8 +57,8 @@ def atlas_selection(wf,modularize=False,**kwargs):
     wf.connect('inputspec', 'atlas_dir', fetch_atlas_wf, 'atlas_dir')
 
     # QC
-    plot_labelmap = plot_atlas_qc('plot_atlas_qc')
-    wf.connect(fetch_atlas_wf, 'labelmap', plot_labelmap, 'labelmap')
+    #plot_labelmap = plot_atlas_qc('plot_atlas_qc')
+    #wf.connect(fetch_atlas_wf, 'labelmap', plot_labelmap, 'labelmap')
 
     if modularize:
 
@@ -70,8 +70,8 @@ def atlas_selection(wf,modularize=False,**kwargs):
         wf.connect('inputspec', 'modules_dir', fetch_atlas_modules_wf, 'atlas_dir')
 
         # QC
-        plot_labelmap_modules = plot_atlas_qc('plot_atlas_modules_qc')
-        wf.connect(fetch_atlas_modules_wf, 'labelmap', plot_labelmap_modules, 'labelmap')
+        #plot_labelmap_modules = plot_atlas_qc('plot_atlas_modules_qc')
+        #wf.connect(fetch_atlas_modules_wf, 'labelmap', plot_labelmap_modules, 'labelmap')
 
         # Relabel labelmap, reorder labels, reorder modules
         modularize_wf = modularize_atlas_module('modularize_atlas_wf',**kwargs)
@@ -81,26 +81,42 @@ def atlas_selection(wf,modularize=False,**kwargs):
         wf.connect(fetch_atlas_modules_wf, 'labelmap', modularize_wf, 'labelmap_modules')
 
         # Sinking
-        wf.connect(modularize_wf, 'relabelled_labelmap', 'sinker', 'relabelled_atlas')
-        wf.connect(modularize_wf, 'reordered_labels', 'sinker', 'reordered_labels')
+        #wf.connect(modularize_wf, 'reordered_labels', 'sinker', 'reordered_labels')
+        #wf.connect(modularize_wf, 'reordered_modules', 'sinker', 'reordered_modules')
+        #wf.connect(modularize_wf, 'relabeled_labelmap', 'sinker', 'relabeled_atlas')
 
         # Output
-        wf.connect(modularize_wf, 'relabelled_labelmap', 'outputspec', 'labelmap')
-        wf.connect(modularize_wf, 'reordered_labels', 'outputspec', 'labels')
+        #wf.connect(modularize_wf, 'reordered_labels', 'outputspec', 'labels')
+        #wf.connect(modularize_wf, 'reordered_modules', 'outputspec', 'modules')
+        #wf.connect(modularize_wf, 'relabeled_labelmap', 'outputspec', 'labelmap')
 
         # QC
-        plot_relabelled_labelmap = plot_atlas_qc('plot_relabelled_atlas_qc')
-        wf.connect(modularize_wf, 'relabelled_labelmap', plot_relabelled_labelmap, 'labelmap')
+        #plot_relabeled_labelmap = plot_atlas_qc('plot_relabeled_atlas_qc')
+        #wf.connect(modularize_wf, 'relabeled_labelmap', plot_relabeled_labelmap, 'labelmap')
 
     else:
 
+        modularize_wf = modularize_atlas_module('modularize_atlas_wf',dummy_modules=True)
+        wf.connect(fetch_atlas_wf, 'labels', modularize_wf, 'labels')
+        wf.connect(fetch_atlas_wf, 'labelmap', modularize_wf, 'labelmap')
+
         # Sinking
-        wf.connect(fetch_atlas_wf, 'labelmap', 'sinker', 'atlas')
-        wf.connect(fetch_atlas_wf, 'labels', 'sinker', 'atlas_labels')
+        #wf.connect(fetch_atlas_wf, 'labelmap', 'sinker', 'atlas')
+        #wf.connect(fetch_atlas_wf, 'labels', 'sinker', 'atlas_labels')
 
         # Output
-        wf.connect(fetch_atlas_wf, 'labelmap', 'outputspec', 'labelmap')
-        wf.connect(fetch_atlas_wf, 'labels', 'outputspec', 'labels')
+        #wf.connect(fetch_atlas_wf, 'labelmap', 'outputspec', 'labelmap')
+        #wf.connect(fetch_atlas_wf, 'labels', 'outputspec', 'labels')
+
+    # Sinking
+    wf.connect(modularize_wf, 'reordered_labels', 'sinker', 'reordered_labels')
+    wf.connect(modularize_wf, 'reordered_modules', 'sinker', 'reordered_modules')
+    wf.connect(modularize_wf, 'relabeled_labelmap', 'sinker', 'relabeled_atlas')
+
+    # Output
+    wf.connect(modularize_wf, 'reordered_labels', 'outputspec', 'labels')
+    wf.connect(modularize_wf, 'reordered_modules', 'outputspec', 'modules')
+    wf.connect(modularize_wf, 'relabeled_labelmap', 'outputspec', 'labelmap')
 
     wf.write_graph('atlas_selection.png')
 
@@ -185,7 +201,7 @@ def plot_atlas_qc(wf, **kwargs):
     wf.connect(plot_atlas, 'plot_file', 'sinker', 'labelmap_plot_QC')
 
 @GroupPipeline(inputspec_fields=['labels', 'labelmap', 'labels_modules', 'labelmap_modules'],
-              outputspec_fields=['reordered_labels', 'relabelled_labelmap'])
+              outputspec_fields=['reordered_labels', 'reordered_modules', 'relabeled_labelmap'])
 def modularize_atlas_module(wf, **kwargs):
     """
     Workflow to modularize an atlas, i.e. reorder the labels, so that they reflect the modules of another atlas.
@@ -202,9 +218,9 @@ def modularize_atlas_module(wf, **kwargs):
                 Path to labelmap file
         Output parameters:
             reordered_labels: Dataframe
-                Relabelled labelmap labels with their associated region and module names
-            relabelled_labelmap: str
-                Path to relabelled labelmap file
+                Relabeled labelmap labels with their associated region and module names
+            relabeled_labelmap: str
+                Path to relabeled labelmap file
 
     Parameters:
         wf: str
@@ -221,7 +237,7 @@ def modularize_atlas_module(wf, **kwargs):
     modularize_atlas = Node(
         interface=utility.Function(
             input_names=['labels', 'labelmap', 'labels_modules', 'labelmap_modules_resampled','module_threshold'],
-            output_names=['reordered_labels', 'relabelled_labelmap'],
+            output_names=['reordered_labels', 'reordered_modules', 'relabeled_labelmap'],
             function=relabel_atlas
         ),
         name='modularize_atlas'
@@ -238,12 +254,14 @@ def modularize_atlas_module(wf, **kwargs):
         modularize_atlas.inputs.mod_threshold = kwargs['module_threshold']
 
     # Sinking
-    wf.connect(modularize_atlas, 'relabelled_labelmap', 'sinker', 'relabelled_atlas')
     wf.connect(modularize_atlas, 'reordered_labels', 'sinker', 'reordered_atlas_labels')
+    wf.connect(modularize_atlas, 'reordered_modules', 'sinker', 'reordered_atlas_modules')
+    wf.connect(modularize_atlas, 'relabeled_labelmap', 'sinker', 'relabeled_atlas')
 
     # Output
     wf.connect(modularize_atlas, 'reordered_labels', 'outputspec', 'reordered_labels')
-    wf.connect(modularize_atlas, 'relabelled_labelmap', 'outputspec', 'relabelled_labelmap')
+    wf.connect(modularize_atlas, 'reordered_modules', 'outputspec', 'reordered_modules')
+    wf.connect(modularize_atlas, 'relabeled_labelmap', 'outputspec', 'relabeled_labelmap')
 
     wf.write_graph('modularize_atlas_wf.png')
 
@@ -330,11 +348,16 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
             # Get labelmap and labels of the selected atlas
             if name_atlas == 'aal':
 
-                labelmap = atlas['maps']
-                labels = pd.DataFrame({'Region': atlas['labels']}, index=list(map(int, atlas['indices'])))
-                labels.loc[0] = ['Background']
-                labels = labels.sort_index()
-                labels.index.names = ['Label']
+                # Load atlas labelmap data
+                labelmap_init = atlas['maps']
+                labelmap_nii = nb.load(labelmap_init)
+                labelmap = os.path.join(os.getcwd(), 'AAL.nii.gz')
+
+                # Get provided labels and map them to the region IDs in the labelmap
+                labels_init = pd.DataFrame({'Region': atlas['labels']}, index=list(map(int, atlas['indices'])))
+                labels_init.loc[0] = ['Background']
+                labels_init = labels_init.sort_index()
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'allen':
 
@@ -351,50 +374,50 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
                     thr = ()
                     spec = '_unthresholded_'
 
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/allen' + spec + 'det.nii.gz')
-                det_labelmap = get_det_atlas(atlas[map_args],*thr)
-                nb.save(det_labelmap, labelmap)
+                labelmap = os.path.join(os.getcwd(), 'allen' + spec + 'det.nii.gz')
+                labelmap_nii = get_det_atlas(atlas[map_args],*thr)
 
                 # Get indices that map the network labels to the labelmap indices
                 df = pd.DataFrame.from_records(atlas['rsn_indices'], columns=['Networks', 'Region_id'])
-                prov_labels = pd.DataFrame({'Region': np.concatenate(atlas['networks'])}, index=np.concatenate(df['Region_id']))
-                labels = prov_labels.sort_index()
-                labels.index = pd.RangeIndex(start=0, stop=len(labels))
-                for x in range(len(labels)):
-                    labels['Region'][x] = labels['Region'][x] + '_IC' + str(prov_labels.index.sort_values()[x])
-                labels.loc[-1] = ['Background']
-                labels.index += 1
-                labels = labels.sort_index()
+                ic_labels = pd.DataFrame({'Region': np.concatenate(atlas['networks'])}, index=np.concatenate(df['Region_id']))
+                labels_init = ic_labels.sort_index()
+                labels_init.index = pd.RangeIndex(start=0, stop=len(labels_init))
+                for x in range(len(labels_init)):
+                    labels_init['Region'][x] = labels_init['Region'][x] + '_IC' + str(ic_labels.index.sort_values()[x])
+                labels_init.loc[-1] = ['Background']
+                labels_init.index += 1
+                labels_init = labels_init.sort_index()
 
                 # Provide extended label list with dummy labels for the 75 network option
                 if 'maps' in map_args:
-                    dlabels = dummy_labels(det_labelmap.get_fdata())
-                    network_ids = list(prov_labels.index.sort_values())
+                    dlabels = dummy_labels(labelmap_nii.get_fdata())
+                    network_ids = list(ic_labels.index.sort_values())
                     for x in range(len(dlabels)):
                         if x in network_ids:
-                            dlabels['Region'][x] = labels['Region'][network_ids.index(x) + 1]
+                            dlabels['Region'][x] = labels_init['Region'][network_ids.index(x) + 1]
 
-                    labels = dlabels
+                    labels_init = dlabels
 
-                labels.index.names = ['Label']
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'basc':
 
                 # Get specified resolution for the labelmap
                 scale = [x for x in dir(atlas) if map_args[0] in x][0]
-                labelmap_file = nb.load(atlas[scale])
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/basc_' + scale + '_det.nii.gz')
-                nb.save(labelmap_file, labelmap)
+                labelmap_nii = nb.load(atlas[scale])
+                labelmap = os.path.join(os.getcwd(), 'basc_' + scale + '_det.nii.gz')
+
                 # Get labels from provided MIST files
-                labels_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))) + '/data_in/atlas/MIST/Parcel_Information/MIST_' + map_args[0] + '.csv'
-                labels = pd.read_csv(labels_dir, delimiter=";")
-                labels = pd.DataFrame({'Region': labels['label']})
-                labels.loc[-1] = ['Background']
-                labels.index += 1
-                labels = labels.sort_index()
-                labels.index.names = ['Label']
+                #labels_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))) + '/data_in/atlas/MIST/Parcel_Information/MIST_' + map_args[0] + '.csv'
+                labels_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                          "../data_in/atlas/MIST/Parcel_Information/MIST_"
+                                                          + map_args[0] + ".csv"))
+                labels_init = pd.read_csv(labels_dir, delimiter=";")
+                labels_init = pd.DataFrame({'Region': labels_init['label']})
+                labels_init.loc[-1] = ['Background']
+                labels_init.index += 1
+                labels_init = labels_init.sort_index()
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'craddock':
 
@@ -402,22 +425,20 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
                 nii = nb.load(atlas[map_args[0]])
 
                 # choose volume with the specified clustering level
-                volume = image.index_img(nii, map_args[1])
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/craddock_' + map_args[0] + '_K' + str(map_args[1]) + '_det.nii.gz')
-                nb.save(volume, labelmap)
-
+                labelmap_nii = image.index_img(nii, map_args[1])
+                labelmap = os.path.join(os.getcwd(), 'craddock_' + map_args[0] + '_K' + str(map_args[1]) + '_det.nii.gz')
                 # create dummy labels
-                labels = dummy_labels(volume.get_fdata())
-                labels.index.names = ['Label']
+                labels_init = dummy_labels(labelmap_nii.get_fdata())
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'destrieux':
 
-                labelmap = atlas['maps']
+                labelmap_nii = nb.load(atlas['maps'])
+                labelmap = os.path.join(os.getcwd(), 'destrieux.nii.gz')
                 label_names = pd.DataFrame.from_records(atlas['labels'])
                 label_names = label_names.iloc[:, 1]
-                labels = pd.DataFrame({'Region': label_names})
-                labels.index.names = ['Label']
+                labels_init = pd.DataFrame({'Region': label_names})
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'difumo':
 
@@ -428,35 +449,32 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
                     thr = ()
                     spec = '_unthresholded_'
 
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/difumo' + spec + 'det.nii.gz')
-                det_labelmap = get_det_atlas(atlas['maps'],*thr)
-                nb.save(det_labelmap, labelmap)
+                labelmap = os.path.join(os.getcwd(), 'difumo' + spec + 'det.nii.gz')
+                labelmap_nii = get_det_atlas(atlas['maps'],*thr)
+
                 labels_file = atlas['labels']
                 if ~isinstance(labels_file, pd.DataFrame):
                     labels_file = pd.DataFrame.from_records(labels_file)
-                labels = labels_file.filter(['difumo_names','yeo_networks7','yeo_networks17'], axis=1)
-                labels.loc[-1] = ['Background','No network found','No network found']
-                labels.index += 1
-                labels = labels.sort_index()
-                labels = labels.rename({'difumo_names': 'Region'}, axis='columns')
-                labels.index.names = ['Label']
+                labels_init = labels_file.filter(['difumo_names','yeo_networks7','yeo_networks17'], axis=1)
+                labels_init.loc[-1] = ['Background','No network found','No network found']
+                labels_init.index += 1
+                labels_init = labels_init.sort_index()
+                labels_init = labels_init.rename({'difumo_names': 'Region'}, axis='columns')
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'harvard_oxford':
 
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/harvard_oxford_' + kwargs['atlas_name'] + '_det.nii.gz')
-                nb.save(atlas['maps'], labelmap)
-                labels = pd.DataFrame({'Region': atlas['labels']})
-                labels.index.names = ['Label']
+                labelmap = os.path.join(os.getcwd(), 'harvard_oxford_' + kwargs['atlas_name'] + '_det.nii.gz')
+                labelmap_nii = atlas['maps']
+                labels_init = pd.DataFrame({'Region': atlas['labels']})
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'juelich':
 
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/juelich_' + kwargs['atlas_name'] + '_det.nii.gz')
-                nb.save(atlas['maps'], labelmap)
-                labels = pd.DataFrame({'Region': atlas['labels']})
-                labels.index.names = ['Label']
+                labelmap = os.path.join(os.getcwd(), 'juelich_' + kwargs['atlas_name'] + '_det.nii.gz')
+                labelmap_nii = atlas['maps']
+                labels_init = pd.DataFrame({'Region': atlas['labels']})
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'msdl':
 
@@ -467,17 +485,16 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
                     thr = ()
                     spec = '_unthresholded_'
 
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/msdl' + spec + 'det.nii.gz')
-                det_labelmap = get_det_atlas(atlas['maps'],*thr)
-                nb.save(det_labelmap, labelmap)
-                labels = pd.DataFrame({'Region': atlas['labels']})
-                labels.index += 1
-                if 0 in np.unique(det_labelmap.get_fdata()):
-                    labels.loc[0] = ['Background']
-                    labels = labels.sort_index()
+                labelmap = os.path.join(os.getcwd(), 'msdl' + spec + 'det.nii.gz')
+                labelmap_nii = get_det_atlas(atlas['maps'],*thr)
 
-                labels.index.names = ['Label']
+                labels_init = pd.DataFrame({'Region': atlas['labels']})
+                labels_init.index += 1
+                if 0 in np.unique(labelmap_nii.get_fdata()):
+                    labels_init.loc[0] = ['Background']
+                    labels_init = labels_init.sort_index()
+
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'pauli':
 
@@ -490,26 +507,26 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
                         thr = ()
                         spec = '_unthresholded_'
 
-                    labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                            'derivatives/pauli' + spec + 'det.nii.gz')
-                    det_labelmap = get_det_atlas(atlas['maps'],*thr)
-                    nb.save(det_labelmap, labelmap)
+                    labelmap = os.path.join(os.getcwd(), 'pauli' + spec + 'det.nii.gz')
+                    labelmap_nii = get_det_atlas(atlas['maps'],*thr)
 
                 else:
-                    labelmap = atlas['maps']
+                    labelmap = os.path.join(os.getcwd(), 'pauli.nii.gz')
+                    labelmap_nii = nb.load(atlas['maps'])
 
                 # Add 'Background' label
-                labels = np.insert(atlas['labels'], 0, 'Background')
-                labels = pd.DataFrame({'Region': labels})
-                labels.index.names = ['Label']
+                labels_init = np.insert(atlas['labels'], 0, 'Background')
+                labels_init = pd.DataFrame({'Region': labels_init})
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'schaefer':
 
-                labelmap = atlas['maps']
+                labelmap = os.path.join(os.getcwd(), 'schaefer.nii.gz')
+                labelmap_nii = nb.load(atlas['maps'])
                 # Add 'Background' label
-                labels = np.insert(atlas['labels'], 0, 'Background')
-                labels = pd.DataFrame({'Region': labels})
-                labels.index.names = ['Label']
+                labels_init = np.insert(atlas['labels'], 0, 'Background')
+                labels_init = pd.DataFrame({'Region': labels_init})
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'smith':
 
@@ -522,69 +539,87 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
                     map_args = map_args[0]
                     spec = '_thr' + str(thr) + '_'
 
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/difumo' + spec + 'det.nii.gz')
-                det_labelmap = get_det_atlas(atlas[map_args],*thr)
-                nb.save(det_labelmap, labelmap)
+                labelmap = os.path.join(os.getcwd(), 'difumo' + spec + 'det.nii.gz')
+                labelmap_nii = get_det_atlas(atlas[map_args],*thr)
 
                 if '10' in map_args:
-                    labels = ['Visual_medial', 'Visual_occipital', 'Visual_lateral', 'DMN', 'Cerebellum',
+                    labels_init = ['Visual_medial', 'Visual_occipital', 'Visual_lateral', 'DMN', 'Cerebellum',
                               'Sensorimotor', 'Auditory', 'Executive_Control', 'FP_left', 'FP_right']
-                    labels = pd.DataFrame({'Labels': labels})
-                    labels.loc[-1] = ['Background']
-                    labels.index += 1
-                    labels = labels.sort_index()
+                    labels_init = pd.DataFrame({'Labels': labels_init})
+                    labels_init.loc[-1] = ['Background']
+                    labels_init.index += 1
+                    labels_init = labels_init.sort_index()
                 else:
-                    labels = dummy_labels(det_labelmap.get_fdata())
+                    labels_init = dummy_labels(labelmap_nii.get_fdata())
 
-                labels.index.names = ['Label']
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'surf_destrieux':
 
                 # Get labelmap of the specified hemisphere
-                labelmap = atlas['map_' + map_args[0]]
-                labels = pd.DataFrame({'Region': atlas['labels']})
-                labels.index.names = ['Label']
+                labelmap = os.path.join(os.getcwd(), 'surf-destrieux.nii.gz')
+                labelmap_nii = nb.load(atlas['map_' + map_args[0]])
+                labels_init = pd.DataFrame({'Region': atlas['labels']})
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'talairach':
 
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))), 'derivatives/talairach_' + kwargs['level_name'] + '.nii.gz')
-                nb.save(atlas['maps'], labelmap)
-                labels = pd.DataFrame({'Region': atlas['labels']})
-                labels.index.names = ['Label']
+                labelmap = os.path.join(os.getcwd(), 'talairach_' + kwargs['level_name'] + '.nii.gz')
+                labelmap_nii = nb.load(atlas['maps'])
+                labels_init = pd.DataFrame({'Region': atlas['labels']})
+                labels_init.index.names = ['Label']
 
             elif name_atlas == 'yeo':
 
                 # Get labelmap and labels with the specified resolution
                 nii = nb.load(atlas[map_args[0]])
                 nii_data = nii.get_fdata()
-                labelmap_orig = nii_data[:, :, :, 0]
-                det_labelmap = nb.Nifti1Image(labelmap_orig, nii.affine, nii.header)
-                labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                                        'derivatives/atlas_yeo_' + map_args[0] + '_det.nii.gz')
-                nb.save(det_labelmap, labelmap)
+                labelmap_data = nii_data[:, :, :, 0]
+                labelmap_nii = nb.Nifti1Image(labelmap_data, nii.affine, nii.header)
+                labelmap = os.path.join(os.getcwd(),'atlas_yeo_' + map_args[0] + '_det.nii.gz')
 
                 if '17' in map_args[0]:
                     # Labels for the 17 Yeo networks
-                    labels = ['Background','Visual Central (Visual A)', 'Visual Peripheral (Visual B)', 'Somatomotor A',
+                    labels_init = ['Background','Visual Central (Visual A)', 'Visual Peripheral (Visual B)', 'Somatomotor A',
                               'Somatomotor B', 'Dorsal Attention A', 'Dorsal Attention B',
                               'Salience / Ventral Attention A', 'Salience / Ventral Attention B',
                               'Limbic A', 'Limbic B', 'Control C', 'Control A', 'Control B', 'Temporal Parietal',
                               'Default C', 'Default A', 'Default B']
                 else:
                     # Labels for the 7 Yeo networks
-                    labels = ['Background','Visual', 'Somatomotor', 'Dorsal Attention', 'Salience / Ventral Attention',
+                    labels_init = ['Background','Visual', 'Somatomotor', 'Dorsal Attention', 'Salience / Ventral Attention',
                               'Limbic', 'Control', 'Default']
 
-                labels = pd.DataFrame({'Region': labels})
-                labels.index.names = ['Label']
+                labels_init = pd.DataFrame({'Region': labels_init})
+                labels_init.index.names = ['Label']
+
+            # Relabel labelmap with a range of values from 0 to the number of labels
+            labelmap_data = labelmap_nii.get_fdata()
+            for p, v in enumerate(labels_init.index.values):
+                labelmap_data[labelmap_data == v] = p
+
+            # Create final labelmap and labels file
+            labels = labels_init
+            labels['Background'] = np.ones(len(labels))
+            labels['Background'][labels.index.values == 0] = 0
+            lut = labels.sort_values(by=['Background', 'Region']).reset_index().sort_values(by='Label').index.values
+
+            new_labelmap = lut[np.array(labelmap_data, dtype=np.int32)]
+            new_labelmap_nii = nb.Nifti1Image(new_labelmap, labelmap_nii.affine, labelmap_nii.header)
+            nb.save(new_labelmap_nii, labelmap)
+
+            labels = pd.DataFrame({'Region': labels['Region']})
+            labels.index = lut
+            labels = labels.sort_index()
+            labels = labels.rename_axis('Label')
+
+            # saving as tsv file
+            labels_path = os.path.join(os.getcwd(), name_atlas + '_labels.tsv')
+            labels.to_csv(labels_path, sep="\t")
+            labels = labels['Region'].values.tolist()
 
         else:
             raise ValueError('No atlas detected. Check query string')
-
-    # saving as tsv file
-    labels_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),'atlas_files/' + name_atlas + '_labels.tsv')
-    labels.to_csv(labels_path, sep="\t")
 
     return labels, labelmap
 
@@ -644,7 +679,7 @@ def get_det_atlas(labelmap_4d, threshold=0):
 
     return deterministic_nii
 
-def relabel_atlas(labels, labelmap, labels_modules, labelmap_modules_resampled, module_threshold=0):
+def relabel_atlas(labels, labelmap, labels_modules, labelmap_modules_resampled, module_threshold=0,dummy_modules=False):
     """
 
     Takes 2 atlases, and relabels the first one so that it reflects the modules in the second atlas.
@@ -667,8 +702,8 @@ def relabel_atlas(labels, labelmap, labels_modules, labelmap_modules_resampled, 
     Returns:
         reordered_labels: Dataframe
             Reordered labelmap labels with their associated region and module names
-        relabelled_labelmap: str
-            Path to relabelled labelmap file
+        relabeled_labelmap: str
+            Path to relabeled labelmap file
 
     """
     from scipy.spatial.distance import dice
@@ -679,83 +714,74 @@ def relabel_atlas(labels, labelmap, labels_modules, labelmap_modules_resampled, 
     import time
     import os
 
-    labelmap_nii = nb.load(labelmap)
-    labelmap_data = labelmap_nii.get_fdata()
-    labelmap_modules_nii = nb.load(labelmap_modules_resampled)
-    labelmap_modules_data = labelmap_modules_nii.get_fdata()
+    if dummy_modules:
 
-    # Reorder labels_modules to ensure that it can be easily compared with the relabelled labelmap
-    new_labels_modules = labels_modules
-    new_labels_modules['Background'] = np.ones(len(new_labels_modules))
-    new_labels_modules['Background'][labels_modules.index.values == 0] = 0
-    lut = new_labels_modules.sort_values(by=['Background', 'Region']).reset_index().sort_values(by='Label').index.values
-    new_labelmap_modules = lut[np.array(labelmap_modules_data, dtype=np.int32)]
-    new_labels_modules = pd.DataFrame({'Module': new_labels_modules['Region']})
-    new_labels_modules.index = lut
-    new_labels_modules = new_labels_modules.sort_index()
-    new_labels_modules = new_labels_modules.rename_axis('Label')
+        # Create dummy modules by duplicating the labels
+        reordered_labels = labels['Region'].values.tolist()
+        reordered_modules = labels['Region'].values.tolist()
+        relabeled_labelmap = labelmap
 
-    print(new_labels_modules)
+    else:
+        labelmap_nii = nb.load(labelmap)
+        labelmap_data = labelmap_nii.get_fdata()
+        labelmap_modules_nii = nb.load(labelmap_modules_resampled)
+        labelmap_modules_data = labelmap_modules_nii.get_fdata()
 
-    # Initialize a temporary relabelled_labelmap and modules list
-    temp_relabelled_data = np.zeros(labelmap_data.shape)
-    modules = ['NA'] * len(labels)
-    indices = np.zeros(len(labels))
+        # Initialize modules list
+        modules = ['NA'] * len(labels)
 
-    for i, lbl in enumerate(labels.index):
+        for i in range(len(labels)):
 
-        # Get mask of each region in labelmap
-        region_mask = np.zeros(labelmap_data.shape)
-        region_mask[labelmap_data == lbl] = 1
+            # Get mask of each region in labelmap
+            region_mask = np.zeros(labelmap_data.shape)
+            region_mask[labelmap_data == i] = 1
 
-        # Initialize dice coefficient array
-        dice_coeff = np.zeros(len(new_labels_modules))
+            # Initialize dice coefficient array
+            dice_coeff = np.zeros(len(labels_modules))
 
-        # Get dice coefficient of mask overlap with module mask
-        for idx, mod in enumerate(new_labels_modules.index):
-            # Get mask of each module in labelmap_modules_resampled
-            module_mask = np.zeros(labelmap_data.shape)
-            module_mask[new_labelmap_modules == mod] = 1
+            # Get dice coefficient of mask overlap with module mask
+            for j in range(len(labels_modules)):
+                # Get mask of each module in labelmap_modules_resampled
+                module_mask = np.zeros(labelmap_data.shape)
+                module_mask[labelmap_modules_data == j] = 1
 
-            dice_coeff[idx] = 1 - dice(region_mask.flatten(), module_mask.flatten())
+                dice_coeff[j] = 1 - dice(region_mask.flatten(), module_mask.flatten())
 
-        # Get module (or background) associated to the current
-        pos = heapq.nlargest(2, range(len(dice_coeff)), key=dice_coeff.__getitem__)
-        val = heapq.nlargest(2, dice_coeff)
-        print(val)
-        if pos[0] != 0:
-            modules[i] = new_labels_modules['Module'][pos[0]]
-        elif val[0] < module_threshold:
-            modules[i] = new_labels_modules['Module'][pos[1]]
+            # Get module (or background) associated to the current
+            pos = heapq.nlargest(2, range(len(dice_coeff)), key=dice_coeff.__getitem__)
+            val = heapq.nlargest(2, dice_coeff)
+            print(val)
+            if pos[0] != 0:
+                modules[i] = labels_modules[pos[0]]
+            elif val[0] < module_threshold:
+                modules[i] = labels_modules[pos[1]]
 
-        temp_relabelled_data[labelmap_data == lbl] = i
-        indices[i] = i
 
-    # Temporal reordered labels to keep track of changes
-    temp_labels = pd.DataFrame({'Region': labels['Region'].tolist(), 'Module': modules}, index=indices)
-    temp_labels.index.names = ['Label']
-    temp_labels['Network'] = np.ones(len(temp_labels))
-    temp_labels['Network'][temp_labels['Module'] == 'NA'] = 0
+        # Temporal reordered labels to keep track of changes
+        temp_labels = pd.DataFrame({'Region': labels, 'Module': modules})
+        temp_labels.index.names = ['Label']
+        temp_labels['Network'] = np.ones(len(temp_labels))
+        temp_labels['Network'][temp_labels['Module'] == 'NA'] = 0
 
-    # Create final relabelled labelmap using a lookup table to swap labels in the labelmap
-    lut = temp_labels.sort_values(by=['Network','Module', 'Region']).reset_index().sort_values(by='Label').index.values
-    new_data = lut[np.array(temp_relabelled_data, dtype=np.int32)]
+        # Create final relabeled labelmap using a lookup table to swap labels in the labelmap
+        lut = temp_labels.sort_values(by=['Network','Module']).reset_index().sort_values(by='Label').index.values
+        new_labelmap_data = lut[np.array(labelmap_data, dtype=np.int32)]
 
-    # Create final reordered_labels
-    reordered_labels = temp_labels.filter(['Region','Module'])
-    reordered_labels.index = lut
-    reordered_labels = reordered_labels.sort_index()
-    reordered_labels = reordered_labels.rename_axis('Label')
+        # Create final reordered_labels
+        output_labels = temp_labels.filter(['Region','Module'])
+        output_labels.index = lut
+        output_labels = output_labels.sort_index()
+        output_labels = output_labels.rename_axis('Label')
+        reordered_labels = output_labels['Region'].values.tolist()
+        reordered_modules = output_labels['Module'].values.tolist()
 
-    # saving relabelled labelmap
-    relabelled_labelmap = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                            'derivatives/' + time.strftime("%Y%m%d") + '_' + time.strftime("%H%M") + '_relabelled_labelmap_det.nii.gz')
-    new_nii = nb.Nifti1Image(new_data, labelmap_nii.affine, labelmap_nii.header)
-    nb.save(new_nii, relabelled_labelmap)
+        # saving relabeled labelmap
+        relabeled_labelmap = os.path.join(os.getcwd(), time.strftime("%Y%m%d") + '_' + time.strftime("%H%M") + '_relabeled_labelmap.nii.gz')
+        new_labelmap_nii = nb.Nifti1Image(new_labelmap_data, labelmap_nii.affine, labelmap_nii.header)
+        nb.save(new_labelmap_nii, relabeled_labelmap)
 
-    # saving labels as tsv file
-    labels_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd()))),
-                               'atlas_files/' + time.strftime("%Y%m%d") + '_' + time.strftime("%H%M") + '_reordered_labels.tsv')
-    reordered_labels.to_csv(labels_path, sep="\t")
+        # saving labels as tsv file
+        labels_path = os.path.join(os.getcwd(), time.strftime("%Y%m%d") + '_' + time.strftime("%H%M") + '_reordered_labels.tsv')
+        output_labels.to_csv(labels_path, sep="\t")
 
-    return reordered_labels, relabelled_labelmap
+    return reordered_labels, reordered_modules, relabeled_labelmap
