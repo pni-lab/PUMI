@@ -315,6 +315,7 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
     from fnmatch import fnmatch
     import os
     from PUMI.pipelines.multimodal.atlas import dummy_labels, get_det_atlas
+    import PUMI
 
     # Separate atlas_params and labelmap_params from kwargs
     if kwargs:
@@ -409,7 +410,7 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
 
                 # Get labels from provided MIST files
                 #labels_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.getcwd())))) + '/data_in/atlas/MIST/Parcel_Information/MIST_' + map_args[0] + '.csv'
-                labels_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                labels_dir = os.path.abspath(os.path.join(os.path.dirname(PUMI.__file__),
                                                           "../data_in/atlas/MIST/Parcel_Information/MIST_"
                                                           + map_args[0] + ".csv"))
                 labels_init = pd.read_csv(labels_dir, delimiter=";")
