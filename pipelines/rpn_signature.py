@@ -11,6 +11,7 @@ from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels
 import traits
+from PUMI.pipelines.multimodal.atlas import atlas_selection
 
 
 @FuncPipeline(inputspec_fields=['ts_files', 'fd_files', 'scrub_threshold'],
@@ -172,16 +173,18 @@ def rpn(wf, **kwargs):
     wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 
-    pick_atlas_wf = pick_atlas('pick_atlas_wf')
-    mist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data_in/atlas/MIST"))
-    pick_atlas_wf.get_node('inputspec').inputs.labelmap = os.path.join(mist_dir, 'Parcellations/MIST_122.nii.gz')
-    pick_atlas_wf.get_node('inputspec').inputs.modules = mist_modules(mist_directory=mist_dir, resolution="122")
-    pick_atlas_wf.get_node('inputspec').inputs.labels = mist_labels(mist_directory=mist_dir, resolution="122")
+    atlas_selection_wf = atlas_selection('atlas_selection_wf', modularize=True, module_threshold=0.0)
+    atlas_selection_wf.get_node('inputspec').inputs.atlas = 'basc'
+    atlas_selection_wf.get_node('inputspec').inputs.atlas_params = {}
+    atlas_selection_wf.get_node('inputspec').inputs.labelmap_params = ('122',)
+    atlas_selection_wf.get_node('inputspec').inputs.modules_atlas = 'basc'
+    atlas_selection_wf.get_node('inputspec').inputs.modules_params = {}
+    atlas_selection_wf.get_node('inputspec').inputs.modules_labelmap_params = ('7',)
 
     extract_timeseries = extract_timeseries_nativespace('extract_timeseries')
-    wf.connect(pick_atlas_wf, 'relabeled_atlas', extract_timeseries, 'atlas')
-    wf.connect(pick_atlas_wf, 'reordered_labels', extract_timeseries, 'labels')
-    wf.connect(pick_atlas_wf, 'reordered_modules', extract_timeseries, 'modules')
+    wf.connect(atlas_selection_wf, 'labelmap', extract_timeseries, 'atlas')
+    wf.connect(atlas_selection_wf, 'labels', extract_timeseries, 'labels')
+    wf.connect(atlas_selection_wf, 'modules', extract_timeseries, 'modules')
     wf.connect(anatomical_preprocessing_wf, 'brain', extract_timeseries, 'anat')
     wf.connect(bbr_wf, 'anat_to_func_linear_xfm', extract_timeseries, 'inv_linear_reg_mtrx')
     wf.connect(anatomical_preprocessing_wf, 'mni2anat_warpfield', extract_timeseries, 'inv_nonlinear_reg_mtrx')
