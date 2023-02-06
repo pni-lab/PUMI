@@ -4,7 +4,6 @@ import os
 from glob import glob
 import warnings
 from configparser import SafeConfigParser
-
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
 import nipype.interfaces.utility as utility
@@ -14,7 +13,7 @@ from nipype import IdentityInterface, Function
 from nipype.utils.filemanip import list_to_filename
 from hashlib import sha1
 import re
-
+import ast
 
 def _parameterization_dir(param):
     """
@@ -491,6 +490,23 @@ class BidsApp:
         self.parser.add_argument('--working_dir', type=str,
                                  help='Directory where temporary data will be stored. Default is the current working directory.')
 
+        self.parser.add_argument('--plugin', type=str,
+                                 help='Nipype plugin (e.g. MultiProc, Slurm). If not set, MultiProc is used.')
+
+        self.parser.add_argument('--n_procs', type=int,
+                                 help='Amount of threads to execute in parallel.'
+                                      + 'If not set, the amount of CPU cores is used.'
+                                      + 'Caution: Does only work with the MultiProc-plugin!')
+
+        self.parser.add_argument('--memory_gb', type=int,
+                                 help='Memory limit in GB. If not set, use 90% of the available memory'
+                                      + 'Caution: Does only work with the MultiProc-plugin!')
+
+        self.parser.add_argument('--plugin_args', type=str,
+                                 help='Nipype plugin arguments in dictionary format (e. g. {\'memory_gb\': 6})'
+                                      + 'Caution: If set, you need to supply the --plugin argument and'
+                                      + 'the command line arguments --n_procs and --memory_gb will be ignored!')
+
         self.pipeline = pipeline  # mandatory via script
         self.name = name  # mandatory via script
         self.bids_dir = bids_dir
@@ -506,6 +522,18 @@ class BidsApp:
         bids_specified = ['bids_dir', 'output_dir', 'analysis_level', 'participant_label', 'version', 'working_dir']
         pipeline_specific_arguments = {key:dict(vars(cli_args))[key] for key in dict(vars(cli_args)).keys() if key not in bids_specified}
 
+        if cli_args.plugin_args is not None:
+            plugin_args_dict = ast.literal_eval(cli_args.plugin_args)
+            self.run_args = {'plugin': cli_args.plugin, 'plugin_args': plugin_args_dict}
+        else:
+            if cli_args.plugin is not None:
+                self.run_args = {'plugin': cli_args.plugin}
+            if cli_args.plugin == 'MultiProc':
+                self.run_args['plugin_args'] = {}
+                if cli_args.n_procs is not None:
+                    self.run_args['plugin_args']['n_procs'] = cli_args.n_procs
+                if cli_args.memory_gb is not None:
+                    self.run_args['plugin_args']['memory_gb'] = cli_args.memory_gb
 
         if (cli_args.bids_dir is None) and (self.bids_dir is None):
             raise ValueError('The argument "bids_dir" has to be set!')
