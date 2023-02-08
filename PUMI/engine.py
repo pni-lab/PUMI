@@ -561,9 +561,9 @@ class BidsApp:
             self.output_dir = cli_args.working_dir if (cli_args.working_dir is not None) else self.working_dir
 
         if self.run_args is None:
-            self.pipeline(self.name, bids_dir=self.bids_dir, output_dir=self.output_dir, working_dir=self.working_dir,
+            self.pipeline(self.name, bids_dir=self.bids_dir, sink_dir=self.output_dir, base_dir=self.working_dir,
                           subjects=self.participant_label, **pipeline_specific_arguments, **self.kwargs)
         else:
-            self.pipeline(self.name, bids_dir=self.bids_dir, output_dir=self.output_dir, working_dir=self.working_dir,
+            self.pipeline(self.name, bids_dir=self.bids_dir, sink_dir=self.output_dir, base_dir=self.working_dir,
                           subjects=self.participant_label, run_args=self.run_args, **pipeline_specific_arguments,
                           **self.kwargs)
