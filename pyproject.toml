@@ -4,7 +4,9 @@ version = "0.0.0.post132.dev0+2fe40cd" # managed by poetry-dynamic-versioning
 description = "Pipelines and Utilities based on a Modulare Inventory"
 authors = ["Tamas Spisak <tamas.spisak@uni-due.de>"] #todo all devs here
 packages = [
-    { include = "PUMI" }
+     { include = "PUMI" },
+     { include = "pipelines" },
+     { include = "resources" }
     ]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/pni-lab/PUMI"
@@ -38,6 +40,9 @@ templateflow = ">=0.8.1"
 matplotlib = ">=3.5.2"
 
 [tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+rpn_signature = 'pipelines.rpn_signature.rpn_app:run'
 
 [tool.poetry-dynamic-versioning]
 enable = true

@@ -1,0 +1,72 @@
+#!/bin/bash
+
+while getopts 'v:i:o:d:h' opt; do
+  case "$opt" in
+    v)
+      # PUMI VERSION, this gets passed to pip install
+      # if it's a path than install from local source
+      # but it can also be from github <github_address>
+      # and (later) simply the PIPY package name
+      PUMI_VER="$OPTARG"	
+      ;;
+      
+    i) 
+     # input BIDS dir, if used, argument should be a BIDS-app
+     INDIR="$OPTARG"
+     ;;
+    o)
+     # output dir (derivatives), if used, argument should be a BIDS-app
+# Dirctory where the results should be put
+# this will be mounted and maybe we match some stuff automatically
+     OUTDIR="$OPTARG"
+     ;;
+    d)
+    # additional docker command line arguments
+    # can be used e.g. to mount volumes
+    DOCKER_CMD="$OPTARG"
+    ;;
+   
+    ?|h)
+      echo "Usage: $(basename $0) [-v] [-o] [-h] commands"
+      exit 1
+      ;;
+  esac
+done
+shift "$(($OPTIND -1))"
+
+
+# Remaining arguments: command to be executed
+PIPELINE_CMD=$@
+
+command="pip install $PUMI_VER >/dev/null; $PIPELINE_CMD"
+
+# determine what to mount
+if [ -d "$PUMI_VER" ]; then
+	DOCKER_CMD="$DOCKER_CMD -v $PUMI_VER:/home/pumi/PUMI"
+	PUMI_VER="./PUMI"
+fi
+
+# todo: a better way: automount if BIDS app is called
+# how to decide? have a flag!
+if [ -n "$INDIR" ]; then
+  DOCKER_CMD="$DOCKER_CMD -v $INDIR:/input:ro"
+  PIPELINE_CMD="$PIPELINE_CMD --bids_dir=/input"
+fi
+
+if [ -n "$OUTDIR" ]; then
+  mkdir -p $OUTDIR
+  DOCKER_CMD="$DOCKER_CMD -v $OUTDIR:/output"
+  PIPELINE_CMD="$PIPELINE_CMD --output_dir=/output"
+fi
+
+command="set -x; pip install $PUMI_VER >/dev/null; $PIPELINE_CMD"
+
+echo ""
+echo + docker run $DOCKER_CMD pnilab/pumi:0.3 bash -c \"$command\"
+echo ""
+
+docker run $DOCKER_CMD pnilab/pumi:0.3 bash -c "$command"
+
+
+
+

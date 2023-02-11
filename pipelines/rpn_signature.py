@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+import importlib
+
 from nipype.interfaces.fsl import Reorient2Std
 
 import PUMI
@@ -92,9 +95,8 @@ def predict_pain_sensitivity(wf, model_json=None, **kwargs):
         import os
 
         if model_json is None:
-            #pos = os.getcwd().rindex('PUMI/') + 5
-            #model_json = os.getcwd()[0:pos] + 'data_in/rpn_model.json'
-            model_json = os.path.dirname(PUMI.__file__) + '/../data_in/rpn_model.json'
+            with importlib.resources.path('resources', 'rpn_model.json') as file:
+                model_json = file
 
         model = rpn_model(file=model_json)
         predicted = model.predict(X)
