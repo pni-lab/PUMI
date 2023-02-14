@@ -1,15 +1,11 @@
 import argparse
 from PUMI._version import get_versions
-import os
-from glob import glob
-import warnings
-from configparser import SafeConfigParser
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
 import nipype.interfaces.utility as utility
 from nipype.interfaces import BIDSDataGrabber
 from nipype.interfaces.io import DataSink
-from nipype import IdentityInterface, Function
+from nipype import Function
 from nipype.utils.filemanip import list_to_filename
 from hashlib import sha1
 import re
