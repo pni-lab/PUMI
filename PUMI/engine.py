@@ -179,7 +179,7 @@ class PumiPipeline:
                     sink_dir = os.path.abspath(sink_dir)
 
             if qc_dir is None:
-                qc_dir = globals.cfg_parser.get('SINKING', 'qc_dir', fallback='derivatives/qc')
+                qc_dir = globals.cfg_parser.get('SINKING', 'qc_dir', fallback='qc')
                 if not qc_dir.startswith('/'):
                     qc_dir = os.path.abspath(os.path.join(sink_dir, qc_dir))
 
