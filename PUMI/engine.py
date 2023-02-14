@@ -14,6 +14,7 @@ from nipype.utils.filemanip import list_to_filename
 from hashlib import sha1
 import re
 import ast
+from PUMI import globals
 
 def _parameterization_dir(param):
     """
@@ -172,26 +173,20 @@ class PumiPipeline:
         @wraps(pipeline_fun) # So that decorated functions can be documented properly
         def wrapper(name, base_dir='.', sink_dir=None, qc_dir=None, **kwargs):
 
-            cfg_parser = SafeConfigParser()
-            cfg_parser.read(os.path.join(os.path.dirname(__file__), 'settings.ini'))
-
             if sink_dir is None:
-                default_sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
-                if default_sink_dir.startswith('/'):
-                    sink_dir = default_sink_dir
-                else:
-                    sink_dir = os.path.abspath(default_sink_dir)
+                sink_dir = globals.cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
+                if not sink_dir.startswith('/'):
+                    sink_dir = os.path.abspath(sink_dir)
+
             if qc_dir is None:
-                default_qc_dir = cfg_parser.get('SINKING', 'qc_dir', fallback='derivatives/qc')
-                if default_qc_dir.startswith('/'):
-                    qc_dir = default_qc_dir
-                else:
-                    qc_dir = os.path.abspath(default_qc_dir)
+                qc_dir = globals.cfg_parser.get('SINKING', 'qc_dir', fallback='derivatives/qc')
+                if not qc_dir.startswith('/'):
+                    qc_dir = os.path.abspath(os.path.join(sink_dir, qc_dir))
 
             wf = NestedWorkflow(name, base_dir)
             wf.sink_dir = sink_dir
             wf.qc_dir = qc_dir
-            wf.cfg_parser = cfg_parser
+            wf.cfg_parser = globals.cfg_parser
 
             if len(self.inputspec_fields) != 0:
                 inputspec = NestedNode(
@@ -371,36 +366,23 @@ class BidsPipeline(PumiPipeline):
             if run_args is None:
                 run_args = {'plugin':'MultiProc'}
 
-            cfg_parser = SafeConfigParser()
-            cfg_parser.read(os.path.join(os.path.dirname(__file__), 'settings.ini'))
-
             if sink_dir is None:
-                default_sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
-                if default_sink_dir.startswith('/'):
-                    sink_dir = default_sink_dir
-                else:
-                    sink_dir = os.path.abspath(os.path.join(base_dir, default_sink_dir))
-            else:
-                # Set default sink dir globally
-                # todo: implement override in configparser?
-                warnings.warn('Setting global sink_dir: Not yet implemented!\nModify settings.ini instead.')
+                sink_dir = globals.cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
+            if not sink_dir.startswith('/'):
+                sink_dir = os.path.abspath(sink_dir)
+            globals.cfg_parser.set('SINKING', 'sink_dir', sink_dir)
 
             if qc_dir is None:
-                default_qc_dir = cfg_parser.get('SINKING', 'qc_dir', fallback='derivatives/qc')
-                if default_qc_dir.startswith('/'):
-                    qc_dir = default_qc_dir
-                else:
-                    qc_dir = os.path.abspath(default_qc_dir)
-            else:
-                # Set default qc dir globally
-                # todo: implement override in configparser?
-                warnings.warn('Setting global qc_dir: Not yet implemented!\nModify settings.ini instead.')
+                qc_dir = globals.cfg_parser.get('SINKING', 'qc_dir', fallback='qc')
+            if not qc_dir.startswith('/'):
+                qc_dir = os.path.abspath(os.path.join(sink_dir, qc_dir))
+            globals.cfg_parser.set('SINKING', 'qc_dir', qc_dir)
 
             # main workflow
             wf = NestedWorkflow(name, base_dir)
             wf.sink_dir = sink_dir
             wf.qc_dir = qc_dir
-            wf.cfg_parser = cfg_parser
+            wf.cfg_parser = globals.cfg_parser
 
             # instead of inputspec, we need a bidsgrabber
 
@@ -469,7 +451,7 @@ class BidsPipeline(PumiPipeline):
 class BidsApp:
 
     def __init__(self, pipeline, name, bids_dir=None, output_dir=None, analysis_level=None, participant_label=None,
-                 working_dir=None, run_args=None, description=None, **kwargs):
+                 working_dir='.', run_args=None, description=None, **kwargs):
 
         if description is None:
             self.parser = argparse.ArgumentParser()
@@ -540,25 +522,13 @@ class BidsApp:
         else:
             self.bids_dir = cli_args.bids_dir if (cli_args.bids_dir is not None) else self.bids_dir
 
-        if (cli_args.output_dir is None) and (self.output_dir is None):
-            self.output_dir = './derivatives/'
-        else:
-            self.output_dir = cli_args.output_dir if (cli_args.output_dir is not None) else self.output_dir
+        # Use specification from CLI if available. Otherwise, use the specification from the BidsApp-constructor.
+        # If output_dir is None, BidsApp and PumiPipeline are going to  read the location specified in the settings.ini
+        self.output_dir = cli_args.output_dir if (cli_args.output_dir is not None) else self.output_dir
+        self.participant_label = cli_args.participant_label if (cli_args.participant_label is not None) else self.participant_label
+        self.working_dir = cli_args.working_dir if (cli_args.working_dir is not None) else self.working_dir
 
-        if (cli_args.analysis_level is None) and (self.analysis_level is None):
-            self.output_dir = 'participant'
-        else:
-            self.output_dir = cli_args.analysis_level if (cli_args.analysis_level is not None) else self.analysis_level
-
-        if (cli_args.participant_label is None) and (self.participant_label is None):
-            self.output_dir = None
-        else:
-            self.output_dir = cli_args.participant_label if (cli_args.participant_label is not None) else self.participant_label
-
-        if (cli_args.working_dir is None) and (self.working_dir is None):
-            self.output_dir = '.'
-        else:
-            self.output_dir = cli_args.working_dir if (cli_args.working_dir is not None) else self.working_dir
+        # todo: integrate analysis_level
 
         if self.run_args is None:
             self.pipeline(self.name, bids_dir=self.bids_dir, sink_dir=self.output_dir, base_dir=self.working_dir,
