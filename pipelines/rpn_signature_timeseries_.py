@@ -16,7 +16,6 @@ from PUMI.utils import mist_modules, mist_labels
 import traits
 from PUMI.pipelines.multimodal.atlas import atlas_selection
 
-
 @FuncPipeline(inputspec_fields=['ts_files', 'fd_files', 'scrub_threshold'],
               outputspec_fields=['features', 'out_file'])
 def calculate_connectivity(wf, **kwargs):
@@ -176,12 +175,7 @@ def rpn(wf, **kwargs):
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 
     atlas_selection_wf = atlas_selection('atlas_selection_wf', modularize=True, module_threshold=0.0)
-    atlas_selection_wf.get_node('inputspec').inputs.atlas = 'basc'
-    atlas_selection_wf.get_node('inputspec').inputs.atlas_params = {}
-    atlas_selection_wf.get_node('inputspec').inputs.labelmap_params = ('122',)
-    atlas_selection_wf.get_node('inputspec').inputs.modules_atlas = 'basc'
-    atlas_selection_wf.get_node('inputspec').inputs.modules_params = {}
-    atlas_selection_wf.get_node('inputspec').inputs.modules_labelmap_params = ('7',)
+    #atlas_selection_wf.get_node('inputspec').inputs.atlas_dir = ()
 
     extract_timeseries = extract_timeseries_nativespace('extract_timeseries')
     wf.connect(atlas_selection_wf, 'labelmap', extract_timeseries, 'atlas')

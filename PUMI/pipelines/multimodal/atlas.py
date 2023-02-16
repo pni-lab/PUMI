@@ -65,7 +65,7 @@ def atlas_selection(wf, modularize=False, **kwargs):
     if modularize:
 
         # Fetch modules atlas
-        fetch_atlas_modules_wf = fetch_atlas_module('fetch_atlas_modules_wf',atlas_module=True)
+        fetch_atlas_modules_wf = fetch_atlas_module('fetch_atlas_modules_wf',atlas_modules=True)
         wf.connect('inputspec', 'modules_atlas', fetch_atlas_modules_wf, 'name_atlas')
         wf.connect('inputspec', 'modules_params', fetch_atlas_modules_wf, 'atlas_params')
         wf.connect('inputspec', 'modules_labelmap_params', fetch_atlas_modules_wf, 'labelmap_params')
@@ -125,7 +125,7 @@ def atlas_selection(wf, modularize=False, **kwargs):
 
 @GroupPipeline(inputspec_fields=['name_atlas', 'atlas_dir', 'atlas_params', 'labelmap_params'],
                outputspec_fields=['labels', 'labelmap'])
-def fetch_atlas_module(wf, atlas_module=False, **kwargs):
+def fetch_atlas_module(wf, atlas_modules=False, **kwargs):
     """
     Workflow to fetch an atlas.
 
@@ -152,24 +152,28 @@ def fetch_atlas_module(wf, atlas_module=False, **kwargs):
             Name of the workflow
         **kwargs:
     """
+
+    from pipelines import rpn_atlas_opt
+
     fetch_atlas = Node(
         interface=utility.Function(
             input_names=['name_atlas', 'atlas_dir', 'atlas_params', 'labelmap_params'],
             output_names=['labels', 'labelmap'],
-            function=get_atlas
+            function=get_atlas,
         ),
         name='fetch_atlas'
     )
 
-    if atlas_module:
-        wf.connect('inputspec', 'name_atlas', fetch_atlas, 'name_atlas')
-        wf.connect('inputspec', 'atlas_params', fetch_atlas, 'atlas_params')
-        wf.connect('inputspec', 'labelmap_params', fetch_atlas, 'labelmap_params')
+    if atlas_modules:
+        fetch_atlas.iterables = [('name_atlas',rpn_atlas_opt.modules_name_iterables),
+                                 ('atlas_params',rpn_atlas_opt.modules_params_iterables),
+                                 ('labelmap_params',rpn_atlas_opt.modules_labelmap_params_iterables)]
+        fetch_atlas.synchronize = True
         wf.connect('inputspec', 'atlas_dir', fetch_atlas, 'atlas_dir')
     else:
-        fetch_atlas.iterables = [('name_atlas',['aal','allen','basc','craddock','craddock','destrieux']),#,'difumo','harvard_oxford','juelich','msdl','pauli','pauli','smith','talairach','yeo']),
-                                 ('atlas_params',[{},{},{},{},{},{}]),#,{'dimension':128},{'atlas_name':'cort-maxprob-thr0-1mm',{'atlas_name':'maxprob-thr0-1mm'},{},{'version':'det'},{},{},{'level_name':'ba'},{}]),
-                                 ('labelmap_params',[(),('rsn28',),('122',),('scorr_mean',19),('tcorr_mean',19),()])]#,(),(),(),(),(),(),('rsn70',),(),('thick_17',)])]
+        fetch_atlas.iterables = [('name_atlas',rpn_atlas_opt.atlas_name_iterables),
+                                 ('atlas_params',rpn_atlas_opt.atlas_params_iterables),
+                                 ('labelmap_params',rpn_atlas_opt.labelmap_params_iterables)]
         fetch_atlas.synchronize = True
         wf.connect('inputspec', 'atlas_dir', fetch_atlas, 'atlas_dir')
 
