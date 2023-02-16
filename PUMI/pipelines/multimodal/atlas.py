@@ -65,7 +65,7 @@ def atlas_selection(wf, modularize=False, **kwargs):
     if modularize:
 
         # Fetch modules atlas
-        fetch_atlas_modules_wf = fetch_atlas_module('fetch_atlas_modules_wf')
+        fetch_atlas_modules_wf = fetch_atlas_module('fetch_atlas_modules_wf',atlas_module=True)
         wf.connect('inputspec', 'modules_atlas', fetch_atlas_modules_wf, 'name_atlas')
         wf.connect('inputspec', 'modules_params', fetch_atlas_modules_wf, 'atlas_params')
         wf.connect('inputspec', 'modules_labelmap_params', fetch_atlas_modules_wf, 'labelmap_params')
@@ -125,7 +125,7 @@ def atlas_selection(wf, modularize=False, **kwargs):
 
 @GroupPipeline(inputspec_fields=['name_atlas', 'atlas_dir', 'atlas_params', 'labelmap_params'],
                outputspec_fields=['labels', 'labelmap'])
-def fetch_atlas_module(wf, **kwargs):
+def fetch_atlas_module(wf, atlas_module=False, **kwargs):
     """
     Workflow to fetch an atlas.
 
@@ -161,10 +161,17 @@ def fetch_atlas_module(wf, **kwargs):
         name='fetch_atlas'
     )
 
-    wf.connect('inputspec', 'name_atlas', fetch_atlas, 'name_atlas')
-    wf.connect('inputspec', 'atlas_params', fetch_atlas, 'atlas_params')
-    wf.connect('inputspec', 'labelmap_params', fetch_atlas, 'labelmap_params')
-    wf.connect('inputspec', 'atlas_dir', fetch_atlas, 'atlas_dir')
+    if atlas_module:
+        wf.connect('inputspec', 'name_atlas', fetch_atlas, 'name_atlas')
+        wf.connect('inputspec', 'atlas_params', fetch_atlas, 'atlas_params')
+        wf.connect('inputspec', 'labelmap_params', fetch_atlas, 'labelmap_params')
+        wf.connect('inputspec', 'atlas_dir', fetch_atlas, 'atlas_dir')
+    else:
+        fetch_atlas.iterables = [('name_atlas',['aal','allen','basc','craddock','craddock','destrieux']),#,'difumo','harvard_oxford','juelich','msdl','pauli','pauli','smith','talairach','yeo']),
+                                 ('atlas_params',[{},{},{},{},{},{}]),#,{'dimension':128},{'atlas_name':'cort-maxprob-thr0-1mm',{'atlas_name':'maxprob-thr0-1mm'},{},{'version':'det'},{},{},{'level_name':'ba'},{}]),
+                                 ('labelmap_params',[(),('rsn28',),('122',),('scorr_mean',19),('tcorr_mean',19),()])]#,(),(),(),(),(),(),('rsn70',),(),('thick_17',)])]
+        fetch_atlas.synchronize = True
+        wf.connect('inputspec', 'atlas_dir', fetch_atlas, 'atlas_dir')
 
     # Sinking
     wf.connect(fetch_atlas, 'labelmap', 'sinker', 'atlas')
@@ -278,7 +285,7 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
     Parameters:
         name_atlas: str
             Input string can be for: 'aal','allen','basc','craddock','destrieux','difumo','harvard_oxford','juelich',
-            'msdl','pauli','schaefer','surf_destrieux','talairach','yeo'
+            'msdl','pauli','schaefer','talairach','yeo'
         atlas_dir: str, optional
             Path to a custom atlas labelmap and label text file.
         **kwargs: dict
@@ -512,27 +519,26 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
             elif name_atlas == 'pauli':
 
                 if kwargs:
-
+                    if kwargs['version'] == 'det':
+                        labelmap = os.path.join(os.getcwd(), 'pauli.nii.gz')
+                        labelmap_nii = nb.load(atlas['maps'])
+                else:
                     if map_args:
                         thr = map_args[0]
                         spec = '_thr' + str(thr) + '_'
                     else:
                         thr = ()
                         spec = '_unthresholded_'
-
                     labelmap = os.path.join(os.getcwd(), 'pauli' + spec + 'det.nii.gz')
                     labelmap_nii = get_det_atlas(atlas['maps'], *thr)
 
-                else:
-                    labelmap = os.path.join(os.getcwd(), 'pauli.nii.gz')
-                    labelmap_nii = nb.load(atlas['maps'])
 
                 # Add 'Background' label
                 labels_init = np.insert(atlas['labels'], 0, 'Background')
                 labels_init = pd.DataFrame({'Region': labels_init})
                 labels_init.index.names = ['Label']
 
-            elif name_atlas == 'schaefer':
+            elif name_atlas == 'schaefer': # There's an error at the end: TypeError: Can't mix strings and bytes in path components
 
                 labelmap = os.path.join(os.getcwd(), 'schaefer.nii.gz')
                 labelmap_nii = nb.load(atlas['maps'])
@@ -567,18 +573,10 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
 
                 labels_init.index.names = ['Label']
 
-            elif name_atlas == 'surf_destrieux':
-
-                # Get labelmap of the specified hemisphere
-                labelmap = os.path.join(os.getcwd(), 'surf-destrieux.nii.gz')
-                labelmap_nii = nb.load(atlas['map_' + map_args[0]])
-                labels_init = pd.DataFrame({'Region': atlas['labels']})
-                labels_init.index.names = ['Label']
-
             elif name_atlas == 'talairach':
 
                 labelmap = os.path.join(os.getcwd(), 'talairach_' + kwargs['level_name'] + '.nii.gz')
-                labelmap_nii = nb.load(atlas['maps'])
+                labelmap_nii = atlas['maps']
                 labels_init = pd.DataFrame({'Region': atlas['labels']})
                 labels_init.index.names = ['Label']
 
