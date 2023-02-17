@@ -43,6 +43,7 @@ matplotlib = ">=3.5.2"
 
 [tool.poetry.scripts]
 rpn_signature = 'pipelines.rpn_signature.rpn_app:run'
+rpn_signature_timeseries = 'pipelines.rpn_signature_timeseries.rpn_app:run'
 
 [tool.poetry-dynamic-versioning]
 enable = true
