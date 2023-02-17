@@ -190,7 +190,6 @@ def rpn(wf, **kwargs):
 
     wf.write_graph('rpn-signature.png')
 
-
 rpn_app = BidsApp(
     pipeline=rpn,
     name='rpn',

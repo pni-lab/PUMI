@@ -28,6 +28,7 @@ brain_extraction_app = BidsApp(
 ).run()
 """
 
+
 brain_extraction_app = BidsApp(
     pipeline=bet_wf,  # bet_wf is not an object! It's the name of the workflow-creating-method
     name='brain_extraction',  # Node-name of the workflow-object of specified pipeline that will be internally created
