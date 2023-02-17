@@ -193,5 +193,6 @@ def rpn(wf, **kwargs):
 rpn_app = BidsApp(
     pipeline=rpn,
     name='rpn',
+    run_args={'plugin':'Linear'},
     bids_dir='../data_in/bids'  # if you pass a cli argument this will be written over!
 ).run()
