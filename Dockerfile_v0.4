@@ -30,7 +30,7 @@ RUN apt-get update --yes && apt-get upgrade --yes && apt-get install --yes --no-
         && rm -f "$conda_installer" \
         && conda update -yq -nbase conda \
         && conda config --system --prepend channels conda-forge \
-        && conda config --set channel_priority false \
+        # && conda config --set channel_priority false \
         && conda config --system --set auto_update_conda false \
         && conda config --system --set show_channel_urls true \
         # Enable `conda activate`
@@ -40,6 +40,7 @@ RUN apt-get update --yes && apt-get upgrade --yes && apt-get install --yes --no-
         # Clean up
         && sync && conda clean --all --yes && sync \
         && rm -rf ~/.cache/pip/*
+
 
 # **********************************************************************************************************************
 
@@ -198,6 +199,10 @@ RUN apt-get update -qq \
 
 # **********************************************************************************************************************
 
+RUN apt-get update --yes && apt-get upgrade --yes && apt-get install --yes --no-install-recommends \
+    graphviz && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER ${NB_UID}
 
 # [USER] INSTALL REQUIRED PUMI PACKAGES:
@@ -210,7 +215,7 @@ RUN conda install -y --name base \
     "traits" \
     "pandas" \
     "matplotlib" \
-    "scikit-learn==1.1.2" \
+    "scikit-learn" \
     "scikit-image" \
     "seaborn" \
     "nbformat" \
@@ -220,11 +225,8 @@ RUN conda install -y --name base \
     "numpydoc" \
     "nbsphinx" \
     "pytest" \
-    "nipype" \
-    "graphviz" \
     "nilearn" \
     "seaborn" \
-    "graphviz" \
     "nbsphinx" \
     "pybids" \
     "poetry" \
@@ -233,6 +235,7 @@ RUN conda install -y --name base \
     "click"
 
 RUN pip install --no-cache-dir  \
+    "nipype[full]" \
     "pydeface" \
     "neurodocker==0.8.0" \
     "templateflow" \
@@ -241,6 +244,7 @@ RUN pip install --no-cache-dir  \
     "nbval" \
     "datalad[full]" \
     "git+https://github.com/MIC-DKFZ/HD-BET"
+
 
 # **********************************************************************************************************************
 
