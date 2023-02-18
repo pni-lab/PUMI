@@ -30,7 +30,7 @@ RUN apt-get update --yes && apt-get upgrade --yes && apt-get install --yes --no-
         && rm -f "$conda_installer" \
         && conda update -yq -nbase conda \
         && conda config --system --prepend channels conda-forge \
-        && conda config --set channel_priority strict \
+        # && conda config --set channel_priority strict \
         && conda config --system --set auto_update_conda false \
         && conda config --system --set show_channel_urls true \
         # Enable `conda activate`
