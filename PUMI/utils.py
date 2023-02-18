@@ -373,7 +373,7 @@ def scale_vol(in_file):
     import os
 
     img = nb.load(in_file)
-    data = img.get_data()
+    data = img.get_fdata()
     std = np.std(data, axis=3)
     std[std == 0] = 1  # divide with 1
     mean = np.mean(data, axis=3)
@@ -759,7 +759,7 @@ def relabel_atlas(atlas_file, modules, labels):
     lut = np.array([0] + lut.tolist())
     # maybe this is a bit complicated, but believe me it does what it should
 
-    data = img.get_data()
+    data = img.get_fdata()
     newdata = lut[np.array(data, dtype=np.int32)]  # apply lookup table to swap labels
 
     img = nib.Nifti1Image(newdata.astype(np.float64), img.affine)
@@ -784,9 +784,9 @@ def TsExtractor(labels, labelmap, func, mask, global_signal=True, pca=False, out
     import numpy as np
     import pandas as pd
 
-    func_data = nib.load(func).get_data()
-    labelmap_data = nib.load(labelmap).get_data()
-    mask_data = nib.load(mask).get_data()
+    func_data = nib.load(func).get_fdata()
+    labelmap_data = nib.load(labelmap).get_fdata()
+    mask_data = nib.load(mask).get_fdata()
 
     labelmap_data[mask_data==0] = 0 # background
 
@@ -963,7 +963,7 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, subplo
         lut2 = lut
         lut2 = np.array([0] + lut2.tolist())
 
-        relabeled=lut2[np.array(atlas.get_data(), dtype=int)]
+        relabeled=lut2[np.array(atlas.get_fdata(), dtype=int)]
         atl = nb.Nifti1Image(relabeled, atlas.affine)
         for i, c in enumerate(coords):
             ax2 = plt.subplot(gslegend[i])
