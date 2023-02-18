@@ -25,7 +25,7 @@ RUN apt-get update --yes && apt-get upgrade --yes && apt-get install --yes --no-
         && export PATH="/opt/miniconda-latest/bin:$PATH" \
         && echo "Downloading Miniconda installer ..." \
         && conda_installer="/tmp/miniconda.sh" \
-        && curl -fsSL -o "$conda_installer" https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        && curl -fsSL -o "$conda_installer" https://repo.anaconda.com/miniconda/Miniconda3-py39_22.11.1-1-Linux-x86_64.sh \
         && bash "$conda_installer" -b -p /opt/miniconda-latest \
         && rm -f "$conda_installer" \
         && conda update -yq -nbase conda \
