@@ -36,7 +36,7 @@ RUN apt-get update --yes && apt-get upgrade --yes && apt-get install --yes --no-
         # Enable `conda activate`
         && conda init bash \
         && conda install -y  --name base \
-               "python=3.9" \
+               "python=3.8" \
         # Clean up
         && sync && conda clean --all --yes && sync \
         && rm -rf ~/.cache/pip/*
@@ -203,7 +203,6 @@ USER ${NB_UID}
 # [USER] INSTALL REQUIRED PUMI PACKAGES:
 
 RUN conda install -y --name base \
-    "python=3.8" \
     "networkx<3" \
     "jupyter" \
     "jupyterlab" \
