@@ -305,8 +305,12 @@ class GroupPipeline(PumiPipeline):
         regexp_sub = [] if regexp_sub is None else regexp_sub
         substitutions = []
 
+        cfg_parser = SafeConfigParser()
+        cfg_parser.read('settings.ini')
+
+        sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
         if default_regexp_sub:
-            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<3>')]
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', sink_dir + r'/groups/\g<2>/\g<3>')]
 
         substitutions.extend(regexp_sub)
         super().__init__(inputspec_fields, outputspec_fields, substitutions)
@@ -541,8 +545,8 @@ class BidsApp:
         # set global default values
         cfg_parser = SafeConfigParser()
         cfg_parser.add_section('SINKING')
-        cfg_parser.set('SINKING', 'sink_dir', value=self.output_dir)
-        cfg_parser.set('SINKING', 'qc_dir', value=self.output_dir + '/qc')
+        cfg_parser.set('SINKING', 'sink_dir', value=os.path.abspath(self.output_dir))
+        cfg_parser.set('SINKING', 'qc_dir', value=os.path.abspath(self.output_dir + '/qc'))
         cfg_parser.write(open('settings.ini', 'w'))  #to working dir
 
         if self.run_args is None:
