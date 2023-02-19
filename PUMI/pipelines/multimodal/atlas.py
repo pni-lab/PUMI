@@ -120,7 +120,7 @@ def atlas_selection(wf, modularize=False, **kwargs):
     wf.connect(modularize_wf, 'reordered_modules', 'outputspec', 'modules')
     wf.connect(modularize_wf, 'relabeled_labelmap', 'outputspec', 'labelmap')
 
-    wf.write_graph('atlas_selection.png')
+    #wf.write_graph('atlas_selection.png')
 
 
 @GroupPipeline(inputspec_fields=['name_atlas', 'atlas_dir', 'atlas_params', 'labelmap_params'],
@@ -185,7 +185,7 @@ def fetch_atlas_module(wf, atlas_modules=False, **kwargs):
     wf.connect(fetch_atlas, 'labelmap', 'outputspec', 'labelmap')
     wf.connect(fetch_atlas, 'labels', 'outputspec', 'labels')
 
-    wf.write_graph('fetch_atlas_wf.png')
+    #wf.write_graph('fetch_atlas_wf.png')
 
 
 @QcPipeline(inputspec_fields=['labelmap'],
@@ -279,7 +279,7 @@ def modularize_atlas_module(wf, **kwargs):
     wf.connect(modularize_atlas, 'reordered_modules', 'outputspec', 'reordered_modules')
     wf.connect(modularize_atlas, 'relabeled_labelmap', 'outputspec', 'relabeled_labelmap')
 
-    wf.write_graph('modularize_atlas_wf.png')
+    #wf.write_graph('modularize_atlas_wf.png')
 
 
 def get_atlas(name_atlas, atlas_dir=None, **kwargs):
