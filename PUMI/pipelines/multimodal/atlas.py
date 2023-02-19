@@ -338,6 +338,8 @@ def get_atlas(name_atlas, atlas_dir=None, **kwargs):
     if kwargs:
         map_args = kwargs['labelmap_params']
         kwargs = kwargs['atlas_params']
+        if 'data_dir' not in kwargs:
+            kwargs['data_dir'] = '.' # override default, to put atlases in the nodes' working directory
 
     # Check if the requested atlas is a custom or nilearn atlas
     if atlas_dir:
