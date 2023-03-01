@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Steps to run a script on the HPC
 while getopts 'b:v:i:o:d:h' opt; do
   case "$opt" in
     b)
@@ -53,10 +54,12 @@ NFS_USER_DIR_NAME=$(basename "$NFS_ROOT")  # e.g. <cluster-username>
 DOCKER_BASE_DIR=/home/pumi/${NFS_USER_DIR_NAME}/
 DOCKER_CMD="$DOCKER_CMD -v ${NFS_ROOT}:${DOCKER_BASE_DIR}"
 
-# determine what to mount # todo: add again
-if [ -d "$PUMI_VER" ]; then  # -d checks if $PUMI_VER (result of -v) is an existing directory
-	#DOCKER_CMD="$DOCKER_CMD -v $PUMI_VER:/home/pumi/PUMI"
-	PUMI_VER="${DOCKER_BASE_DIR}/${PUMI_VER}"
+if [[ "$PUMI_VER" != git+* ]] && [[ -d "$PUMI_VER" ]]; then
+  PUMI_DIR="${DOCKER_BASE_DIR}/${PUMI_VER}"
+fi
+
+if [[ "$PUMI_VER" == git+* ]]; then
+  PUMI_VER=${DOCKER_BASE_DIR}/PUMI/
 fi
 
 # todo: a better way: automount if BIDS app is called
@@ -67,9 +70,6 @@ if [ -n "$INDIR" ]; then
 fi
 
 if [ -n "$OUTDIR" ]; then
-  #mkdir -p $OUTDIR
-  #mkdir -p ${DOCKER_BASE_DIR}/${OUTDIR}
-  #DOCKER_CMD="$DOCKER_CMD -v $OUTDIR:/output"
   PIPELINE_CMD="$PIPELINE_CMD --output_dir=${DOCKER_BASE_DIR}/${OUTDIR}"
 fi
 
