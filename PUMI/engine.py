@@ -357,6 +357,7 @@ class BidsPipeline(PumiPipeline):
             }
         else:
             self.output_query = output_query
+            print(output_query)
 
         super().__init__(None, None, None)
 
@@ -370,6 +371,7 @@ class BidsPipeline(PumiPipeline):
             # default: multiproc
             if run_args is None:
                 run_args = {'plugin':'MultiProc'}
+
 
             cfg_parser = SafeConfigParser()
             cfg_parser.read(os.path.join(os.path.dirname(__file__), 'settings.ini'))
@@ -421,6 +423,7 @@ class BidsPipeline(PumiPipeline):
 
             wf.connect(subject_iterator, 'subject', bids_grabber, 'subject')
 
+
             inputspec = NestedNode(
                 utility.IdentityInterface(
                     fields=[*self.output_query]
@@ -432,7 +435,6 @@ class BidsPipeline(PumiPipeline):
             # bids_grabber returns a list with a string (path to the anat image of a subject),
             # but most other nodes do not take a list as input file
             for bids_modality in [*self.output_query]:
-                print(bids_modality)
                 path_extractor = Node(
                     Function(
                         input_names=["filelist"],

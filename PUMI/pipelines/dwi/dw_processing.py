@@ -41,6 +41,8 @@ dwi_denoise.inputs.out_file = os.path.join(output_dir, 'sub-002_dwi_eddy-correct
 dwi_denoise.run()
 
 
+
+'''
 # MRDeGibbs
 mrde_gibbs = Node(mrt.MRDeGibbs(), name='mrde_gibbs')
 mrde_gibbs.inputs.in_file = os.path.join(output_dir, 'sub-002_dwi_eddy-correct_dwidenoise.mif')
@@ -54,3 +56,4 @@ brain_mask.inputs.in_file = os.path.join(output_dir,'sub-0002_dwi_eddy-correct.m
 brain_mask.inputs.out_file = os.path.join(output_dir, 'sub-0002_dwi_eddy-correct_dwidenoise_mask.mif')
 brain_mask.run()
 
+'''

@@ -14,7 +14,6 @@ output_dir = os.path.join(ROOT_DIR, 'data_out')  # place where the folder 'BET' 
 working_dir = os.path.join(ROOT_DIR, 'data_out')  # place where the folder 'bet_iter_wf' will be created for the workflow
 
 
-
 subjects = ['001', '002', '003']  # subjects for which a brain extraction should be performed
 # ---
 
