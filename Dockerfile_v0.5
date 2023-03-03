@@ -208,15 +208,12 @@ USER ${NB_UID}
 # [USER] INSTALL REQUIRED PUMI PACKAGES:
 
 RUN conda install -y --name base \
-    "networkx<3" \
     "jupyter" \
     "jupyterlab" \
     "jupyter_contrib_nbextensions" \
     "traits" \
     "pandas" \
     "matplotlib" \
-    "scikit-learn==1.1.2" \
-    "scikit-image" \
     "seaborn" \
     "nbformat" \
     "nb_conda" \
@@ -235,6 +232,9 @@ RUN conda install -y --name base \
     "click"
 
 RUN pip install --no-cache-dir  \
+    "scikit-learn==1.1.2" \
+    "scikit-image" \
+    "networkx<3" \
     "nipype[full]" \
     "pydeface" \
     "neurodocker==0.8.0" \
