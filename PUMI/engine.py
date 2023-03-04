@@ -357,7 +357,6 @@ class BidsPipeline(PumiPipeline):
             }
         else:
             self.output_query = output_query
-            print(output_query)
 
         super().__init__(None, None, None)
 
