@@ -76,10 +76,10 @@ fi
 command="set -x; pip install $PUMI_DIR >/dev/null; python3 ${PUMI_DIR}/${PIPELINE_CMD}"
 
 echo ""
-echo + docker run --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.4 bash -c \"$command\"
+echo + docker run --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.5 bash -c \"$command\"
 echo ""
 
-docker run --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.4 bash -c "$command"
+docker run --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.5 bash -c "$command"
 
 
 
