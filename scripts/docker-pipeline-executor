@@ -38,7 +38,7 @@ while getopts 'v:i:o:d:n:h' opt; do
       echo "-v      Path to PUMI"
       echo "-i      Input BIDS folder"
       echo "-o      Output folder"
-      echo "-n      To use or store data on an NFS share, set -n to the NFS root directory. However, if you do this, -i as well as -o must be on the NFS."
+      echo "-n      To use or store data on an NFS share, set -n to the NFS root directory. However, if you do this, every path (-v, -i, -o, -n) must be on the NFS."
       echo "-d      Additional arguments for docker run"
       exit 1
       ;;
