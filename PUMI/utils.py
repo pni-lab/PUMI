@@ -577,8 +577,8 @@ def scrub_image(scrub_input):
 
     Method to run 3dcalc in order to scrub the image. This is used instead of
     the Nipype interface for 3dcalc because functionality is needed for
-    specifying an input file with specifically-selected volumes. For example:
-    input.nii.gz[2,3,4,..98], etc.
+    specifying an input file with specifically-selected volumes.
+    For example: input.nii.gz[2,3,4,..98], etc.
 
     Parameters:
         scrub_input (str): path to 4D file to be scrubbed, plus with selected volumes to be included
@@ -589,9 +589,24 @@ def scrub_image(scrub_input):
 
     import os
 
-    os.system("3dcalc -a %s -expr 'a' -prefix scrubbed_preprocessed.nii.gz" % scrub_input)
+    # input for 3dCalc looks like 4dfile.nii.gz[0,1,2,..100]
+    # but the output of the scrubbing wf should look like 4dfile_scrubbed.nii.gz
 
-    scrubbed_image = os.path.join(os.getcwd(), "scrubbed_preprocessed.nii.gz")
+    old_filename = os.path.basename(scrub_input)
+    # e. g. sub-001_task-rest_bold_reoriented_masked_mcf_despike_regfilt_bp.nii.gz
+
+    if '.nii.gz' in old_filename:
+        ext_type = '.nii.gz'
+    elif '.nii' in old_filename:
+        ext_type = '.nii'
+    else:
+        raise ValueError(f'%s must have .nii or .nii.gz extension' % scrub_input)
+
+    new_filename = old_filename[:old_filename.find(ext_type)] + '_scrubbed' + ext_type
+    # e. g. sub-001_task-rest_bold_reoriented_masked_mcf_despike_regfilt_bp_scrubbed.nii.gz
+
+    os.system(f"3dcalc -a %s -expr 'a' -prefix %s" % (scrub_input, new_filename))
+    scrubbed_image = os.path.join(os.getcwd(), new_filename)
 
     return scrubbed_image
 

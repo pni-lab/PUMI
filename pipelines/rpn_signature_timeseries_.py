@@ -193,5 +193,5 @@ def rpn(wf, **kwargs):
 rpn_app = BidsApp(
     pipeline=rpn,
     name='rpn',
-    bids_dir='../data_in/bids'  # if you pass a cli argument this will be written over!
+    bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
 ).run()
