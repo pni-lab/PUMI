@@ -867,11 +867,9 @@ def TsExtractor(labels, labelmap, func, mask, global_signal=True, pca=False, out
 def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, subplot=None, output_file="regts.png"):
     """
     Adapted from: https://github.com/poldracklab/niworkflows
-
     Plot an image representation of voxel intensities across time also know
     as the "carpet plot" or "Power plot". See Jonathan Power Neuroimage
     2017 Jul 1; 154:150-158.
-
     Parameters:
         timeseries (numpy.ndarray): 4D input image. See http://nilearn.github.io/manipulating_images/input_output.html.
         output_file (str, None): Optional! The name of the output image. Valid extensions are .png, .pdf, .svg.
@@ -979,8 +977,7 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, subplo
         lut2 = np.array([0] + lut2.tolist())
 
         relabeled=lut2[np.array(atlas.get_fdata(), dtype=int)]
-        atl = nb.Nifti1Image(relabeled, atlas.affine)
-
+        atl = nb.Nifti1Image(relabeled, atlas.affine, dtype=np.int64)
         for i, c in enumerate(coords):
             ax2 = plt.subplot(gslegend[i])
             plot_img(atl, bg_img=background, axes=ax2, display_mode='z',
@@ -995,7 +992,6 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, subplo
         return os.getcwd() + '/' + output_file
 
     return [ax0, ax1], gs
-
 
 def rpn_model(file):
     with open(file, 'r') as f_obj:
