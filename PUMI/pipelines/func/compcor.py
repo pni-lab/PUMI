@@ -1,5 +1,5 @@
 from PUMI.engine import FuncPipeline, NestedNode as Node, QcPipeline
-from PUMI.pipelines.multimodal.image_manipulation import vol2png
+from PUMI.pipelines.multimodal.image_manipulation import vol2png, pick_volume
 
 
 @FuncPipeline(inputspec_fields=['wm_mask', 'ventricle_mask'],
@@ -44,10 +44,14 @@ def anat_noise_roi(wf, **kwargs):
 
 @QcPipeline(inputspec_fields=['func_aligned', 'mask_file'],
             outputspec_fields=[])
-def compcor_qc(wf, **kwargs):
+def compcor_qc(wf, volume='first', **kwargs):
     """
 
     Save quality check images for mcflirt motion-correction
+
+    Parameters
+        volume (str): Select which volume of the functional image should be used.
+                      Can be either 'first', 'middle', 'last', 'mean' or an arbitrary number
 
     Inputs
         func_aligned (str): Reoriented and realigned functional image
@@ -61,19 +65,29 @@ def compcor_qc(wf, **kwargs):
 
     """
 
-    compcor_wf = vol2png("compcor_qc")
-    wf.connect('inputspec', 'func_aligned', compcor_wf, 'bg_image')
+    pick_func_wf = pick_volume('pick_func_wf', volume=volume)
+    wf.connect('inputspec', 'func_aligned', pick_func_wf, 'in_file')
+
+    compcor_wf = vol2png('compcor_qc')
+    wf.connect(pick_func_wf, 'out_file', compcor_wf, 'bg_image')
     wf.connect('inputspec', 'mask_file', compcor_wf, 'overlay_image')
+
+    # sinking
     wf.connect(compcor_wf, 'out_file', 'sinker', 'qc_compcor')
 
 
 @FuncPipeline(inputspec_fields=['func_aligned', 'mask_file'],
               outputspec_fields=['out_file'])
-def compcor(wf, **kwargs):
+def compcor(wf, volume='first', **kwargs):
     """
 
     Component based noise reduction method (Behzadi et al.,2007): Regressing out principal components from noise ROIs.
     Here the aCompCor is used.
+
+    Parameters:
+        volume (str): Select which volume of the functional image should be used for the quality check image(s).
+                      Can be either 'first', 'middle', 'last', 'mean' or an arbitrary number
+
 
     Inputs:
         func_aligned (str): Reoriented and realigned functional image
@@ -140,9 +154,9 @@ def compcor(wf, **kwargs):
     wf.connect(compcor, 'components_file', drop_first_line, 'in_file')
 
     # qc
-    #qc = compcor_qc('qc')  # todo: fix compcor_qc
-    #wf.connect('inputspec', 'func_aligned', qc, 'func_aligned')
-    #wf.connect('inputspec', 'mask_file', qc, 'mask_file')
+    qc = compcor_qc('qc', volume=volume)
+    wf.connect('inputspec', 'func_aligned', qc, 'func_aligned')
+    wf.connect('inputspec', 'mask_file', qc, 'mask_file')
 
     # output
     wf.connect(drop_first_line, 'out_file', 'outputspec', 'out_file')

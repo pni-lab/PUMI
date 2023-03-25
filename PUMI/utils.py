@@ -980,6 +980,7 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, subplo
 
         relabeled=lut2[np.array(atlas.get_fdata(), dtype=int)]
         atl = nb.Nifti1Image(relabeled, atlas.affine)
+
         for i, c in enumerate(coords):
             ax2 = plt.subplot(gslegend[i])
             plot_img(atl, bg_img=background, axes=ax2, display_mode='z',
