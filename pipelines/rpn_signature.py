@@ -243,7 +243,10 @@ def collect_predictions(wf):
         extension=['nii', 'nii.gz']
     )
 })
-def rpn(wf, **kwargs):
+def rpn(wf, bbr=True, **kwargs):
+
+    print('* bbr:', bbr)
+
     reorient_struct_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_struct_wf")
     wf.connect('inputspec', 'T1w', reorient_struct_wf, 'in_file')
 
@@ -253,17 +256,17 @@ def rpn(wf, **kwargs):
     anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf')
     wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
 
-    bbr_wf = func2anat(name='bbr_wf')
-    wf.connect(reorient_func_wf, 'out_file', bbr_wf, 'func')
-    wf.connect(anatomical_preprocessing_wf, 'brain', bbr_wf, 'head')
-    wf.connect(anatomical_preprocessing_wf, 'probmap_wm', bbr_wf, 'anat_wm_segmentation')
-    wf.connect(anatomical_preprocessing_wf, 'probmap_csf', bbr_wf, 'anat_csf_segmentation')
-    wf.connect(anatomical_preprocessing_wf, 'probmap_gm', bbr_wf, 'anat_gm_segmentation')
-    wf.connect(anatomical_preprocessing_wf, 'probmap_ventricle', bbr_wf, 'anat_ventricle_segmentation')
+    func2anat_wf = func2anat(name='func2anat_wf', bbr=bbr)
+    wf.connect(reorient_func_wf, 'out_file', func2anat_wf, 'func')
+    wf.connect(anatomical_preprocessing_wf, 'brain', func2anat_wf, 'head')
+    wf.connect(anatomical_preprocessing_wf, 'probmap_wm', func2anat_wf, 'anat_wm_segmentation')
+    wf.connect(anatomical_preprocessing_wf, 'probmap_csf', func2anat_wf, 'anat_csf_segmentation')
+    wf.connect(anatomical_preprocessing_wf, 'probmap_gm', func2anat_wf, 'anat_gm_segmentation')
+    wf.connect(anatomical_preprocessing_wf, 'probmap_ventricle', func2anat_wf, 'anat_ventricle_segmentation')
 
     compcor_roi_wf = anat_noise_roi('compcor_roi_wf')
-    wf.connect(bbr_wf, 'wm_mask_in_funcspace', compcor_roi_wf, 'wm_mask')
-    wf.connect(bbr_wf, 'ventricle_mask_in_funcspace', compcor_roi_wf, 'ventricle_mask')
+    wf.connect(func2anat_wf, 'wm_mask_in_funcspace', compcor_roi_wf, 'wm_mask')
+    wf.connect(func2anat_wf, 'ventricle_mask_in_funcspace', compcor_roi_wf, 'ventricle_mask')
 
     func_proc_wf = func_proc_despike_afni('func_proc_wf')
     wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
@@ -289,9 +292,9 @@ def rpn(wf, **kwargs):
     wf.connect(pick_atlas_wf, 'reordered_labels', extract_timeseries, 'labels')
     wf.connect(pick_atlas_wf, 'reordered_modules', extract_timeseries, 'modules')
     wf.connect(anatomical_preprocessing_wf, 'brain', extract_timeseries, 'anat')
-    wf.connect(bbr_wf, 'anat_to_func_linear_xfm', extract_timeseries, 'inv_linear_reg_mtrx')
+    wf.connect(func2anat_wf, 'anat_to_func_linear_xfm', extract_timeseries, 'inv_linear_reg_mtrx')
     wf.connect(anatomical_preprocessing_wf, 'mni2anat_warpfield', extract_timeseries, 'inv_nonlinear_reg_mtrx')
-    wf.connect(bbr_wf, 'gm_mask_in_funcspace', extract_timeseries, 'gm_mask')
+    wf.connect(func2anat_wf, 'gm_mask_in_funcspace', extract_timeseries, 'gm_mask')
     wf.connect(func_proc_wf, 'func_preprocessed', extract_timeseries, 'func')
     wf.connect(func_proc_wf, 'FD', extract_timeseries, 'confounds')
 
@@ -310,4 +313,8 @@ rpn_app = BidsApp(
     pipeline=rpn,
     name='rpn',
     bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
-).run()
+)
+rpn_app.parser.add_argument('--bbr', default='yes', type=lambda x: (str(x).lower() == ['true','1', 'yes']),
+                            help='Use BBR registration: yes/no (default: yes)')
+
+rpn_app.run()

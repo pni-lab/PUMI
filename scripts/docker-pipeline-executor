@@ -34,7 +34,7 @@ while getopts 'v:i:o:d:n:h' opt; do
     ;;
 
     ?|h)
-      echo "Usage: $(basename $0) [-v] [-i] [-o] [-d] [-h] commands"
+      echo "Usage: $(basename $0) [-v] [-i] [-o] [-d] [-h] pumi_pipeline [pipeline_args]"
       echo "-v      Path to PUMI"
       echo "-i      Input BIDS folder"
       echo "-o      Output folder"

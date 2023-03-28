@@ -131,11 +131,11 @@ def func2anat(wf, bbr=True, **kwargs):
 
         # Create png images for quality check
         func2anat_qc = vol2png("func2anat_qc")
-        wf.connect(bbreg_func_to_anat, 'out_file', func2anat_qc, 'bg_image')
+        wf.connect(main_func2anat, 'out_file', func2anat_qc, 'bg_image')
         wf.connect(wm_bb_mask, 'out_file', func2anat_qc, 'overlay_image')
 
         # sink the results
-        wf.connect(bbreg_func_to_anat, 'out_file', 'sinker', "func2anat_qc")
+        wf.connect(main_func2anat, 'out_file', 'sinker', "func2anat_qc")
 
         # outputspec
         wf.connect(myonevol, 'out_file', 'outputspec', 'example_func')
@@ -143,6 +143,6 @@ def func2anat(wf, bbr=True, **kwargs):
         wf.connect(reg_anatmask_to_func2, 'out_file', 'outputspec', 'wm_mask_in_funcspace')
         wf.connect(reg_anatmask_to_func3, 'out_file', 'outputspec', 'gm_mask_in_funcspace')
         wf.connect(reg_anatmask_to_func4, 'out_file', 'outputspec', 'ventricle_mask_in_funcspace')
-        wf.connect(bbreg_func_to_anat, 'out_file', 'outputspec', 'func_sample2anat')
-        wf.connect(bbreg_func_to_anat, 'out_matrix_file', 'outputspec', 'func_to_anat_linear_xfm')
+        wf.connect(main_func2anat, 'out_file', 'outputspec', 'func_sample2anat')
+        wf.connect(main_func2anat, 'out_matrix_file', 'outputspec', 'func_to_anat_linear_xfm')
         wf.connect(convertmatrix, 'out_file', 'outputspec', 'anat_to_func_linear_xfm')
