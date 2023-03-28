@@ -2,7 +2,7 @@ from nipype.interfaces.fsl import Reorient2Std
 from PUMI.engine import BidsPipeline, NestedNode as Node
 from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
-from PUMI.pipelines.anat.func_to_anat import bbr
+from PUMI.pipelines.anat.func_to_anat import func2anat
 import os
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
@@ -36,7 +36,7 @@ def rpn_preproc(wf, **kwargs):
     anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf')
     wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
 
-    bbr_wf = bbr(name='bbr_wf')
+    bbr_wf = func2anat(name='bbr_wf')
     wf.connect(reorient_func_wf, 'out_file', bbr_wf, 'func')
     wf.connect(anatomical_preprocessing_wf, 'brain', bbr_wf, 'head')
     wf.connect(anatomical_preprocessing_wf, 'probmap_wm', bbr_wf, 'anat_wm_segmentation')

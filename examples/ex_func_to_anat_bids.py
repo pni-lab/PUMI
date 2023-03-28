@@ -24,7 +24,7 @@ working_dir = os.path.join(ROOT_DIR, 'data_out')  # place where the folder will 
 })
 def func_to_anat_wf(wf, **kwargs):
     from PUMI.pipelines.anat.anat_proc import anat_proc
-    from PUMI.pipelines.anat.func_to_anat import bbr
+    from PUMI.pipelines.anat.func_to_anat import func2anat
 
 
     # reorient anat images
@@ -40,7 +40,7 @@ def func_to_anat_wf(wf, **kwargs):
     anat_proc = anat_proc('brain_extraction')
     wf.connect(reorient_anat, 'out_file', anat_proc, 'in_file')
 
-    bbr = bbr('bbr')
+    bbr = func2anat('func2anat')
     wf.connect(reorient_func, 'out_file', bbr, 'func')
     wf.connect(anat_proc, 'brain', bbr, 'head')  # todo: rename head to brain if everytime brain should be passed
     wf.connect(anat_proc, 'probmap_wm', bbr, 'anat_wm_segmentation')

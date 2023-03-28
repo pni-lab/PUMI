@@ -3,7 +3,7 @@ from nipype.interfaces.fsl import Reorient2Std
 from PUMI.engine import BidsPipeline, NestedNode as Node
 from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
-from PUMI.pipelines.anat.func_to_anat import bbr
+from PUMI.pipelines.anat.func_to_anat import func2anat
 import os
 
 from PUMI.pipelines.func.temporal_filtering import temporal_filtering

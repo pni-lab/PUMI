@@ -76,7 +76,7 @@
                                  <span class="s1">&#39;anat_to_func_linear_xfm&#39;</span><span class="p">,</span> <span class="s1">&#39;csf_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="s1">&#39;csf_mask_in_funcspace&#39;</span><span class="p">,</span>
                                  <span class="s1">&#39;csf_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="s1">&#39;ventricle_mask_in_funcspace&#39;</span><span class="p">,</span> <span class="s1">&#39;wm_mask_in_funcspace&#39;</span><span class="p">,</span>
                                  <span class="s1">&#39;gm_mask_in_funcspace&#39;</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">bbr</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">func2anat</span><span class="p">(</span><span class="n">wf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    BBR registration of functional image to anat.</span>
@@ -126,14 +126,14 @@
 
         <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">        A function is defined for define bbr argument which says flirt to perform bbr registration</span>
+<span class="sd">        A function is defined for define func2anat argument which says flirt to perform func2anat registration</span>
 <span class="sd">        for each element of the list, due to MapNode</span>
 
 <span class="sd">        Parameter:</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">return</span> <span class="s1">&#39;-cost bbr -wmseg &#39;</span> <span class="o">+</span> <span class="n">bbreg_target</span>
+        <span class="k">return</span> <span class="s1">&#39;-cost func2anat -wmseg &#39;</span> <span class="o">+</span> <span class="n">bbreg_target</span>
 
     <span class="n">bbreg_arg_convert</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">Function</span><span class="p">(</span><span class="n">input_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;bbreg_target&quot;</span><span class="p">],</span>
                                                 <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;arg&quot;</span><span class="p">],</span>

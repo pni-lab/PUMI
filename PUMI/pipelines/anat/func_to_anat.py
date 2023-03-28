@@ -10,135 +10,139 @@ from nipype.interfaces import fsl
                                  'anat_to_func_linear_xfm', 'csf_mask_in_funcspace', 'csf_mask_in_funcspace',
                                  'csf_mask_in_funcspace', 'ventricle_mask_in_funcspace', 'wm_mask_in_funcspace',
                                  'gm_mask_in_funcspace'])
-def bbr(wf, **kwargs):
-    """
+def func2anat(wf, bbr=True, **kwargs):
+        """
 
-    BBR registration of functional image to anat.
+        Registration of functional image to anat.
 
-    Inputs:
-        func (str): One volume of the 4D fMRI
-        (The one which is the closest to the fieldmap recording in time should be chosen
-        e.g: if fieldmap was recorded after the fMRI the last volume of it should be chosen)
-        head (str): The oriented T1w image.
-        anat_wm_segmentation (str): WM probability mask
-        anat_gm_segmentation (str): GM probability mask
-        anat_csf_segmentation (str): CSF probability mask
+        Parameters:
+            bbr (bool): If True (default), BBR registration is used. If False, linear registration is used.
 
-    Acknowledgements:
-        Adapted from Balint Kincses (2018) code.
-        Modified version of CPAC.registration.registration
-        (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/registration/registration.py)
+        Inputs:
+            func (str): One volume of the 4D fMRI
+            (The one which is the closest to the fieldmap recording in time should be chosen
+            e.g: if fieldmap was recorded after the fMRI the last volume of it should be chosen)
+            head (str): The oriented T1w image.
+            anat_wm_segmentation (str): WM probability mask
+            anat_gm_segmentation (str): GM probability mask
+            anat_csf_segmentation (str): CSF probability mask
 
-    """
-
-    myonevol = pick_volume('myonevol')
-
-    # trilinear interpolation is used by default in linear registration for func to anat
-    linear_func_to_anat = Node(interface=fsl.FLIRT(), name='linear_func_to_anat')
-    linear_func_to_anat.inputs.cost = 'corratio'
-    linear_func_to_anat.inputs.dof = 6
-    linear_func_to_anat.inputs.out_matrix_file = "lin_mat"
-
-    # WM probability map is thresholded and masked
-    wm_bb_mask = Node(interface=fsl.ImageMaths(), name='wm_bb_mask')
-    wm_bb_mask.inputs.op_string = '-thr 0.5 -bin'
-
-    # CSf probability map is thresholded and masked
-    csf_bb_mask = Node(interface=fsl.ImageMaths(), name='csf_bb_mask')
-    csf_bb_mask.inputs.op_string = '-thr 0.5 -bin'
-
-    # GM probability map is thresholded and masked
-    gm_bb_mask = Node(interface=fsl.ImageMaths(), name='gm_bb_mask')
-    gm_bb_mask.inputs.op_string = '-thr 0.1 -bin' # liberal mask to capture all gm signal
-
-    # ventricle probability map is thresholded and masked
-    vent_bb_mask = Node(interface=fsl.ImageMaths(), name='vent_bb_mask')
-    vent_bb_mask.inputs.op_string = '-thr 0.8 -bin -ero -dilM'  # stricter threshold and some morphology for compcor
-
-
-    def bbreg_args(bbreg_target):
+        Acknowledgements:
+            Adapted from Balint Kincses (2018) code.
+            Modified version of CPAC.registration.registration
+            (https://github.com/FCP-INDI/C-PAC/blob/main/CPAC/registration/registration.py)
 
         """
 
-        A function is defined for define bbr argument which says flirt to perform bbr registration
-        for each element of the list, due to MapNode
+        myonevol = pick_volume('myonevol')
+        wf.connect('inputspec', 'func', myonevol, 'in_file')
 
-        Parameter:
+        # trilinear interpolation is used by default in linear registration for func to anat
+        linear_func_to_anat = Node(interface=fsl.FLIRT(), name='linear_func_to_anat')
+        linear_func_to_anat.inputs.cost = 'corratio'
+        linear_func_to_anat.inputs.dof = 6
+        linear_func_to_anat.inputs.out_matrix_file = "lin_mat"
+        wf.connect(myonevol, 'out_file', linear_func_to_anat, 'in_file')
+        wf.connect('inputspec', 'head', linear_func_to_anat, 'reference')
 
-        """
+        # WM probability map is thresholded and masked
+        wm_bb_mask = Node(interface=fsl.ImageMaths(), name='wm_bb_mask')
+        wm_bb_mask.inputs.op_string = '-thr 0.5 -bin'
+        wf.connect('inputspec', 'anat_wm_segmentation', wm_bb_mask, 'in_file')
 
-        return '-cost bbr -wmseg ' + bbreg_target
+        # CSf probability map is thresholded and masked
+        csf_bb_mask = Node(interface=fsl.ImageMaths(), name='csf_bb_mask')
+        csf_bb_mask.inputs.op_string = '-thr 0.5 -bin'
+        wf.connect('inputspec', 'anat_csf_segmentation', csf_bb_mask, 'in_file')
 
-    bbreg_arg_convert = Node(interface=Function(input_names=["bbreg_target"],
-                                                output_names=["arg"],
-                                                function=bbreg_args),
-                             name="bbr_arg_converter")
+        # GM probability map is thresholded and masked
+        gm_bb_mask = Node(interface=fsl.ImageMaths(), name='gm_bb_mask')
+        gm_bb_mask.inputs.op_string = '-thr 0.1 -bin'  # liberal mask to capture all gm signal
+        wf.connect('inputspec', 'anat_gm_segmentation', gm_bb_mask, 'in_file')
 
-    # BBR registration within the FLIRT node
-    bbreg_func_to_anat = Node(interface=fsl.FLIRT(), name='bbreg_func_to_anat')
-    bbreg_func_to_anat.inputs.dof = 6
+        # ventricle probability map is thresholded and masked
+        vent_bb_mask = Node(interface=fsl.ImageMaths(), name='vent_bb_mask')
+        vent_bb_mask.inputs.op_string = '-thr 0.8 -bin -ero -dilM'  # stricter threshold and some morphology for compcor
+        wf.connect('inputspec', 'anat_ventricle_segmentation', vent_bb_mask, 'in_file')
 
-    # calculate the inverse of the transformation matrix (of func to anat)
-    convertmatrix = Node(interface=fsl.ConvertXFM(), name="convertmatrix")
-    convertmatrix.inputs.invert_xfm = True
+        if bbr:
+            def bbreg_args(bbreg_target):
+                """
 
-    # use the invers registration (anat to func) to transform anatomical csf mask
-    reg_anatmask_to_func1 = Node(interface=fsl.FLIRT(apply_xfm=True, interp='nearestneighbour'),
-                                 name='anatmasks_to_func1')
+                A function is defined for define bbr argument which says flirt to perform bbr registration
+                for each element of the list, due to MapNode
 
-    # use the invers registration (anat to func) to transform anatomical wm mask
-    reg_anatmask_to_func2 = Node(interface=fsl.FLIRT(apply_xfm=True, interp='nearestneighbour'),
-                                 name='anatmasks_to_func2')
+                Parameter:
 
-    # use the invers registration (anat to func) to transform anatomical gm mask
-    reg_anatmask_to_func3 = Node(interface=fsl.FLIRT(apply_xfm=True, interp='nearestneighbour'),
-                                 name='anatmasks_to_func3')
+                """
 
-    # use the invers registration (anat to func) to transform anatomical gm mask
-    reg_anatmask_to_func4 = Node(interface=fsl.FLIRT(apply_xfm=True, interp='nearestneighbour'),
-                                 name='anatmasks_to_func4')
+                return '-cost bbr -wmseg ' + bbreg_target
 
-    # Create png images for quality check
-    func2anat_qc = vol2png("func2anat_qc")
+            bbreg_arg_convert = Node(interface=Function(input_names=["bbreg_target"],
+                                                        output_names=["arg"],
+                                                        function=bbreg_args),
+                                     name="bbr_arg_converter")
+            wf.connect('inputspec', 'anat_wm_segmentation', bbreg_arg_convert, 'bbreg_target')
 
-    wf.connect('inputspec', 'func', myonevol, 'in_file')
-    wf.connect(myonevol, 'out_file', linear_func_to_anat, 'in_file')
-    wf.connect('inputspec', 'head', linear_func_to_anat, 'reference')
-    wf.connect(linear_func_to_anat, 'out_matrix_file', bbreg_func_to_anat, 'in_matrix_file')
-    wf.connect(myonevol, 'out_file', bbreg_func_to_anat, 'in_file')
-    wf.connect('inputspec', 'anat_wm_segmentation', bbreg_arg_convert, 'bbreg_target')
-    wf.connect(bbreg_arg_convert, 'arg', bbreg_func_to_anat, 'args')
-    wf.connect('inputspec', 'head', bbreg_func_to_anat, 'reference')
-    wf.connect(bbreg_func_to_anat, 'out_matrix_file', convertmatrix, 'in_file')
-    wf.connect(convertmatrix, 'out_file', reg_anatmask_to_func1, 'in_matrix_file')
-    wf.connect(myonevol, 'out_file', reg_anatmask_to_func1, 'reference')
-    wf.connect(csf_bb_mask,'out_file', reg_anatmask_to_func1, 'in_file')
-    wf.connect(convertmatrix, 'out_file', reg_anatmask_to_func2, 'in_matrix_file')
-    wf.connect(myonevol, 'out_file', reg_anatmask_to_func2, 'reference')
-    wf.connect(wm_bb_mask, 'out_file', reg_anatmask_to_func2, 'in_file')
-    wf.connect(convertmatrix, 'out_file', reg_anatmask_to_func3, 'in_matrix_file')
-    wf.connect(myonevol, 'out_file', reg_anatmask_to_func3, 'reference')
-    wf.connect(gm_bb_mask, 'out_file', reg_anatmask_to_func3, 'in_file')
-    wf.connect(convertmatrix, 'out_file', reg_anatmask_to_func4, 'in_matrix_file')
-    wf.connect(myonevol, 'out_file', reg_anatmask_to_func4, 'reference')
-    wf.connect(vent_bb_mask, 'out_file', reg_anatmask_to_func4, 'in_file')
-    wf.connect('inputspec', 'anat_wm_segmentation', wm_bb_mask, 'in_file')
-    wf.connect('inputspec', 'anat_csf_segmentation', csf_bb_mask, 'in_file')
-    wf.connect('inputspec', 'anat_gm_segmentation', gm_bb_mask, 'in_file')
-    wf.connect('inputspec', 'anat_ventricle_segmentation', vent_bb_mask, 'in_file')
+            # BBR registration within the FLIRT node
+            bbreg_func_to_anat = Node(interface=fsl.FLIRT(), name='bbreg_func_to_anat')
+            bbreg_func_to_anat.inputs.dof = 6
+            wf.connect(linear_func_to_anat, 'out_matrix_file', bbreg_func_to_anat, 'in_matrix_file')
+            wf.connect(myonevol, 'out_file', bbreg_func_to_anat, 'in_file')
+            wf.connect(bbreg_arg_convert, 'arg', bbreg_func_to_anat, 'args')
+            wf.connect('inputspec', 'head', bbreg_func_to_anat, 'reference')
 
+            main_func2anat = bbreg_func_to_anat
+        else:
+            main_func2anat = linear_func_to_anat
 
-    wf.connect(myonevol, 'out_file', 'outputspec', 'example_func')
-    wf.connect(bbreg_func_to_anat, 'out_file', func2anat_qc, 'bg_image')
-    wf.connect(wm_bb_mask, 'out_file', func2anat_qc, 'overlay_image')
+        # calculate the inverse of the transformation matrix (of func to anat)
+        convertmatrix = Node(interface=fsl.ConvertXFM(), name="convertmatrix")
+        convertmatrix.inputs.invert_xfm = True
+        wf.connect(main_func2anat, 'out_matrix_file', convertmatrix, 'in_file')
 
-    wf.connect(reg_anatmask_to_func1, 'out_file', 'outputspec', 'csf_mask_in_funcspace')
-    wf.connect(reg_anatmask_to_func2, 'out_file', 'outputspec', 'wm_mask_in_funcspace')
-    wf.connect(reg_anatmask_to_func3, 'out_file', 'outputspec', 'gm_mask_in_funcspace')
-    wf.connect(reg_anatmask_to_func4, 'out_file', 'outputspec', 'ventricle_mask_in_funcspace')
-    wf.connect(bbreg_func_to_anat, 'out_file', 'outputspec', 'func_sample2anat')
-    wf.connect(bbreg_func_to_anat, 'out_matrix_file', 'outputspec', 'func_to_anat_linear_xfm')
-    wf.connect(convertmatrix, 'out_file', 'outputspec', 'anat_to_func_linear_xfm')
+        # use the invers registration (anat to func) to transform anatomical csf mask
+        reg_anatmask_to_func1 = Node(interface=fsl.FLIRT(apply_xfm=True, interp='nearestneighbour'),
+                                     name='anatmasks_to_func1')
+        wf.connect(convertmatrix, 'out_file', reg_anatmask_to_func1, 'in_matrix_file')
+        wf.connect(myonevol, 'out_file', reg_anatmask_to_func1, 'reference')
+        wf.connect(csf_bb_mask, 'out_file', reg_anatmask_to_func1, 'in_file')
 
-    wf.connect(bbreg_func_to_anat, 'out_file', 'sinker', "func2anat_qc")
+        # use the invers registration (anat to func) to transform anatomical wm mask
+        reg_anatmask_to_func2 = Node(interface=fsl.FLIRT(apply_xfm=True, interp='nearestneighbour'),
+                                     name='anatmasks_to_func2')
+        wf.connect(convertmatrix, 'out_file', reg_anatmask_to_func2, 'in_matrix_file')
+        wf.connect(myonevol, 'out_file', reg_anatmask_to_func2, 'reference')
+        wf.connect(wm_bb_mask, 'out_file', reg_anatmask_to_func2, 'in_file')
 
+        # use the invers registration (anat to func) to transform anatomical gm mask
+        reg_anatmask_to_func3 = Node(interface=fsl.FLIRT(apply_xfm=True, interp='nearestneighbour'),
+                                     name='anatmasks_to_func3')
+        wf.connect(convertmatrix, 'out_file', reg_anatmask_to_func3, 'in_matrix_file')
+        wf.connect(myonevol, 'out_file', reg_anatmask_to_func3, 'reference')
+        wf.connect(gm_bb_mask, 'out_file', reg_anatmask_to_func3, 'in_file')
+
+        # use the invers registration (anat to func) to transform anatomical gm mask
+        reg_anatmask_to_func4 = Node(interface=fsl.FLIRT(apply_xfm=True, interp='nearestneighbour'),
+                                     name='anatmasks_to_func4')
+        wf.connect(convertmatrix, 'out_file', reg_anatmask_to_func4, 'in_matrix_file')
+        wf.connect(myonevol, 'out_file', reg_anatmask_to_func4, 'reference')
+        wf.connect(vent_bb_mask, 'out_file', reg_anatmask_to_func4, 'in_file')
+
+        # Create png images for quality check
+        func2anat_qc = vol2png("func2anat_qc")
+        wf.connect(bbreg_func_to_anat, 'out_file', func2anat_qc, 'bg_image')
+        wf.connect(wm_bb_mask, 'out_file', func2anat_qc, 'overlay_image')
+
+        # sink the results
+        wf.connect(bbreg_func_to_anat, 'out_file', 'sinker', "func2anat_qc")
+
+        # outputspec
+        wf.connect(myonevol, 'out_file', 'outputspec', 'example_func')
+        wf.connect(reg_anatmask_to_func1, 'out_file', 'outputspec', 'csf_mask_in_funcspace')
+        wf.connect(reg_anatmask_to_func2, 'out_file', 'outputspec', 'wm_mask_in_funcspace')
+        wf.connect(reg_anatmask_to_func3, 'out_file', 'outputspec', 'gm_mask_in_funcspace')
+        wf.connect(reg_anatmask_to_func4, 'out_file', 'outputspec', 'ventricle_mask_in_funcspace')
+        wf.connect(bbreg_func_to_anat, 'out_file', 'outputspec', 'func_sample2anat')
+        wf.connect(bbreg_func_to_anat, 'out_matrix_file', 'outputspec', 'func_to_anat_linear_xfm')
+        wf.connect(convertmatrix, 'out_file', 'outputspec', 'anat_to_func_linear_xfm')
