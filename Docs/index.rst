@@ -13,6 +13,7 @@ Developer Documentation
 
 `Developing the Documentation <dev_docs.html>`_
 
+`Running PUMI pipelines in a docker container <running_with_docker.html>`_
 
 
 API
