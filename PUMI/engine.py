@@ -364,8 +364,6 @@ class BidsPipeline(PumiPipeline):
             # Todo Docs
             """
 
-            print("************** BEFORE", base_dir, sink_dir, qc_dir)
-
             # default: multiproc
             if run_args is None:
                 run_args = {'plugin':'MultiProc'}
@@ -381,8 +379,6 @@ class BidsPipeline(PumiPipeline):
             if not qc_dir.startswith('/'):
                 qc_dir = os.path.abspath(os.path.join(sink_dir, qc_dir))
             globals.cfg_parser.set('SINKING', 'qc_dir', qc_dir)
-
-            print("************** AFTER", base_dir, sink_dir, qc_dir)
 
             # main workflow
             wf = NestedWorkflow(name, base_dir)
