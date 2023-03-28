@@ -373,7 +373,7 @@ def scale_vol(in_file):
     import os
 
     img = nb.load(in_file)
-    data = img.get_data()
+    data = img.get_fdata()
     std = np.std(data, axis=3)
     std[std == 0] = 1  # divide with 1
     mean = np.mean(data, axis=3)
@@ -577,8 +577,8 @@ def scrub_image(scrub_input):
 
     Method to run 3dcalc in order to scrub the image. This is used instead of
     the Nipype interface for 3dcalc because functionality is needed for
-    specifying an input file with specifically-selected volumes. For example:
-    input.nii.gz[2,3,4,..98], etc.
+    specifying an input file with specifically-selected volumes.
+    For example: input.nii.gz[2,3,4,..98], etc.
 
     Parameters:
         scrub_input (str): path to 4D file to be scrubbed, plus with selected volumes to be included
@@ -589,9 +589,24 @@ def scrub_image(scrub_input):
 
     import os
 
-    os.system("3dcalc -a %s -expr 'a' -prefix scrubbed_preprocessed.nii.gz" % scrub_input)
+    # input for 3dCalc looks like 4dfile.nii.gz[0,1,2,..100]
+    # but the output of the scrubbing wf should look like 4dfile_scrubbed.nii.gz
 
-    scrubbed_image = os.path.join(os.getcwd(), "scrubbed_preprocessed.nii.gz")
+    old_filename = os.path.basename(scrub_input)
+    # e. g. sub-001_task-rest_bold_reoriented_masked_mcf_despike_regfilt_bp.nii.gz
+
+    if '.nii.gz' in old_filename:
+        ext_type = '.nii.gz'
+    elif '.nii' in old_filename:
+        ext_type = '.nii'
+    else:
+        raise ValueError(f'%s must have .nii or .nii.gz extension' % scrub_input)
+
+    new_filename = old_filename[:old_filename.find(ext_type)] + '_scrubbed' + ext_type
+    # e. g. sub-001_task-rest_bold_reoriented_masked_mcf_despike_regfilt_bp_scrubbed.nii.gz
+
+    os.system(f"3dcalc -a %s -expr 'a' -prefix %s" % (scrub_input, new_filename))
+    scrubbed_image = os.path.join(os.getcwd(), new_filename)
 
     return scrubbed_image
 
@@ -759,7 +774,7 @@ def relabel_atlas(atlas_file, modules, labels):
     lut = np.array([0] + lut.tolist())
     # maybe this is a bit complicated, but believe me it does what it should
 
-    data = img.get_data()
+    data = img.get_fdata()
     newdata = lut[np.array(data, dtype=np.int32)]  # apply lookup table to swap labels
 
     img = nib.Nifti1Image(newdata.astype(np.float64), img.affine)
@@ -784,9 +799,9 @@ def TsExtractor(labels, labelmap, func, mask, global_signal=True, pca=False, out
     import numpy as np
     import pandas as pd
 
-    func_data = nib.load(func).get_data()
-    labelmap_data = nib.load(labelmap).get_data()
-    mask_data = nib.load(mask).get_data()
+    func_data = nib.load(func).get_fdata()
+    labelmap_data = nib.load(labelmap).get_fdata()
+    mask_data = nib.load(mask).get_fdata()
 
     labelmap_data[mask_data==0] = 0 # background
 
@@ -852,11 +867,9 @@ def TsExtractor(labels, labelmap, func, mask, global_signal=True, pca=False, out
 def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, subplot=None, output_file="regts.png"):
     """
     Adapted from: https://github.com/poldracklab/niworkflows
-
     Plot an image representation of voxel intensities across time also know
     as the "carpet plot" or "Power plot". See Jonathan Power Neuroimage
     2017 Jul 1; 154:150-158.
-
     Parameters:
         timeseries (numpy.ndarray): 4D input image. See http://nilearn.github.io/manipulating_images/input_output.html.
         output_file (str, None): Optional! The name of the output image. Valid extensions are .png, .pdf, .svg.
@@ -963,8 +976,8 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, subplo
         lut2 = lut
         lut2 = np.array([0] + lut2.tolist())
 
-        relabeled=lut2[np.array(atlas.get_data(), dtype=int)]
-        atl = nb.Nifti1Image(relabeled, atlas.affine, dtype='int64')
+        relabeled=lut2[np.array(atlas.get_fdata(), dtype=int)]
+        atl = nb.Nifti1Image(relabeled, atlas.affine, dtype=np.int64)
         for i, c in enumerate(coords):
             ax2 = plt.subplot(gslegend[i])
             plot_img(atl, bg_img=background, axes=ax2, display_mode='z',
@@ -979,7 +992,6 @@ def plot_carpet_ts(timeseries, modules, atlas=None, background_file=None, subplo
         return os.getcwd() + '/' + output_file
 
     return [ax0, ax1], gs
-
 
 def rpn_model(file):
     with open(file, 'r') as f_obj:

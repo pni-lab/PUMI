@@ -1,114 +1,20 @@
 #!/usr/bin/env python3
+import importlib
 
 from nipype.interfaces.fsl import Reorient2Std
-from nipype.interfaces import afni
+
+import PUMI
 from PUMI.engine import BidsPipeline, NestedNode as Node, FuncPipeline, GroupPipeline, BidsApp
 from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import bbr
 from nipype.interfaces import utility
+import os
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
-from PUMI.utils import mist_modules, mist_labels, get_reference
+from PUMI.utils import mist_modules, mist_labels
 import traits
-import os
-
-
-def relabel_mist_atlas(atlas_file, modules, labels):
-    """
-       Relabel MIST atlas
-       * Beware : currently works only with labelmap!!
-       Parameters:
-           atlas_file(str): Path to the atlas file
-           modules ([str]): List containing the modules in MIST
-           labels ([str]): List containing the labels in MIST
-       Returns:
-           relabel_file (str): Path to relabeld atlas file
-           reordered_modules ([str]): list containing reordered module names
-           reordered_labels ([str]): list containing reordered label names
-           new_labels (str): Path to .tsv-file with the new labels
-    """
-
-    import os
-    import numpy as np
-    import pandas as pd
-    import nibabel as nib
-
-    df = pd.DataFrame({'modules': modules, 'labels': labels})
-    df.index += 1  # indexing from 1
-
-    reordered = df.sort_values(by='modules')
-
-    # relabel labelmap
-    img = nib.load(atlas_file)
-    if len(img.shape) != 3:
-        raise Exception("relabeling does not work for probability maps!")
-
-    lut = reordered.reset_index().sort_values(by="index").index.values + 1
-    lut = np.array([0] + lut.tolist())
-    # maybe this is a bit complicated, but believe me it does what it should
-
-    data = img.get_fdata()
-    newdata = lut[np.array(data, dtype=np.int32)]  # apply lookup table to swap labels
-
-    img = nib.Nifti1Image(newdata.astype(np.float64), img.affine)
-    nib.save(img, 'relabeled_atlas.nii.gz')
-
-    out = reordered.reset_index()
-    out.index = out.index + 1
-    relabel_file = os.path.join(os.getcwd(), 'relabeled_atlas.nii.gz')
-    reordered_modules = reordered['modules'].values.tolist()
-    reordered_labels = reordered['labels'].values.tolist()
-
-    newlabels_file = os.path.join(os.getcwd(), 'newlabels.tsv')
-    out.to_csv(newlabels_file, sep='\t')
-    return relabel_file, reordered_modules, reordered_labels, newlabels_file
-
-@GroupPipeline(inputspec_fields=['labelmap', 'modules', 'labels'],
-              outputspec_fields=['relabeled_atlas', 'reordered_labels', 'reordered_modules'])
-def mist_atlas(wf, reorder=True, **kwargs):
-
-    resample_atlas = Node(
-        interface=afni.Resample(
-            outputtype='NIFTI_GZ',
-            master=get_reference(wf, 'brain'),
-        ),
-        name='resample_atlas'
-    )
-
-    if reorder:
-        # reorder if modules is given (like for MIST atlases)
-        relabel_atls = Node(
-            interface=utility.Function(
-                input_names=['atlas_file', 'modules', 'labels'],
-                output_names=['relabelled_atlas_file', 'reordered_modules', 'reordered_labels', 'newlabels_file'],
-                function=relabel_mist_atlas
-            ),
-            name='relabel_atls'
-        )
-        wf.connect('inputspec', 'labelmap', relabel_atls, 'atlas_file')
-        wf.connect('inputspec', 'modules', relabel_atls, 'modules')
-        wf.connect('inputspec', 'labels', relabel_atls, 'labels')
-
-        wf.connect(relabel_atls, 'relabelled_atlas_file', resample_atlas, 'in_file')
-    else:
-        wf.connect('inputspec', 'labelmap', resample_atlas, 'in_file')
-
-    # Sinking
-    wf.connect(resample_atlas, 'out_file', 'sinker', 'atlas')
-    if reorder:
-        wf.connect(relabel_atls, 'newlabels_file', 'sinker', 'reordered_labels')
-    else:
-        wf.connect('inputspec', 'labels', 'sinker', 'atlas_labels')
-
-    # Output
-    wf.connect(resample_atlas, 'out_file', 'outputspec', 'relabeled_atlas')
-    if reorder:
-        wf.connect(relabel_atls, 'reordered_labels', 'outputspec', 'reordered_labels')
-        wf.connect(relabel_atls, 'reordered_modules', 'outputspec', 'reordered_modules')
-    else:
-        wf.connect('inputspec', 'labels', 'outputspec', 'reordered_labels')
-        wf.connect('inputspec', 'modules', 'outputspec', 'reordered_modules')
+from PUMI.pipelines.multimodal.atlas import atlas_selection
 
 @FuncPipeline(inputspec_fields=['ts_files', 'fd_files', 'scrub_threshold'],
               outputspec_fields=['features', 'out_file'])
@@ -186,10 +92,9 @@ def predict_pain_sensitivity(wf, model_json=None, **kwargs):
         import pandas as pd
         import PUMI
         import os
-        import importlib
 
         if model_json is None:
-            with importlib.resources.path('resources', 'model_rpn.json') as file:
+            with importlib.resources.path('resources', 'rpn_model.json') as file:
                 model_json = file
 
         model = rpn_model(file=model_json)
@@ -269,25 +174,13 @@ def rpn(wf, **kwargs):
     wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 
-    """
     atlas_selection_wf = atlas_selection('atlas_selection_wf', modularize=True, module_threshold=0.0)
-    atlas_selection_wf.get_node('inputspec').inputs.atlas = 'basc'
-    atlas_selection_wf.get_node('inputspec').inputs.atlas_params = {}
-    atlas_selection_wf.get_node('inputspec').inputs.labelmap_params = ('122',)
-    atlas_selection_wf.get_node('inputspec').inputs.modules_atlas = 'basc'
-    atlas_selection_wf.get_node('inputspec').inputs.modules_params = {}
-    atlas_selection_wf.get_node('inputspec').inputs.modules_labelmap_params = ('7',)
-    """
-    pick_atlas_wf = mist_atlas('pick_atlas_wf')
-    mist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data_in/atlas/MIST"))
-    pick_atlas_wf.get_node('inputspec').inputs.labelmap = os.path.join(mist_dir, 'Parcellations/MIST_122.nii.gz')
-    pick_atlas_wf.get_node('inputspec').inputs.modules = mist_modules(mist_directory=mist_dir, resolution="122")
-    pick_atlas_wf.get_node('inputspec').inputs.labels = mist_labels(mist_directory=mist_dir, resolution="122")
+    #atlas_selection_wf.get_node('inputspec').inputs.atlas_dir = ()
 
     extract_timeseries = extract_timeseries_nativespace('extract_timeseries')
-    wf.connect(pick_atlas_wf, 'relabeled_atlas', extract_timeseries, 'atlas')
-    wf.connect(pick_atlas_wf, 'reordered_labels', extract_timeseries, 'labels')
-    wf.connect(pick_atlas_wf, 'reordered_modules', extract_timeseries, 'modules')
+    wf.connect(atlas_selection_wf, 'labelmap', extract_timeseries, 'atlas')
+    wf.connect(atlas_selection_wf, 'labels', extract_timeseries, 'labels')
+    wf.connect(atlas_selection_wf, 'modules', extract_timeseries, 'modules')
     wf.connect(anatomical_preprocessing_wf, 'brain', extract_timeseries, 'anat')
     wf.connect(bbr_wf, 'anat_to_func_linear_xfm', extract_timeseries, 'inv_linear_reg_mtrx')
     wf.connect(anatomical_preprocessing_wf, 'mni2anat_warpfield', extract_timeseries, 'inv_nonlinear_reg_mtrx')
@@ -295,16 +188,7 @@ def rpn(wf, **kwargs):
     wf.connect(func_proc_wf, 'func_preprocessed', extract_timeseries, 'func')
     wf.connect(func_proc_wf, 'FD', extract_timeseries, 'confounds')
 
-    calculate_connectivity_wf = calculate_connectivity('calculate_connectivity_wf')
-    wf.connect(extract_timeseries, 'timeseries', calculate_connectivity_wf, 'ts_files')
-    wf.connect(func_proc_wf, 'FD', calculate_connectivity_wf, 'fd_files')
-
-    predict_pain_sensitivity_wf = predict_pain_sensitivity('predict_pain_sensitivity_wf')
-    wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_wf, 'X')
-    wf.connect('inputspec', 'bold', predict_pain_sensitivity_wf, 'in_files')
-
     wf.write_graph('rpn-signature.png')
-
 
 rpn_app = BidsApp(
     pipeline=rpn,

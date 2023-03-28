@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Steps to run a script on the HPC
+while getopts 'b:v:i:o:d:h' opt; do
+  case "$opt" in
+    b)
+    # NFS root dir
+    NFS_ROOT="$OPTARG"  # e.g. /homes/<cluster-username>/
+    ;;
+
+    v)
+      # PUMI VERSION, this gets passed to pip install
+      # if it's a path than install from local source
+      # but it can also be from github <github_address>
+      # and (later) simply the PIPY package name
+      PUMI_VER="$OPTARG"	
+      ;;
+      
+    i) 
+     # input BIDS dir, if used, argument should be a BIDS-app
+     INDIR="$OPTARG"
+     ;;
+    o)
+     # output dir (derivatives), if used, argument should be a BIDS-app
+# Dirctory where the results should be put
+# this will be mounted and maybe we match some stuff automatically
+     OUTDIR="$OPTARG"
+     ;;
+    d)
+    # additional docker command line arguments
+    # can be used e.g. to mount volumes
+    DOCKER_CMD="$OPTARG"
+    ;;
+   
+    ?|h)
+      echo "Usage: $(basename $0) [-v] [-i] [-o] [-d] [-h] commands"  # todo: add b)
+      echo "-v      PUMI version to use (can be a path, or an argument to pip install, e.g. a github link)"
+      echo "-i      Local input BIDS folder (mounts it and adds argument for BIDS apps)"
+      echo "-o      Local output folder (mounts it and adds argument for BIDS apps)"
+      echo "-d      Additional arguments for docker run"
+      exit 1
+      ;;
+  esac
+done
+shift "$(($OPTIND -1))"
+
+
+# Remaining arguments: command to be executed
+PIPELINE_CMD=$@
+
+command="pip install $PUMI_VER >/dev/null; $PIPELINE_CMD"
+
+NFS_USER_DIR_NAME=$(basename "$NFS_ROOT")  # e.g. <cluster-username>
+DOCKER_BASE_DIR=/home/pumi/${NFS_USER_DIR_NAME}/
+DOCKER_CMD="$DOCKER_CMD -v ${NFS_ROOT}:${DOCKER_BASE_DIR}"
+
+if [[ "$PUMI_VER" != git+* ]] && [[ -d "$PUMI_VER" ]]; then
+  PUMI_DIR="${DOCKER_BASE_DIR}/${PUMI_VER}"
+fi
+
+if [[ "$PUMI_VER" == git+* ]]; then
+  PUMI_DIR=${DOCKER_BASE_DIR}/PUMI/
+fi
+
+# todo: a better way: automount if BIDS app is called
+# how to decide? have a flag!
+if [ -n "$INDIR" ]; then
+  #DOCKER_CMD="$DOCKER_CMD -v $INDIR:/input:ro"
+  PIPELINE_CMD="$PIPELINE_CMD --bids_dir=${DOCKER_BASE_DIR}/${INDIR}"
+fi
+
+if [ -n "$OUTDIR" ]; then
+  PIPELINE_CMD="$PIPELINE_CMD --output_dir=${DOCKER_BASE_DIR}/${OUTDIR}"
+fi
+
+command="set -x; pip install $PUMI_DIR >/dev/null; python3 ${PUMI_DIR}/${PIPELINE_CMD}"
+
+echo ""
+echo + docker run --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.5 bash -c \"$command\"
+echo ""
+
+docker run --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.5 bash -c "$command"
+
+
+
+

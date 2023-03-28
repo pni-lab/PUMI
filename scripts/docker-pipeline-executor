@@ -1,0 +1,125 @@
+#!/bin/bash
+
+while getopts 'v:i:o:d:n:h' opt; do
+  case "$opt" in
+    v)
+      # PUMI VERSION, this gets passed to pip install
+      # if it's a path than install from local source
+      # but it can also be from github <github_address>
+      # and (later) simply the PIPY package name
+      PUMI_VER="$OPTARG"
+      ;;
+
+    i)
+     # input BIDS dir, if used, argument should be a BIDS-app
+     INDIR="$OPTARG"
+     ;;
+
+    o)
+     # output dir (derivatives), if used, argument should be a BIDS-app
+# Dirctory where the results should be put
+# this will be mounted and maybe we match some stuff automatically
+     OUTDIR="$OPTARG"
+     ;;
+
+    d)
+    # additional docker command line arguments
+    # can be used e.g. to mount volumes
+    DOCKER_CMD="$OPTARG"
+    ;;
+
+    n)
+    # NFS root folder
+    NFS_ROOT="$OPTARG"
+    ;;
+
+    ?|h)
+      echo "Usage: $(basename $0) [-v] [-i] [-o] [-d] [-h] commands"
+      echo "-v      Path to PUMI"
+      echo "-i      Input BIDS folder"
+      echo "-o      Output folder"
+      echo "-n      To use or store data on an NFS share, set -n to the NFS root directory. However, if you do this, every path (-v, -i, -o, -n) must be on the NFS."
+      echo "-d      Additional arguments for docker run"
+      exit 1
+      ;;
+  esac
+done
+shift "$(($OPTIND -1))"
+
+
+# Remaining arguments: command to be executed
+PIPELINE_CMD=$@
+
+command="pip install $PUMI_VER >/dev/null; $PIPELINE_CMD"
+
+current_dir=$(pwd)
+
+if [[ "$PUMI_VER" == "."* ]]; then
+  PUMI_VER="${current_dir}/${PUMI_VER}"
+fi
+
+if [[ "$INDIR" == "."* ]]; then
+  INDIR="${current_dir}/${INDIR}"
+fi
+
+if [[ "$OUTDIR" == "."* ]]; then
+  OUTDIR="${current_dir}/${OUTDIR}"
+fi
+
+if [[ "$NFS_ROOT" == "."* ]]; then
+  NFS_ROOT="${current_dir}/${NFS_ROOT}"
+fi
+
+
+if [ -z "$NFS_ROOT" ]; then
+  echo "Using local paths (no NFS)..."
+
+  if [ -n "$INDIR" ]; then
+    echo "Mounting input directory ${INDIR} to docker container"
+    DOCKER_CMD="$DOCKER_CMD -v $INDIR:/input:ro"
+    PIPELINE_CMD="$PIPELINE_CMD --bids_dir=/input"
+  fi
+
+  if [ -n "$OUTDIR" ]; then
+    echo "Creating output directory and mounting output directory ${OUTDIR} to docker container"
+    mkdir -p $OUTDIR
+    DOCKER_CMD="$DOCKER_CMD -v $OUTDIR:/output"
+    PIPELINE_CMD="$PIPELINE_CMD --output_dir=/output"
+  fi
+
+else
+
+  DOCKER_CMD="$DOCKER_CMD -v ${NFS_ROOT}:/nfs/"
+
+  INDIR=$(realpath --relative-to="$NFS_ROOT" "$INDIR")
+  OUTDIR=$(realpath --relative-to="$NFS_ROOT" "$OUTDIR")
+
+  if [ -n "$INDIR" ]; then
+  PIPELINE_CMD="$PIPELINE_CMD --bids_dir=/nfs/${INDIR}"
+  fi
+
+  if [ -n "$OUTDIR" ]; then
+  PIPELINE_CMD="$PIPELINE_CMD --output_dir=/nfs/${OUTDIR}"
+  fi
+
+fi
+
+if [[ -d "$NFS_ROOT" && "$PUMI_VER" == "$NFS_ROOT"* ]]; then
+  # A path to PUMI was specified and it seems like it is on the NFS
+  PUMI_DIR=$(realpath --relative-to="$NFS_ROOT" "$PUMI_VER")
+  PUMI_VER="/nfs/${PUMI_DIR}"
+
+else
+  DOCKER_CMD="$DOCKER_CMD -v $PUMI_VER:/home/pumi/PUMI"
+  PUMI_VER="/home/pumi/PUMI"
+
+fi
+
+command="set -x; pip install $PUMI_VER > /dev/null; python3 ${PUMI_VER}/pipelines/$PIPELINE_CMD"
+
+
+echo ""
+echo + docker run --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.5 bash -c \"$command\"
+echo ""
+
+docker run --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.5 bash -c "$command"

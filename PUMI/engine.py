@@ -1,4 +1,6 @@
 import argparse
+from configparser import SafeConfigParser
+
 from PUMI._version import get_versions
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
@@ -166,7 +168,7 @@ class PumiPipeline:
 
         from functools import wraps
 
-        @wraps(pipeline_fun) # So that decorated functions can be documented properly
+        @wraps(pipeline_fun)  # So that decorated functions can be documented properly
         def wrapper(name, base_dir='.', sink_dir=None, qc_dir=None, **kwargs):
 
             if sink_dir is None:
@@ -295,8 +297,12 @@ class GroupPipeline(PumiPipeline):
         regexp_sub = [] if regexp_sub is None else regexp_sub
         substitutions = []
 
+        cfg_parser = SafeConfigParser()
+        cfg_parser.read('settings.ini')
+
+        sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
         if default_regexp_sub:
-            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<3>')]
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', sink_dir + r'/group/\g<2>/\g<3>')]
 
         substitutions.extend(regexp_sub)
         super().__init__(inputspec_fields, outputspec_fields, substitutions)
@@ -444,6 +450,7 @@ class BidsPipeline(PumiPipeline):
 
         return wrapper
 
+
 class BidsApp:
 
     def __init__(self, pipeline, name, bids_dir=None, output_dir=None, analysis_level=None, participant_label=None,
@@ -512,6 +519,7 @@ class BidsApp:
                     self.run_args['plugin_args']['n_procs'] = cli_args.n_procs
                 if cli_args.memory_gb is not None:
                     self.run_args['plugin_args']['memory_gb'] = cli_args.memory_gb
+
 
         if (cli_args.bids_dir is None) and (self.bids_dir is None):
             raise ValueError('The argument "bids_dir" has to be set!')
