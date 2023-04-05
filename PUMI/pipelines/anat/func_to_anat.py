@@ -13,7 +13,7 @@ def func2anat_qc(wf, **kwargs):
 
     Inputs:
         func2anat (str): path to out_file of func2anat workflow
-        wm_bb_mask (str): white matter masked calculated in func2anat workflow
+        wm_bb_mask (str): white matter mask calculated in func2anat workflow
 
     Outputs:
         out_file (str): path to quality check image
