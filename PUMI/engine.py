@@ -331,6 +331,7 @@ class BidsPipeline(PumiPipeline):
             self.output_query = {
                 'T1w': dict(
                     datatype='anat',
+                    suffix='T1w',
                     extension=['nii', 'nii.gz']
                 ),
                 #'rest': dict(   # todo: how to get rests only

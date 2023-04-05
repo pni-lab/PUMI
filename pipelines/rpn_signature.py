@@ -236,10 +236,12 @@ def collect_predictions(wf):
 @BidsPipeline(output_query={
     'T1w': dict(
         datatype='anat',
+        suffix="T1w",
         extension=['nii', 'nii.gz']
     ),
     'bold': dict(
         datatype='func',
+        suffix="bold",
         extension=['nii', 'nii.gz']
     )
 })
