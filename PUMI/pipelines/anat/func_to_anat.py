@@ -1,7 +1,35 @@
 from nipype.interfaces.utility import Function
-from PUMI.engine import NestedNode as Node, AnatPipeline
+from PUMI.engine import NestedNode as Node, AnatPipeline, QcPipeline
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume, vol2png
 from nipype.interfaces import fsl
+
+
+@QcPipeline(inputspec_fields=['func2anat', 'wm_bb_mask'],
+            outputspec_fields=['out_file'])
+def func2anat_qc(wf, **kwargs):
+    """
+
+    Create and save quality check image for func2anat workflow
+
+    Inputs:
+        func2anat (str): path to out_file of func2anat workflow
+        wm_bb_mask (str): white matter mask calculated in func2anat workflow
+
+    Outputs:
+        out_file (str): path to quality check image
+
+    Sinking
+        func2anat quality check image
+
+    """
+
+    # Create png images for quality check
+    func2anat_vol2png = vol2png('func2anat_vol2png')
+    wf.connect('inputspec', 'func2anat', func2anat_vol2png, 'bg_image')
+    wf.connect('inputspec', 'wm_bb_mask', func2anat_vol2png, 'overlay_image')
+
+    wf.connect(func2anat_vol2png, 'out_file', 'sinker', 'qc_func2anat')
+
 
 
 @AnatPipeline(inputspec_fields=['func', 'head', 'anat_wm_segmentation', 'anat_gm_segmentation',
@@ -129,10 +157,9 @@ def func2anat(wf, bbr=True, **kwargs):
         wf.connect(myonevol, 'out_file', reg_anatmask_to_func4, 'reference')
         wf.connect(vent_bb_mask, 'out_file', reg_anatmask_to_func4, 'in_file')
 
-        # Create png images for quality check
-        func2anat_qc = vol2png("func2anat_qc")
-        wf.connect(main_func2anat, 'out_file', func2anat_qc, 'bg_image')
-        wf.connect(wm_bb_mask, 'out_file', func2anat_qc, 'overlay_image')
+        qc_func2anat = func2anat_qc('qc_func2anat')
+        wf.connect(main_func2anat, 'out_file', qc_func2anat, 'func2anat')
+        wf.connect(wm_bb_mask, 'out_file', qc_func2anat, 'wm_bb_mask')
 
         # sink the results
         wf.connect(main_func2anat, 'out_file', 'sinker', "func2anat_qc")
