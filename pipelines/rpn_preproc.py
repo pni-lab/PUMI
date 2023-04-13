@@ -312,7 +312,5 @@ rpn_preproc_app = BidsApp(
     name='rpn_preproc',
     bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
 )
-rpn_app.parser.add_argument('--bbr', default='yes', type=lambda x: (str(x).lower() == ['true','1', 'yes']),
-                            help='Use BBR registration: yes/no (default: yes)')
 
-rpn_app.run()
+rpn_preproc_app.run()
