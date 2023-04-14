@@ -302,8 +302,8 @@ class GroupPipeline(PumiPipeline):
 
         sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
         if default_regexp_sub:
-            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', sink_dir + r'/group/\g<2>/\g<3>')]
-
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>//group/\g<2>/\g<3>')]
+        
         substitutions.extend(regexp_sub)
         super().__init__(inputspec_fields, outputspec_fields, substitutions)
 
