@@ -11,6 +11,7 @@ from nipype.interfaces import utility
 from PUMI.pipelines.func.func2standard import func2standard
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
+from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 from PUMI.utils import mist_modules, mist_labels, get_reference
 import traits
 import os
@@ -171,31 +172,15 @@ def func2standard_wf(wf, bbr=True, **kwargs):
     wf.connect(func_proc_wf, 'func_preprocessed', extract_timeseries, 'func')
     wf.connect(func_proc_wf, 'FD', extract_timeseries, 'confounds')
 
+    pick_example_func = pick_volume('pick_example_func')
+    wf.connect('inputspec', 'bold', pick_example_func, 'in_file')
+
     anat2std = func2standard('func2std')
-    wf.connect(pick_atlas_wf, 'relabeled_atlas', anat2std, 'atlas')
     wf.connect(anatomical_preprocessing_wf, 'brain', anat2std, 'anat')
     wf.connect(func2anat_wf, 'func_to_anat_linear_xfm', anat2std, 'linear_reg_mtrx')
     wf.connect(anatomical_preprocessing_wf, 'anat2mni_warpfield', anat2std, 'nonlinear_reg_mtrx')
-    wf.connect(func_proc_wf, 'func_preprocessed', anat2std, 'func')
-    wf.connect(anatomical_preprocessing_wf, 'brain', anat2std, 'example_func')
-
-    # ['atlas', 'anat', 'linear_reg_mtrx', 'nonlinear_reg_mtrx', 'func',
-    #  'example_func', 'confounds', 'confound_names']
-    func2std = func2standard('func2std_2')
-    wf.connect(pick_atlas_wf, 'relabeled_atlas', func2std, 'atlas')
-    wf.connect(anatomical_preprocessing_wf, 'brain', func2std, 'anat')
-    wf.connect(func2anat_wf, 'func_to_anat_linear_xfm', func2std, 'linear_reg_mtrx')
-    wf.connect(anatomical_preprocessing_wf, 'anat2mni_warpfield', func2std, 'nonlinear_reg_mtrx')
-    wf.connect(func_proc_wf, 'func_preprocessed', func2std, 'func')
-    wf.connect(func2anat_wf, 'gm_mask_in_funcspace', func2std, 'example_func')
-
-
-    #wf.connect(func2anat_wf, 'gm_mask_in_funcspace', func2std, 'example_func')
-    #wf.connect(func2anat_wf, 'gm_mask_in_funcspace', func2std, 'example_func')
-    #wf.connect(anatomical_preprocessing_wf, 'probmap_gm', func2std, 'example_func')
-
-    wf.connect(func_proc_wf, 'FD', func2std, 'confounds')
-
+    wf.connect(anatomical_preprocessing_wf, 'std_template', anat2std, 'reference_brain')
+    wf.connect(pick_example_func, 'out_file', anat2std, 'func')
 
 
 func2standard_app = BidsApp(
