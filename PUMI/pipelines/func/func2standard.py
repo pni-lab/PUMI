@@ -108,8 +108,8 @@ def func2standard(wf, func_is_3D=True, stdreg='ants', interp="NearestNeighbor", 
 
 
 @FuncPipeline(inputspec_fields=['atlas', 'anat', 'inv_linear_reg_mtrx', 'inv_nonlinear_reg_mtrx', 'func',
-                                'example_func', 'confounds', 'confound_names'],
-              outputspec_fields=['atlas2func'])
+                                'example_func'],
+              outputspec_fields=['out_file'])
 def atlas2func(wf, stdreg='ants', interp="NearestNeighbor", **kwargs):
     """
 
@@ -129,7 +129,8 @@ def atlas2func(wf, stdreg='ants', interp="NearestNeighbor", **kwargs):
             confounds ([str]):
             confound_names ([str]):
        Returns:
-           atlas2func (str):
+           out_file (str):
+
     Adapted from Balint Kincses (2018)
     """
 
@@ -148,9 +149,6 @@ def atlas2func(wf, stdreg='ants', interp="NearestNeighbor", **kwargs):
         wf.connect('inputspec', 'inv_linear_reg_mtrx', applywarp, 'postmat')
         wf.connect('inputspec', 'inv_nonlinear_reg_mtrx', applywarp, 'field_file')
         wf.connect('inputspec', 'example_func', applywarp, 'ref_file')
-        wf.connect(applywarp, 'out_file', 'outputspec', 'atlas2func')
-
-        wf.connect(applywarp, 'out_file', 'sinker', 'atlas2func')
     elif stdreg == 'ants':
         # concat premat and ants transform
         bbr2ants = Node(interface=C3dAffineTool(fsl2ras=True, itk_transform=True), name="bbr2ants")
@@ -185,9 +183,9 @@ def atlas2func(wf, stdreg='ants', interp="NearestNeighbor", **kwargs):
 
     # Output
     if stdreg == 'fsl':
-        wf.connect(applywarp, 'out_file', 'outputspec', 'atlas2func')
+        wf.connect(applywarp, 'out_file', 'outputspec', 'out_file')
     elif stdreg == 'ants':
-        wf.connect(applywarp, 'output_image', 'outputspec', 'atlas2func')
+        wf.connect(applywarp, 'output_image', 'outputspec', 'out_file')
 
     # Sinking
     if stdreg == 'fsl':
