@@ -13,7 +13,7 @@ from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
             outputspec_fields=['out_file'])
-def qc_segmentation(wf, **kwargs):
+def qc_segmentation(wf, fmri=False, **kwargs):
     """
 
     Create quality check images for background extraction workflows
@@ -37,7 +37,10 @@ def qc_segmentation(wf, **kwargs):
     wf.connect('inputspec', 'overlay', plot, 'overlay')
 
     # sinking
-    wf.connect(plot, 'out_file', 'sinker', 'qc_segmentation')
+    if fmri:
+        wf.connect(plot, 'out_file', 'sinker', 'qc_func_segmentation')
+    else:
+        wf.connect(plot, 'out_file', 'sinker', 'qc_anat_segmentation')
 
     # output
     wf.connect(plot, 'out_file', 'outputspec', 'out_file')
@@ -116,16 +119,21 @@ def bet_fsl(wf, fmri=False, volume='middle', **kwargs):
         bet.inputs.robust = True
 
     # quality check
-    qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
     if fmri:
-        qc_overlay = pick_volume('qc_overlay')
-        wf.connect(apply_mask, 'out_file', qc_overlay, 'in_file')
-        wf.connect(qc_overlay, 'out_file', qc, 'background')
 
-        qc_background = pick_volume('qc_background')
-        wf.connect('inputspec', 'in_file', qc_background, 'in_file')
-        wf.connect(qc_background, 'out_file', qc, 'overlay')
+        overlay = pick_volume('qc_overlay', volume=volume)
+        wf.connect(apply_mask, 'out_file', overlay, 'in_file')
+
+        background = pick_volume('qc_background')
+        wf.connect('inputspec', 'in_file', background, 'in_file')
+
+        qc = qc_segmentation(name='qc_segmentation', fmri=True, qc_dir=wf.qc_dir)
+        wf.connect(overlay, 'out_file', qc, 'overlay')
+        wf.connect(background, 'out_file', qc, 'background')
+        #wf.connect(overlay, 'out_file', qc, 'background')
+        #wf.connect(background, 'out_file', qc, 'overlay')
     else:
+        qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
         wf.connect(bet, 'out_file', qc, 'overlay')
         wf.connect('inputspec', 'in_file', qc, 'background')
 
