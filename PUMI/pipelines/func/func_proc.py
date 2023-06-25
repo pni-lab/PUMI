@@ -70,6 +70,9 @@ def func_proc_despike_afni(wf, stdrefvol='middle', fwhm=0, carpet_plot='', **kwa
     wf.connect(mymc, 'FD_file', myscrub, 'FD')
     wf.connect(mytmpfilt, 'out_file', myscrub, 'func')
 
+    # sinking
+    wf.connect(mymc, 'FD_file', 'sinker', 'FD')
+  
     # output
     wf.connect(mymc, 'FD_file', 'outputspec', 'FD')
     wf.connect(myscrub, 'scrubbed_image', 'outputspec', 'func_preprocessed_scrubbed')
