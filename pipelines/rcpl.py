@@ -334,7 +334,7 @@ def collect_pain_predictions(wf, **kwargs):
         merged_df['RPN'] = df_rpn['RPN']
         merged_df['RCPL'] = df_rcpl['RCPL']
 
-        path = os.path.abspath('pain_sensitivity_predictions.csv')
+        path = os.path.abspath('pain-sensitivity-predictions.csv')
         merged_df.to_csv(path, index=False)
 
         return path
