@@ -236,7 +236,7 @@ def predict_pain_sensitivity_rpn(wf, **kwargs):
 
 @FuncPipeline(inputspec_fields=['X', 'in_file'],
               outputspec_fields=['score', 'out_file'])
-def predict_pain_sensitivity_rcpl(wf, model_path='final_model_M1.sav', **kwargs):
+def predict_pain_sensitivity_rcpl(wf, model_path='rcpl_model.sav', **kwargs):
     """
 
     Perform pain sensitivity prediction using RCPL signature
