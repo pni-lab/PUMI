@@ -236,7 +236,7 @@ def predict_pain_sensitivity_rpn(wf, **kwargs):
 
 @FuncPipeline(inputspec_fields=['X', 'in_file'],
               outputspec_fields=['score', 'out_file'])
-def predict_pain_sensitivity_rcpl(wf, model_path='rcpl_model.sav', **kwargs):
+def predict_pain_sensitivity_rcpl(wf, model_path=None, **kwargs):
     """
 
     Perform pain sensitivity prediction using RCPL signature
@@ -244,7 +244,8 @@ def predict_pain_sensitivity_rcpl(wf, model_path='rcpl_model.sav', **kwargs):
     Further information regarding the signature: https://github.com/kincsesbalint/paintone_rsn
 
     Parameters:
-        model_path (str, optional): Path to the pre-trained model relative to PUMI's data_in folder
+        model_path (str, optional): Path to the pre-trained model relative to PUMI's data_in folder.
+                                    If set to None, PUMI's build in RCPL model is used.
 
     Inputs:
         X (array-like): Input data for pain sensitivity prediction
@@ -264,14 +265,19 @@ def predict_pain_sensitivity_rcpl(wf, model_path='rcpl_model.sav', **kwargs):
         import os
         import PUMI
         import joblib
+        import importlib
 
-        data_in_folder = os.path.join(os.path.dirname(os.path.abspath(PUMI.__file__)), '..', 'data_in')
-        model_path = os.path.join(data_in_folder, model_path)
+        if model_path is None:
+            with importlib.resources.path('resources', 'rcpl_model.sav') as file:
+                model = joblib.load(file)
+        else:
+            if not os.path.exists(model_path):
+                raise FileNotFoundError(f"Model file not found: {model_path}")
 
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found: {model_path}")
+            data_in_folder = os.path.join(os.path.dirname(os.path.abspath(PUMI.__file__)), '..', 'data_in')
+            model_path = os.path.join(data_in_folder, model_path)
+            model = joblib.load(model_path)
 
-        model = joblib.load(model_path)
         predicted = model.predict(X)
 
         path = os.path.abspath('rcpl-prediction.csv')
