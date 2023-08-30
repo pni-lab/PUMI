@@ -10,6 +10,8 @@ from nipype.interfaces import utility
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels, get_reference
+from PUMI.pipelines.func.func2standard import func2standard
+from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 import traits
 import os
 
@@ -417,6 +419,16 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func2anat_wf, 'gm_mask_in_funcspace', extract_timeseries, 'gm_mask')
     wf.connect(func_proc_wf, 'func_preprocessed', extract_timeseries, 'func')
     wf.connect(func_proc_wf, 'FD', extract_timeseries, 'confounds')
+
+    pick_example_func = pick_volume('pick_example_func')
+    wf.connect('inputspec', 'bold', pick_example_func, 'in_file')
+
+    func2std = func2standard('func2std')
+    wf.connect(anatomical_preprocessing_wf, 'brain', func2std, 'anat')
+    wf.connect(func2anat_wf, 'func_to_anat_linear_xfm', func2std, 'linear_reg_mtrx')
+    wf.connect(anatomical_preprocessing_wf, 'anat2mni_warpfield', func2std, 'nonlinear_reg_mtrx')
+    wf.connect(anatomical_preprocessing_wf, 'std_template', func2std, 'reference_brain')
+    wf.connect(pick_example_func, 'out_file', func2std, 'func')
 
     calculate_connectivity_wf = calculate_connectivity('calculate_connectivity_wf')
     wf.connect(extract_timeseries, 'timeseries', calculate_connectivity_wf, 'ts_files')
