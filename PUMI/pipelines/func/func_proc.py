@@ -13,18 +13,28 @@ from PUMI.pipelines.func.temporal_filtering import temporal_filtering
 def func_proc_despike_afni(wf, stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
 
     """
-    Performs processing of functional (resting-state) images:
-    Images should be already reoriented, e.g. with fsl fslreorient2std (see scripts/ex_pipeline.py)
-    Workflow inputs:
-        :param func: The functional image file.
 
-    Tamas Spisak
-    tamas.spisak@uk-essen.de
-    2018
-        """
+    Perform processing of functional (resting-state) images.
+
+    Parameters:
+        stdrefvol (str): Reference volume (e.g., 'first', 'middle', 'last').
+        fwhm (str): Full Width at Half Maximum (FWHM) value.
+        carpet_plot (bool): Set to True to generate carpet plots.
+
+    Inputs:
+        func (str): Path to reoriented functional image.
+        cc_noise_roi (str): Path to noise ROI.
+
+    Outputs:
+        func_preprocessed (str): Path to preprocessed functional image.
+        func_preprocessed_scrubbed (str): Path to scrubbed preprocessed functional image.
+        FD (str): Path to the file containing frame-wise displacement.
+
+    Adapted from Tamas Spisak (2018).
+
+    """
 
     # ToDo: Add fmri2QC
-    # ToDo: Redo documentation
     # ToDo: check if variable names and node names are the same
 
     mybet = bet_fsl('mybet', fmri=True)
