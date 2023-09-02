@@ -210,9 +210,6 @@ USER ${NB_UID}
 
 RUN conda install -y --name base \
     "mrtrix3" \
-    "jupyter" \
-    "jupyterlab" \
-    "jupyter_contrib_nbextensions" \
     "traits" \
     "pandas" \
     "matplotlib" \
@@ -241,13 +238,12 @@ RUN pip install --no-cache-dir  \
     "pydeface" \
     "neurodocker==0.8.0" \
     "templateflow" \
-    "nipy" \
     "duecredit" \
     "nbval" \
     "datalad[full]" \
-    "git+https://github.com/MIC-DKFZ/HD-BET" \
-    "deepbet"
-
+    "deepbet" \
+    "jupyter" \
+    "git+https://github.com/MIC-DKFZ/HD-BET"
 
 # **********************************************************************************************************************
 
