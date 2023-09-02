@@ -99,7 +99,7 @@ RUN apt-get update -qq \
            xvfb \
     && rm -rf /var/lib/apt/lists/* \
     && _reproenv_tmppath="$(mktemp -t tmp.XXXXXXXXXX.deb)" \
-    && curl -fsSL --retry 5 -o "${_reproenv_tmppath}" http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
+    && curl -fsSL --retry 5 -o "${_reproenv_tmppath}" http://launchpadlibrarian.net/160108232/libxp6_1.0.2-1ubuntu1_amd64.deb \
     && apt-get install --yes -q "${_reproenv_tmppath}" \
     && rm "${_reproenv_tmppath}" \
     && _reproenv_tmppath="$(mktemp -t tmp.XXXXXXXXXX.deb)" \
