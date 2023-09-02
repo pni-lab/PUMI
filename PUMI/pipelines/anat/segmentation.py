@@ -83,18 +83,19 @@ def qc_tissue_segmentation(wf, **kwargs):
 def bet_fsl(wf, fmri=False, volume='middle', **kwargs):
     """
 
-    Performs Brain extraction of a 3d-vloume.
-    User can choose the position of the 3d-volume
+    Perform brain extraction with FSL.
 
-    Parameter:
-        fmri(bool):
+    Parameters:
+        fmri (bool): Set to true if the supplied in_file file is a 4D volume.
+        volume (str/int): On which volume to perform the brain extraction based on if a 4D image is supplied.
+                          Can be either 'first', 'middle', 'last', 'mean' or a number.
 
     Inputs:
-        in_file(str): Path to the functional 4d-image.
+        in_file(str): Path to the 3D or 4D head scan.
 
     Outputs:
-        out_file(str):
-        brain_mask(str):
+        out_file(str): Path to the extracted brain.
+        brain_mask (str): Path to the mask of the extracted brain.
 
     """
 
@@ -147,6 +148,29 @@ def bet_fsl(wf, fmri=False, volume='middle', **kwargs):
         wf.connect(apply_mask, 'out_file', 'outputspec', 'out_file')
     else:
         wf.connect(bet, 'out_file', 'outputspec', 'out_file')
+
+
+@AnatPipeline(inputspec_fields=['in_file'],
+              outputspec_fields=['out_file', 'brain_mask'])
+def bet_deepbet(wf, fmri=False, volume='middle', **kwargs):
+    """
+
+    Perform brain extraction with deepbet.
+
+    Parameters:
+        fmri (bool): Set to true if the supplied in_file file is a 4D volume.
+        volume (str/int): On which volume to perform the brain extraction based on if a 4D image is supplied.
+                          Can be either 'first', 'middle', 'last', 'mean' or a number.
+
+    Inputs:
+        in_file(str): Path to the 3D or 4D head scan.
+
+    Outputs:
+        out_file(str): Path to the extracted brain.
+        brain_mask (str): Path to the mask of the extracted brain.
+
+    """
+    pass
 
 
 @AnatPipeline(inputspec_fields=['in_file'],
