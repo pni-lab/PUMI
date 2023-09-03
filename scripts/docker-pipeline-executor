@@ -119,7 +119,7 @@ command="set -x; pip install $PUMI_VER > /dev/null; python3 ${PUMI_VER}/pipeline
 
 
 echo ""
-echo + docker run --rm --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.5 bash -c \"$command\"
+echo + docker run --rm --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:latest bash -c \"$command\"
 echo ""
 
-docker run --rm --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:0.5 bash -c "$command"
+docker run --rm --user="$(id -u):$(id -g)" $DOCKER_CMD pnilab/pumi:latest bash -c "$command"
