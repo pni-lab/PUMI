@@ -17,7 +17,7 @@ def func_proc_despike_afni(wf, bet_tool='FSL', stdrefvol='middle', fwhm=0, carpe
     Perform processing of functional (resting-state) images.
 
     Parameters:
-        bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL', 'HD-BET' or 'deepbet'.
+        bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL' or 'deepbet'.
         stdrefvol (str): Reference volume (e.g., 'first', 'middle', 'last').
         fwhm (str): Full Width at Half Maximum (FWHM) value.
         carpet_plot (bool): Set to True to generate carpet plots.
@@ -36,15 +36,14 @@ def func_proc_despike_afni(wf, bet_tool='FSL', stdrefvol='middle', fwhm=0, carpe
     """
 
     # ToDo: Add fmri2QC
+    # ToDo: Allow HD-Bet
 
     if bet_tool == 'FSL':
-        bet_wf = bet_fsl('bet_fsl')
-    elif bet_tool == 'HD-BET':
-        bet_wf = bet_hd('hd-bet')
+        bet_wf = bet_fsl('bet_fsl', fmri=True)
     elif bet_tool == 'deepbet':
-        bet_wf = bet_deepbet('deepbet')
+        bet_wf = bet_deepbet('deepbet', fmri=True)
     else:
-        raise ValueError('bet_tool can be \'FSL\', \'HD-BET\' or \'deepbet\' but not ' + bet_tool)
+        raise ValueError('bet_tool can be \'FSL\' or \'deepbet\' but not ' + bet_tool)
 
     wf.connect('inputspec', 'func', bet_wf, 'in_file')
 
