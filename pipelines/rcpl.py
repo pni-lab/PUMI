@@ -399,7 +399,7 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func2anat_wf, 'wm_mask_in_funcspace', compcor_roi_wf, 'wm_mask')
     wf.connect(func2anat_wf, 'ventricle_mask_in_funcspace', compcor_roi_wf, 'ventricle_mask')
 
-    func_proc_wf = func_proc_despike_afni('func_proc_wf')
+    func_proc_wf = func_proc_despike_afni('func_proc_wf', bet_tool='deepbet')
     wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 

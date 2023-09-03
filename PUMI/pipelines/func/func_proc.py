@@ -1,6 +1,6 @@
 from PUMI.engine import FuncPipeline, NestedNode as Node
 from nipype.interfaces import fsl, afni
-from PUMI.pipelines.anat.segmentation import bet_fsl
+from PUMI.pipelines.anat.segmentation import bet_fsl, bet_hd, bet_deepbet
 from PUMI.pipelines.func.compcor import compcor
 from PUMI.pipelines.func.concat import concat
 from PUMI.pipelines.func.data_censorer import datacens_workflow_threshold
@@ -10,13 +10,14 @@ from PUMI.pipelines.func.temporal_filtering import temporal_filtering
 
 @FuncPipeline(inputspec_fields=['func', 'cc_noise_roi'],
               outputspec_fields=['func_preprocessed', 'func_preprocessed_scrubbed', 'FD'])
-def func_proc_despike_afni(wf, stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
+def func_proc_despike_afni(wf, bet_tool='FSL', stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
 
     """
 
     Perform processing of functional (resting-state) images.
 
     Parameters:
+        bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL', 'HD-BET' or 'deepbet'.
         stdrefvol (str): Reference volume (e.g., 'first', 'middle', 'last').
         fwhm (str): Full Width at Half Maximum (FWHM) value.
         carpet_plot (bool): Set to True to generate carpet plots.
@@ -37,16 +38,24 @@ def func_proc_despike_afni(wf, stdrefvol='middle', fwhm=0, carpet_plot='', **kwa
     # ToDo: Add fmri2QC
     # ToDo: check if variable names and node names are the same
 
-    mybet = bet_fsl('mybet', fmri=True)
-    wf.connect('inputspec', 'func', mybet, 'in_file')
+    if bet_tool == 'FSL':
+        bet_wf = bet_fsl('bet_fsl')
+    elif bet_tool == 'HD-BET':
+        bet_wf = bet_hd('hd-bet')
+    elif bet_tool == 'deepbet':
+        bet_wf = bet_deepbet('deepbet')
+    else:
+        raise ValueError('bet_tool can be \'FSL\', \'HD-BET\' or \'deepbet\' but not ' + bet_tool)
+
+    wf.connect('inputspec', 'func', bet_wf, 'in_file')
 
     mymc = motion_correction_mcflirt('mymc', reference_vol=stdrefvol)
-    wf.connect(mybet, 'out_file', mymc, 'in_file')
+    wf.connect(bet_wf, 'out_file', mymc, 'in_file')
 
     if carpet_plot:
         add_masks = Node(fsl.ImageMaths(op_string=' -add'), name="addimgs")
         wf.connect('inputspec', 'cc_noise_roi', add_masks, 'in_file')
-        wf.connect(mybet, 'brain_mask', add_masks, 'in_file2')
+        wf.connect(bet_wf, 'brain_mask', add_masks, 'in_file2')
 
     mydespike = Node(afni.Despike(outputtype="NIFTI_GZ"), name="DeSpike")
     wf.connect(mymc, 'func_out_file', mydespike, 'in_file')
