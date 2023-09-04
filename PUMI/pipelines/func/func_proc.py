@@ -10,7 +10,7 @@ from PUMI.pipelines.func.temporal_filtering import temporal_filtering
 
 @FuncPipeline(inputspec_fields=['func', 'cc_noise_roi'],
               outputspec_fields=['func_preprocessed', 'func_preprocessed_scrubbed', 'FD'])
-def func_proc_despike_afni(wf, bet_tool='FSL', stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
+def func_proc_despike_afni(wf, bet_tool='FSL', deepbet_n_dilate=0, stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
 
     """
 
@@ -18,6 +18,9 @@ def func_proc_despike_afni(wf, bet_tool='FSL', stdrefvol='middle', fwhm=0, carpe
 
     Parameters:
         bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL' or 'deepbet'.
+        deepbet_n_dilate (int): n_dilate value of deepbet.
+                                Adjusting the size of the brain mask by either adding or removing adjacent voxels along
+                                its surface.
         stdrefvol (str): Reference volume (e.g., 'first', 'middle', 'last').
         fwhm (str): Full Width at Half Maximum (FWHM) value.
         carpet_plot (bool): Set to True to generate carpet plots.
@@ -41,7 +44,7 @@ def func_proc_despike_afni(wf, bet_tool='FSL', stdrefvol='middle', fwhm=0, carpe
     if bet_tool == 'FSL':
         bet_wf = bet_fsl('bet_fsl', fmri=True)
     elif bet_tool == 'deepbet':
-        bet_wf = bet_deepbet('deepbet', fmri=True)
+        bet_wf = bet_deepbet('deepbet', fmri=True, n_dilate=deepbet_n_dilate)
     else:
         raise ValueError('bet_tool can be \'FSL\' or \'deepbet\' but not ' + bet_tool)
 
