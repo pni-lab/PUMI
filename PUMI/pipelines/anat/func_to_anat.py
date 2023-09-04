@@ -38,16 +38,18 @@ def func2anat_qc(wf, **kwargs):
                                  'anat_to_func_linear_xfm', 'csf_mask_in_funcspace', 'csf_mask_in_funcspace',
                                  'csf_mask_in_funcspace', 'ventricle_mask_in_funcspace', 'wm_mask_in_funcspace',
                                  'gm_mask_in_funcspace'])
-def func2anat(wf, bbr=True, **kwargs):
+def func2anat(wf, func_volume='middle', bbr=True, **kwargs):
         """
 
         Registration of functional image to anat.
 
         Parameters:
+            func_volume: Select which volume from the functional image should be used.
+                         Can be either 'first', 'middle', 'last', 'mean' or a number.
             bbr (bool): If True (default), BBR registration is used. If False, linear registration is used.
 
         Inputs:
-            func (str): One volume of the 4D fMRI
+            func (str): Functional image
             (The one which is the closest to the fieldmap recording in time should be chosen
             e.g: if fieldmap was recorded after the fMRI the last volume of it should be chosen)
             head (str): The oriented T1w image.
@@ -62,7 +64,7 @@ def func2anat(wf, bbr=True, **kwargs):
 
         """
 
-        myonevol = pick_volume('myonevol')
+        myonevol = pick_volume('myonevol', volume=func_volume)
         wf.connect('inputspec', 'func', myonevol, 'in_file')
 
         # trilinear interpolation is used by default in linear registration for func to anat
