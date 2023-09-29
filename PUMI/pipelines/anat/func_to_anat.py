@@ -165,6 +165,10 @@ def func2anat(wf, func_volume='middle', bbr=True, **kwargs):
 
         # sink the results
         wf.connect(main_func2anat, 'out_file', 'sinker', "func2anat_qc")
+        wf.connect(main_func2anat, 'out_matrix_file', 'sinker', 'func_to_anat_linear_xfm')
+        wf.connect(convertmatrix, 'out_file', 'sinker', 'anat_to_func_linear_xfm')
+
+
 
         # outputspec
         wf.connect(myonevol, 'out_file', 'outputspec', 'example_func')
