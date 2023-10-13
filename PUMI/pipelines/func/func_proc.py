@@ -1,6 +1,6 @@
 from PUMI.engine import FuncPipeline, NestedNode as Node
 from nipype.interfaces import fsl, afni
-from PUMI.pipelines.anat.segmentation import bet_fsl
+from PUMI.pipelines.anat.segmentation import bet_fsl, bet_hd, bet_deepbet
 from PUMI.pipelines.func.compcor import compcor
 from PUMI.pipelines.func.concat import concat
 from PUMI.pipelines.func.data_censorer import datacens_workflow_threshold
@@ -10,71 +10,94 @@ from PUMI.pipelines.func.temporal_filtering import temporal_filtering
 
 @FuncPipeline(inputspec_fields=['func', 'cc_noise_roi'],
               outputspec_fields=['func_preprocessed', 'func_preprocessed_scrubbed', 'FD'])
-def func_proc_despike_afni(wf, stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
+def func_proc_despike_afni(wf, bet_tool='FSL', deepbet_n_dilate=0, stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
 
     """
-    Performs processing of functional (resting-state) images:
-    Images should be already reoriented, e.g. with fsl fslreorient2std (see scripts/ex_pipeline.py)
-    Workflow inputs:
-        :param func: The functional image file.
 
-    Tamas Spisak
-    tamas.spisak@uk-essen.de
-    2018
-        """
+    Perform processing of functional (resting-state) images.
+
+    Parameters:
+        bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL' or 'deepbet'.
+        deepbet_n_dilate (int): n_dilate value of deepbet.
+                                Adjusting the size of the brain mask by either adding or removing adjacent voxels along
+                                its surface.
+        stdrefvol (str): Reference volume (e.g., 'first', 'middle', 'last').
+        fwhm (str): Full Width at Half Maximum (FWHM) value.
+        carpet_plot (bool): Set to True to generate carpet plots.
+
+    Inputs:
+        func (str): Path to reoriented functional image.
+        cc_noise_roi (str): Path to noise ROI.
+
+    Outputs:
+        func_preprocessed (str): Path to preprocessed functional image.
+        func_preprocessed_scrubbed (str): Path to scrubbed preprocessed functional image.
+        FD (str): Path to the file containing frame-wise displacement.
+
+    Adapted from Tamas Spisak (2018).
+
+    """
 
     # ToDo: Add fmri2QC
-    # ToDo: Redo documentation
-    # ToDo: check if variable names and node names are the same
+    # ToDo: Allow HD-Bet
 
-    mybet = bet_fsl('mybet', fmri=True)
-    wf.connect('inputspec', 'func', mybet, 'in_file')
+    if bet_tool == 'FSL':
+        bet_wf = bet_fsl('bet_fsl', fmri=True)
+    elif bet_tool == 'deepbet':
+        bet_wf = bet_deepbet('deepbet', fmri=True, n_dilate=deepbet_n_dilate)
+    else:
+        raise ValueError('bet_tool can be \'FSL\' or \'deepbet\' but not ' + bet_tool)
 
-    mymc = motion_correction_mcflirt('mymc', reference_vol=stdrefvol)
-    wf.connect(mybet, 'out_file', mymc, 'in_file')
+    wf.connect('inputspec', 'func', bet_wf, 'in_file')
+
+    motion_correction_mcflirt_wf = motion_correction_mcflirt('motion_correction_mcflirt_wf',
+                                                             reference_vol=stdrefvol)
+    wf.connect(bet_wf, 'out_file', motion_correction_mcflirt_wf, 'in_file')
 
     if carpet_plot:
         add_masks = Node(fsl.ImageMaths(op_string=' -add'), name="addimgs")
         wf.connect('inputspec', 'cc_noise_roi', add_masks, 'in_file')
-        wf.connect(mybet, 'brain_mask', add_masks, 'in_file2')
+        wf.connect(bet_wf, 'brain_mask', add_masks, 'in_file2')
 
-    mydespike = Node(afni.Despike(outputtype="NIFTI_GZ"), name="DeSpike")
-    wf.connect(mymc, 'func_out_file', mydespike, 'in_file')
+    despike_wf = Node(afni.Despike(outputtype="NIFTI_GZ"), name="despike_wf")
+    wf.connect(motion_correction_mcflirt_wf, 'func_out_file', despike_wf, 'in_file')
 
-    mycmpcor = compcor('mycmpcor') # to  WM+CSF signal
-    wf.connect(mydespike, 'out_file', mycmpcor, 'func_aligned')
-    wf.connect('inputspec', 'cc_noise_roi', mycmpcor, 'mask_file')
+    compcor_wf = compcor('compcor_wf') # to  WM+CSF signal
+    wf.connect(despike_wf, 'out_file', compcor_wf, 'func_aligned')
+    wf.connect('inputspec', 'cc_noise_roi', compcor_wf, 'mask_file')
 
-    myconc = concat('myconc')
-    wf.connect(mycmpcor, 'out_file', myconc, 'par1')
-    wf.connect(mymc, 'friston24_file', myconc, 'par2')
+    concat_wf = concat('concat_wf')
+    wf.connect(compcor_wf, 'out_file', concat_wf, 'par1')
+    wf.connect(motion_correction_mcflirt_wf, 'friston24_file', concat_wf, 'par2')
 
-    mynuisscor = nuisance_removal('mynuisscor') # regress out 5 compcor variables and the Friston24
-    wf.connect(myconc, 'concat_file', mynuisscor, 'design_file')
-    wf.connect(mydespike, 'out_file', mynuisscor, 'in_file')
+    nuisance_removal_wf = nuisance_removal('nuisance_removal_wf') # regress out 5 compcor variables and the Friston24
+    wf.connect(concat_wf, 'concat_file', nuisance_removal_wf, 'design_file')
+    wf.connect(despike_wf, 'out_file', nuisance_removal_wf, 'in_file')
 
     # optional smoother:
     if fwhm > 0:
         smoother = Node(interface=fsl.Smooth(fwhm=fwhm), name="smoother")
-        wf.connect(mynuisscor, 'out_file', smoother, 'in_file')
+        wf.connect(nuisance_removal_wf, 'out_file', smoother, 'in_file')
 
-    mytmpfilt = temporal_filtering('mytmpfilt')
-    mytmpfilt.get_node('inputspec').inputs.highpass = 0.008
-    mytmpfilt.get_node('inputspec').inputs.lowpass = 0.08
+    temportal_filtering_wf = temporal_filtering('temportal_filtering_wf')
+    temportal_filtering_wf.get_node('inputspec').inputs.highpass = 0.008
+    temportal_filtering_wf.get_node('inputspec').inputs.lowpass = 0.08
     if fwhm > 0:
-        wf.connect(smoother, 'smoothed_file', mytmpfilt, 'func')
+        wf.connect(smoother, 'smoothed_file', temportal_filtering_wf, 'func')
     else:
-        wf.connect(mynuisscor, 'out_file', mytmpfilt, 'func')
+        wf.connect(nuisance_removal_wf, 'out_file', temportal_filtering_wf, 'func')
 
-    myscrub = datacens_workflow_threshold('myscrub', ex_before=0, ex_after=0)
-    wf.connect(mymc, 'FD_file', myscrub, 'FD')
-    wf.connect(mytmpfilt, 'out_file', myscrub, 'func')
+    datacens_workflow_threshold_wf = datacens_workflow_threshold('datacens_workflow_threshold_wf',
+                                                                 ex_before=0,
+                                                                 ex_after=0)
+    wf.connect(motion_correction_mcflirt_wf, 'FD_file', datacens_workflow_threshold_wf, 'FD')
+    wf.connect(temportal_filtering_wf, 'out_file', datacens_workflow_threshold_wf, 'func')
 
     # sinking
-    wf.connect(mymc, 'FD_file', 'sinker', 'FD')
+    wf.connect(motion_correction_mcflirt_wf, 'FD_file', 'sinker', 'FD')
   
     # output
-    wf.connect(mymc, 'FD_file', 'outputspec', 'FD')
-    wf.connect(myscrub, 'scrubbed_image', 'outputspec', 'func_preprocessed_scrubbed')
-    wf.connect(mytmpfilt, 'out_file', 'outputspec', 'func_preprocessed')
+    wf.connect(motion_correction_mcflirt_wf, 'FD_file', 'outputspec', 'FD')
+    wf.connect(datacens_workflow_threshold_wf, 'scrubbed_image', 'outputspec', 'func_preprocessed_scrubbed')
+    wf.connect(temportal_filtering_wf, 'out_file', 'outputspec', 'func_preprocessed')
 

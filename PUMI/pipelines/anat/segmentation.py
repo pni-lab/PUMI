@@ -9,6 +9,8 @@ from PUMI.engine import AnatPipeline
 from PUMI.engine import NestedNode as Node
 import os
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume
+from nipype.interfaces import utility
+
 
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
@@ -83,18 +85,19 @@ def qc_tissue_segmentation(wf, **kwargs):
 def bet_fsl(wf, fmri=False, volume='middle', **kwargs):
     """
 
-    Performs Brain extraction of a 3d-vloume.
-    User can choose the position of the 3d-volume
+    Perform brain extraction with FSL.
 
-    Parameter:
-        fmri(bool):
+    Parameters:
+        fmri (bool): Set to true if the supplied in_file file is a 4D volume.
+        volume (str/int): On which volume to perform the brain extraction based on if a 4D image is supplied.
+                          Can be either 'first', 'middle', 'last', 'mean' or a number.
 
     Inputs:
-        in_file(str): Path to the functional 4d-image.
+        in_file(str): Path to the 3D or 4D head scan.
 
     Outputs:
-        out_file(str):
-        brain_mask(str):
+        out_file(str): Path to the extracted brain.
+        brain_mask (str): Path to the mask of the extracted brain.
 
     """
 
@@ -124,7 +127,7 @@ def bet_fsl(wf, fmri=False, volume='middle', **kwargs):
         overlay = pick_volume('qc_overlay', volume=volume)
         wf.connect(apply_mask, 'out_file', overlay, 'in_file')
 
-        background = pick_volume('qc_background')
+        background = pick_volume('qc_background', volume=volume)
         wf.connect('inputspec', 'in_file', background, 'in_file')
 
         qc = qc_segmentation(name='qc_segmentation', fmri=True, qc_dir=wf.qc_dir)
@@ -147,6 +150,108 @@ def bet_fsl(wf, fmri=False, volume='middle', **kwargs):
         wf.connect(apply_mask, 'out_file', 'outputspec', 'out_file')
     else:
         wf.connect(bet, 'out_file', 'outputspec', 'out_file')
+
+
+@AnatPipeline(inputspec_fields=['in_file'],
+              outputspec_fields=['out_file', 'brain_mask', 'tiv'])
+def bet_deepbet(wf, fmri=False, volume='middle', threshold=0.5, n_dilate=0, no_gpu=False, **kwargs):
+    """
+
+    Perform brain extraction with deepbet.
+
+    Parameters:
+        fmri (bool): Set to true if the supplied in_file file is a 4D volume.
+        volume (str/int): On which volume to perform the brain extraction based on if a 4D image is supplied.
+                          Can be either 'first', 'middle', 'last', 'mean' or a number.
+        threshold (int): Threshold value of deepbet.
+        n_dilate (int): n_dilate value of deepbet.
+                        Adjusting the size of the brain mask by either adding or removing adjacent voxels along its
+                        surface.
+        no_gpu (bool): If a graphics card is installed but should not be used for the extraction, set no_gpu to true.
+
+    Inputs:
+        in_file(str): Path to the 3D or 4D head scan.
+
+    Outputs:
+        out_file(str): Path to the extracted brain.
+        brain_mask (str): Path to the mask of the extracted brain.
+        tiv (str): Path to file containing total intracranial volume (TIV) in cm³.
+
+    For more information regarding see: https://github.com/wwu-mmll/deepbet
+
+    """
+
+    def run_deepbet(in_file, threshold=0.5, n_dilate=0, no_gpu=False):
+        from deepbet import run_bet
+        from pathlib import Path
+        import os
+
+        input_filename = os.path.basename(in_file)  # x/y/sub_11.nii.gz -> sub_11.nii.gz
+        input_filename = input_filename.split('.')[0]  # sub_11.nii.gz -> sub_11
+
+        brain_path = Path(os.getcwd() + '/' + input_filename + '_bet.nii.gz')  # where to store extracted brain
+        mask_path = Path(os.getcwd() + '/' + input_filename + '_bet_mask.nii.gz')
+        tiv_path = Path(os.getcwd() + '/' + input_filename + '_bet_tiv.csv')
+
+        run_bet(input_paths=[in_file],
+                brain_paths=[brain_path],
+                mask_paths=[mask_path],
+                tiv_paths=[tiv_path],
+                threshold=threshold,
+                n_dilate=n_dilate,
+                no_gpu=no_gpu)
+
+        return str(brain_path), str(mask_path), str(tiv_path)
+
+    bet = Node(
+        interface=utility.Function(
+            input_names=['in_file', 'threshold', 'n_dilate', 'no_gpu'],
+            output_names=['out_file', 'brain_mask', 'tiv'],
+            function=run_deepbet
+        ),
+        name='bet'
+    )
+    wf.connect('inputspec', 'in_file', bet, 'in_file')
+    bet.inputs.threshold = threshold
+    bet.inputs.n_dilate = n_dilate
+    bet.inputs.no_gpu = no_gpu
+
+    if fmri:
+        bet_vol = pick_volume('bet_vol', volume=volume)
+        wf.connect(bet, 'brain_mask', bet_vol, 'in_file')
+
+        apply_mask = Node(fsl.ApplyMask(), name="apply_mask")
+        wf.connect(bet_vol, 'out_file', apply_mask, 'mask_file')
+        wf.connect('inputspec', 'in_file', apply_mask, 'in_file')
+
+        overlay = pick_volume('qc_overlay', volume=volume)
+        wf.connect(apply_mask, 'out_file', overlay, 'in_file')
+
+        background = pick_volume('qc_background', volume=volume)
+        wf.connect('inputspec', 'in_file', background, 'in_file')
+
+        qc = qc_segmentation(name='qc_segmentation', fmri=True, qc_dir=wf.qc_dir)
+        wf.connect(overlay, 'out_file', qc, 'overlay')
+        wf.connect(background, 'out_file', qc, 'background')
+    else:
+        qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
+        wf.connect(bet, 'out_file', qc, 'overlay')
+        wf.connect('inputspec', 'in_file', qc, 'background')
+
+    # sinking
+    wf.connect(bet, 'out_file', 'sinker', 'out_file')
+    wf.connect(bet, 'brain_mask', 'sinker', 'brain_mask')
+    wf.connect(bet, 'tiv', 'sinker', 'tiv')
+
+    # output
+    wf.connect(bet, 'brain_mask', 'outputspec', 'brain_mask')
+    wf.connect(bet, 'tiv', 'outputspec', 'tiv')
+    if fmri:
+        wf.connect(apply_mask, 'out_file', 'outputspec', 'out_file')
+    else:
+        wf.connect(bet, 'out_file', 'outputspec', 'out_file')
+
+
 
 
 @AnatPipeline(inputspec_fields=['in_file'],

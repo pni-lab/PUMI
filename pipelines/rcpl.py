@@ -10,6 +10,8 @@ from nipype.interfaces import utility
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels, get_reference
+from PUMI.pipelines.func.func2standard import func2standard
+from PUMI.pipelines.multimodal.image_manipulation import pick_volume
 import traits
 import os
 
@@ -382,7 +384,7 @@ def rcpl(wf, bbr=True, **kwargs):
     reorient_func_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_wf")
     wf.connect('inputspec', 'bold', reorient_func_wf, 'in_file')
 
-    anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf')
+    anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf', bet_tool='deepbet')
     wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
 
     func2anat_wf = func2anat(name='func2anat_wf', bbr=bbr)
@@ -397,7 +399,7 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func2anat_wf, 'wm_mask_in_funcspace', compcor_roi_wf, 'wm_mask')
     wf.connect(func2anat_wf, 'ventricle_mask_in_funcspace', compcor_roi_wf, 'ventricle_mask')
 
-    func_proc_wf = func_proc_despike_afni('func_proc_wf')
+    func_proc_wf = func_proc_despike_afni('func_proc_wf', bet_tool='deepbet', deepbet_n_dilate=2)
     wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 
@@ -417,6 +419,13 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func2anat_wf, 'gm_mask_in_funcspace', extract_timeseries, 'gm_mask')
     wf.connect(func_proc_wf, 'func_preprocessed', extract_timeseries, 'func')
     wf.connect(func_proc_wf, 'FD', extract_timeseries, 'confounds')
+
+    func2std = func2standard('func2std', func_is_3D=False)
+    wf.connect(anatomical_preprocessing_wf, 'brain', func2std, 'anat')
+    wf.connect(func2anat_wf, 'func_to_anat_linear_xfm', func2std, 'linear_reg_mtrx')
+    wf.connect(anatomical_preprocessing_wf, 'anat2mni_warpfield', func2std, 'nonlinear_reg_mtrx')
+    wf.connect(anatomical_preprocessing_wf, 'std_template', func2std, 'reference_brain')
+    wf.connect(func_proc_wf, 'func_preprocessed', func2std, 'func')
 
     calculate_connectivity_wf = calculate_connectivity('calculate_connectivity_wf')
     wf.connect(extract_timeseries, 'timeseries', calculate_connectivity_wf, 'ts_files')
