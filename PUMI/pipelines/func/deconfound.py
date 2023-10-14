@@ -34,6 +34,7 @@ def fieldmap_correction_qc(wf, volume='middle', **kwargs):
         from matplotlib import pyplot as plt
         from pathlib import Path
         from nilearn import plotting
+        import os
 
         fig, axes = plt.subplots(3, 1, facecolor='black', figsize=(10, 15))
 

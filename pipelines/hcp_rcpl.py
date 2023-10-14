@@ -372,7 +372,7 @@ def collect_pain_predictions(wf, **kwargs):
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    '--input_dir',
+    '--bids_dir',
     required=True,
     help='Root directory of the input dataset.'
 )
@@ -390,12 +390,28 @@ parser.add_argument(
     help='Use BBR registration: yes/no (default: yes)'
 )
 
+parser.add_argument('--n_procs', type=int,
+                    help='Amount of threads to execute in parallel.'
+                    + 'If not set, the amount of CPU cores is used.'
+                    + 'Caution: Does only work with the MultiProc-plugin!')
+
+parser.add_argument('--memory_gb', type=int,
+                    help='Memory limit in GB. If not set, use 90% of the available memory'
+                    + 'Caution: Does only work with the MultiProc-plugin!')
+
 
 cli_args = parser.parse_args()
 
-input_dir = cli_args.input_dir
+input_dir = cli_args.bids_dir
 output_dir = cli_args.output_dir
 bbr = cli_args.bbr
+
+plugin_args = {}
+if cli_args.n_procs is not None:
+    plugin_args['n_procs'] = cli_args.n_procs
+
+if cli_args.memory_gb is not None:
+    plugin_args['memory_gb'] = cli_args.memory_gb
 
 subjects = []
 for path in glob.glob(str(input_dir) + '/*'):
@@ -501,4 +517,4 @@ wf.connect(predict_pain_sensitivity_rpn_wf, 'out_file', collect_pain_predictions
 wf.connect(predict_pain_sensitivity_rcpl_wf, 'out_file', collect_pain_predictions_wf, 'rcpl_out_file')
 
 wf.write_graph('Pipeline.png')
-wf.run()
+wf.run(plugin='MultiProc', plugin_args=plugin_args)
