@@ -2,7 +2,7 @@
 
 import argparse
 import glob
-
+from PUMI import globals
 from nipype import IdentityInterface, DataGrabber
 from nipype.interfaces.fsl import Reorient2Std
 from nipype.interfaces import afni
@@ -421,6 +421,9 @@ for path in glob.glob(str(input_dir) + '/*'):
 
 wf = Workflow(name='HCP-RCPL')
 wf.base_dir = os.path.abspath(output_dir)
+globals.cfg_parser.set('SINKING', 'sink_dir', str(Path(os.path.abspath(output_dir + '/derivatives'))))
+globals.cfg_parser.set('SINKING', 'qc_dir', str(Path(os.path.abspath(output_dir + '/derivatives/qc'))))
+
 
 # Create a subroutine (subgraph) for every subject
 inputspec = Node(interface=IdentityInterface(fields=['subject']), name='inputspec')
