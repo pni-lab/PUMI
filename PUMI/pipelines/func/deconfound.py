@@ -152,8 +152,8 @@ def fieldmap_correction(wf, encoding_direction=['y-', 'y'], readout_times=[0.082
     wf.connect('inputspec', 'func_2', qc_fieldmap_correction, 'func_2')
     wf.connect(topup, 'out_corrected', qc_fieldmap_correction, 'func_corrected')
 
-    wf.connect(topup, 'out_corrected', 'outputspec', 'out_file')
-    wf.connect(topup, 'out_corrected', 'sinker', 'out_file')
+    wf.connect(apply_topup, 'out_corrected', 'outputspec', 'out_file')
+    wf.connect(apply_topup, 'out_corrected', 'sinker', 'out_file')
 
 
 @FuncPipeline(inputspec_fields=['in_file'],
