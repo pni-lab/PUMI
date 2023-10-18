@@ -424,7 +424,8 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(anatomical_preprocessing_wf, 'brain', func2std, 'anat')
     wf.connect(func2anat_wf, 'func_to_anat_linear_xfm', func2std, 'linear_reg_mtrx')
     wf.connect(anatomical_preprocessing_wf, 'anat2mni_warpfield', func2std, 'nonlinear_reg_mtrx')
-    wf.connect(anatomical_preprocessing_wf, 'std_template', func2std, 'reference_brain')
+    #wf.connect(anatomical_preprocessing_wf, 'std_template', func2std, 'reference_brain')
+    wf.connect('inputspec', 'bold', func2std, 'reference_brain')
     wf.connect(func_proc_wf, 'func_preprocessed', func2std, 'func')
 
     calculate_connectivity_wf = calculate_connectivity('calculate_connectivity_wf')
