@@ -414,13 +414,34 @@ if cli_args.memory_gb is not None:
     plugin_args['memory_gb'] = cli_args.memory_gb
 
 subjects = []
+excluded = []
 for path in glob.glob(str(input_dir) + '/*'):
     id = path.split('/')[-1]
-    subjects.append(id)
+
+    base = path + '/unprocessed/3T/'
+
+    t1w_base = str(Path(base + '/T1w_MPR1/' + id + '_3T_T1w_MPR1.nii'))
+    has_t1w = os.path.isfile(t1w_base) or os.path.isfile(t1w_base + '.gz')
+
+    lr_base = str(Path(base + '/rfMRI_REST1_LR/' + id + '_3T_rfMRI_REST1_LR.nii'))
+    has_lr = os.path.isfile(lr_base) or os.path.isfile(lr_base + '.gz')
+
+    rl_base = str(Path(base + '/rfMRI_REST1_RL/' + id + '_3T_rfMRI_REST1_RL.nii'))
+    has_rl = os.path.isfile(rl_base) or os.path.isfile(rl_base + '.gz')
+
+    if has_t1w and has_lr and has_rl:
+        subjects.append(id)
+    else:
+        excluded.append(id)
+
+print('-' * 100)
+print(f'Included %d subjects.' % len(subjects))
+print(f'Excluded %d subjects.' % len(excluded))
+print('-' * 100)
 
 
 wf = Workflow(name='HCP-RCPL')
-wf.base_dir = os.path.abspath(output_dir)
+wf.base_dir = '.'
 globals.cfg_parser.set('SINKING', 'sink_dir', str(Path(os.path.abspath(output_dir + '/derivatives'))))
 globals.cfg_parser.set('SINKING', 'qc_dir', str(Path(os.path.abspath(output_dir + '/derivatives/qc'))))
 
@@ -495,13 +516,6 @@ wf.connect(anatomical_preprocessing_wf, 'mni2anat_warpfield', extract_timeseries
 wf.connect(func2anat_wf, 'gm_mask_in_funcspace', extract_timeseries, 'gm_mask')
 wf.connect(func_proc_wf, 'func_preprocessed', extract_timeseries, 'func')
 wf.connect(func_proc_wf, 'FD', extract_timeseries, 'confounds')
-
-func2std = func2standard('func2std', func_is_3D=False)
-wf.connect(anatomical_preprocessing_wf, 'brain', func2std, 'anat')
-wf.connect(func2anat_wf, 'func_to_anat_linear_xfm', func2std, 'linear_reg_mtrx')
-wf.connect(anatomical_preprocessing_wf, 'anat2mni_warpfield', func2std, 'nonlinear_reg_mtrx')
-wf.connect(anatomical_preprocessing_wf, 'std_template', func2std, 'reference_brain')
-wf.connect(func_proc_wf, 'func_preprocessed', func2std, 'func')
 
 calculate_connectivity_wf = calculate_connectivity('calculate_connectivity_wf')
 wf.connect(extract_timeseries, 'timeseries', calculate_connectivity_wf, 'ts_files')
