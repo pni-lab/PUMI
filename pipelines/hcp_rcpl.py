@@ -452,19 +452,19 @@ inputspec.iterables = [('subject', subjects)]
 
 T1w_grabber = Node(DataGrabber(infields=['subject'], outfields=['T1w']), name='T1w_grabber')
 T1w_grabber.inputs.base_directory = os.path.abspath(input_dir)
-T1w_grabber.inputs.template = '%s/unprocessed/3T/T1w_MPR1/*T1w_MPR1.nii.gz'
+T1w_grabber.inputs.template = '%s/unprocessed/3T/T1w_MPR1/*T1w_MPR1.nii*'
 T1w_grabber.inputs.sort_filelist = True
 wf.connect(inputspec, 'subject', T1w_grabber, 'subject')
 
 bold_lr_grabber = Node(DataGrabber(infields=['subject'], outfields=['bold_lr']), name='bold_lr_grabber')
 bold_lr_grabber.inputs.base_directory = os.path.abspath(input_dir)
-bold_lr_grabber.inputs.template = '%s/unprocessed/3T/rfMRI_REST1_LR/*_3T_rfMRI_REST1_LR.nii.gz'
+bold_lr_grabber.inputs.template = '%s/unprocessed/3T/rfMRI_REST1_LR/*_3T_rfMRI_REST1_LR.nii*'
 bold_lr_grabber.inputs.sort_filelist = True
 wf.connect(inputspec, 'subject', bold_lr_grabber, 'subject')
 
 bold_rl_grabber = Node(DataGrabber(infields=['subject'], outfields=['bold_rl']), name='bold_rl_grabber')
 bold_rl_grabber.inputs.base_directory = os.path.abspath(input_dir)
-bold_rl_grabber.inputs.template = '%s/unprocessed/3T/rfMRI_REST1_RL/*_3T_rfMRI_REST1_RL.nii.gz'
+bold_rl_grabber.inputs.template = '%s/unprocessed/3T/rfMRI_REST1_RL/*_3T_rfMRI_REST1_RL.nii*'
 bold_rl_grabber.inputs.sort_filelist = True
 wf.connect(inputspec, 'subject', bold_rl_grabber, 'subject')
 
