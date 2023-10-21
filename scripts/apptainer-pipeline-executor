@@ -115,7 +115,7 @@ else
 
 fi
 
-command="set -x; pip install $PUMI_VER > /dev/null; python3 ${PUMI_VER}/pipelines/$PIPELINE_CMD"
+command="set -x; pip install --user $PUMI_VER; python3 ${PUMI_VER}/pipelines/$PIPELINE_CMD"
 
 
 echo ""
