@@ -79,7 +79,11 @@ def func2standard(wf, func_is_3D=True, stdreg='ants', interp="NearestNeighbor", 
         wf.connect(bbr2ants, 'itk_transform', transform_list, 'trf_second')
         wf.connect('inputspec', 'nonlinear_reg_mtrx', transform_list, 'trf_first')
 
-        applywarp = Node(interface=ants.ApplyTransforms(interpolation=interp, input_image_type=3), name='applywarp')
+        applywarp = Node(interface=ants.ApplyTransforms(
+            interpolation=interp,
+            input_image_type=3,
+            dimension=3
+        ), name='applywarp')
         wf.connect(transform_list, 'trflist', applywarp, 'transforms')
         wf.connect('inputspec', 'func', applywarp, 'input_image')
         wf.connect('inputspec', 'reference_brain', applywarp, 'reference_image')
