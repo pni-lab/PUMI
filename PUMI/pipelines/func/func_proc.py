@@ -9,7 +9,7 @@ from PUMI.pipelines.func.temporal_filtering import temporal_filtering
 
 
 @FuncPipeline(inputspec_fields=['func', 'cc_noise_roi'],
-              outputspec_fields=['func_preprocessed', 'func_preprocessed_scrubbed', 'FD'])
+              outputspec_fields=['func_preprocessed', 'func_preprocessed_scrubbed', 'FD', 'mc_ref_vol'])
 def func_proc_despike_afni(wf, bet_tool='FSL', deepbet_n_dilate=0, stdrefvol='middle', fwhm=0, carpet_plot='', **kwargs):
 
     """
@@ -33,6 +33,7 @@ def func_proc_despike_afni(wf, bet_tool='FSL', deepbet_n_dilate=0, stdrefvol='mi
         func_preprocessed (str): Path to preprocessed functional image.
         func_preprocessed_scrubbed (str): Path to scrubbed preprocessed functional image.
         FD (str): Path to the file containing frame-wise displacement.
+        mc_ref_vol (str): Reference volume used for motion correction.
 
     Adapted from Tamas Spisak (2018).
 
@@ -98,6 +99,7 @@ def func_proc_despike_afni(wf, bet_tool='FSL', deepbet_n_dilate=0, stdrefvol='mi
   
     # output
     wf.connect(motion_correction_mcflirt_wf, 'FD_file', 'outputspec', 'FD')
+    wf.connect(motion_correction_mcflirt_wf, 'mc_ref_vol', 'outputspec', 'mc_ref_vol')
     wf.connect(datacens_workflow_threshold_wf, 'scrubbed_image', 'outputspec', 'func_preprocessed_scrubbed')
     wf.connect(temportal_filtering_wf, 'out_file', 'outputspec', 'func_preprocessed')
 

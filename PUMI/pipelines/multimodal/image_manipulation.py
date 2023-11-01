@@ -6,13 +6,13 @@ from PUMI.engine import FuncPipeline
 
 @FuncPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file'])
-def pick_volume(wf, volume='middle', **kwargs):
+def pick_volume(wf, volume='middle', sink=True, **kwargs):
     """
     Sub-Workflow that deals with extracting a 3D-volume choosen by the user from a functional 4D-Sequence
 
     Parameters:
-        wf(str): Name of the workflow.
-
+        wf (str): Name of the workflow.
+        sink (bool): Set to False if you don't want the resulting volume to get sinked automatically.
         volume(str): The volume specified by the user.
             - Possible Values : (first | middle | last | mean | arbitrary number).
             - In case no value was given, the first volume will be returned.
@@ -48,14 +48,17 @@ def pick_volume(wf, volume='middle', **kwargs):
 
     if mean:
         wf.connect('inputspec', 'in_file', img_mean, 'in_file')
-        wf.connect(img_mean, 'out_file', 'sinker', 'out_file')
         wf.connect(img_mean, 'out_file', 'outputspec', 'out_file')
+        if sink:
+            wf.connect(img_mean, 'out_file', 'sinker', 'out_file')
     else:
         wf.connect('inputspec', 'in_file', img_4d_info, 'in_file')
         wf.connect('inputspec', 'in_file', fslroi, 'in_file')
         wf.connect(img_4d_info, 'start_idx', fslroi, 't_min')
-        wf.connect(fslroi, 'roi_file', 'sinker', 'out_file')
         wf.connect(fslroi, 'roi_file', 'outputspec', 'out_file')
+        if sink:
+            wf.connect(fslroi, 'roi_file', 'sinker', 'out_file')
+
 
 def get_info(in_file, volume='first'):
     """

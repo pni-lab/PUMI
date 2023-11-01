@@ -302,12 +302,13 @@ def rpn(wf, bbr=True, **kwargs):
     wf.connect(func_proc_wf, 'func_preprocessed', extract_timeseries, 'func')
     wf.connect(func_proc_wf, 'FD', extract_timeseries, 'confounds')
 
-    func2std = func2standard('func2std', func_is_3D=False)
+    func2std = func2standard('func2std')
     wf.connect(anatomical_preprocessing_wf, 'brain', func2std, 'anat')
     wf.connect(func2anat_wf, 'func_to_anat_linear_xfm', func2std, 'linear_reg_mtrx')
     wf.connect(anatomical_preprocessing_wf, 'anat2mni_warpfield', func2std, 'nonlinear_reg_mtrx')
     wf.connect(anatomical_preprocessing_wf, 'std_template', func2std, 'reference_brain')
     wf.connect(func_proc_wf, 'func_preprocessed', func2std, 'func')
+    wf.connect(func_proc_wf, 'mc_ref_vol', func2std, 'bbr2ants_source_file')
 
     calculate_connectivity_wf = calculate_connectivity('calculate_connectivity_wf')
     wf.connect(extract_timeseries, 'timeseries', calculate_connectivity_wf, 'ts_files')
