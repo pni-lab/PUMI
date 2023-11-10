@@ -108,7 +108,8 @@ def qc_motion_correction_mcflirt(wf, **kwargs):
 
 
 @FuncPipeline(inputspec_fields=['in_file'],
-              outputspec_fields=['func_out_file', 'mat_file', 'mc_par_file', 'friston24_file', 'FD_file'])
+              outputspec_fields=['func_out_file', 'mat_file', 'mc_par_file', 'friston24_file', 'FD_file',
+                                 'mc_ref_vol'])
 def motion_correction_mcflirt(wf, reference_vol='middle', FD_mode='Power', **kwargs):
     """
 
@@ -128,6 +129,7 @@ def motion_correction_mcflirt(wf, reference_vol='middle', FD_mode='Power', **kwa
         func_out_file (str): Path to motion-corrected timeseries
         mat_file (str): Path to motion-correction transformation matrices
         mc_par_file (str): Path to file with motion parameters
+        mc_ref_vol (str): Reference volume used for motion correction.
         friston24_file (str): Path to file with friston24 parameters
         FD_file (str): Path to file with FD
 
@@ -254,6 +256,7 @@ def motion_correction_mcflirt(wf, reference_vol='middle', FD_mode='Power', **kwa
     wf.connect(mcflirt, 'par_file', 'outputspec', 'mc_par_file')
     wf.connect(calculate_FD, 'out_file', 'outputspec', 'FD_file')
     wf.connect(calc_friston, 'out_file', 'outputspec', 'friston24_file')
+    wf.connect(refvol, 'out_file', 'outputspec', 'mc_ref_vol')
 
 
 @QcPipeline(inputspec_fields=['in_file'],

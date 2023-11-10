@@ -1,20 +1,22 @@
 import nipype.interfaces.utility as utility
 from PUMI.engine import FuncPipeline, NestedNode as Node, QcPipeline
-from PUMI.pipelines.multimodal.image_manipulation import vol2png
+from PUMI.pipelines.multimodal.image_manipulation import vol2png, pick_volume
 from PUMI.plot.carpet_plot import plot_carpet
 from nipype.interfaces import fsl, ants
 from nipype.interfaces.c3 import C3dAffineTool
 import os
 
 
-
-@QcPipeline(inputspec_fields=['overlay', 'func'],
+@QcPipeline(inputspec_fields=['overlay', 'std_func'],
             outputspec_fields=['out_file'])
-def qc(wf, **kwargs):
+def func2standard_qc(wf, **kwargs):
+
+    one_std_func_vol = pick_volume('one_std_func_vol', volume='mean', sink=False)
+    wf.connect('inputspec', 'std_func', one_std_func_vol, 'in_file')
 
     qc_vol2png = vol2png(wf.name + '_vol2png')
     wf.connect('inputspec', 'overlay', qc_vol2png, 'overlay_image')
-    wf.connect('inputspec', 'func', qc_vol2png, 'bg_image')
+    wf.connect(one_std_func_vol, 'out_file', qc_vol2png, 'bg_image')
 
     #  Output
     wf.connect(qc_vol2png, 'out_file', 'outputspec', 'out_file')
@@ -23,30 +25,32 @@ def qc(wf, **kwargs):
     wf.connect(qc_vol2png, 'out_file', 'sinker', wf.name)
 
 
-@FuncPipeline(inputspec_fields=['anat', 'linear_reg_mtrx', 'nonlinear_reg_mtrx', 'func', 'reference_brain'],
+@FuncPipeline(inputspec_fields=['anat', 'linear_reg_mtrx', 'nonlinear_reg_mtrx', 'func', 'reference_brain',
+                                'bbr2ants_source_file'],
               outputspec_fields=['out_file'])
-def func2standard(wf, func_is_3D=True, stdreg='ants', interp="NearestNeighbor", **kwargs):
+def func2standard(wf, stdreg='ants', interp='NearestNeighbor', **kwargs):
     """
 
     Apply transformation to standard space
-
-    CAUTION: Make sure to set func_is_3D correctly!
 
         Parameters:
             stdreg (str): registration tools ('ants' and 'fsl' possible values)
             interp (str): interpolation method
             carpet_plot (bool): set to True, to generate carpet plots
+
         Inputs:
-            anat (str): Path to the anatomical scan
+            anat (str): Path to the anatomical scan with extracted brain
             linear_reg_mtrx (str): Path to linear registration matrix
             nonlinear_reg_mtrx (str): Path to nonlinear registration matrix
-            func (str): Path to functional image
-            func_is_3D (bool): Set to False, if you supply 4D timeseries. Then no qc images are generated
+            func (str): Path to preprocessed functional image
             reference_brain (str): Path to reference brain image
+            bbr2ants_source_file (str): Path to the reference volume used for motion correction.
+
        Returns:
            out_file (str): Image in standard space
 
     Adapted from Balint Kincses (2018) code
+
     """
 
     if wf.get_node('inputspec').inputs.reference_brain is None:
@@ -62,9 +66,10 @@ def func2standard(wf, func_is_3D=True, stdreg='ants', interp="NearestNeighbor", 
         wf.connect('inputspec', 'nonlinear_reg_mtrx', applywarp, 'field_file')
         wf.connect('inputspec', 'func', applywarp, 'ref_file')
     elif stdreg == 'ants':
+
         # concat premat and ants transform
         bbr2ants = Node(interface=C3dAffineTool(fsl2ras=True, itk_transform=True), name="bbr2ants")
-        wf.connect('inputspec', 'func', bbr2ants, 'source_file')  # example func for source file
+        wf.connect('inputspec', 'bbr2ants_source_file', bbr2ants, 'source_file')
         wf.connect('inputspec', 'linear_reg_mtrx', bbr2ants, 'transform_file')
         wf.connect('inputspec', 'anat', bbr2ants, 'reference_file')  # anat for ref
 
@@ -77,22 +82,26 @@ def func2standard(wf, func_is_3D=True, stdreg='ants', interp="NearestNeighbor", 
             ), name="collect_trf"
         )
         wf.connect(bbr2ants, 'itk_transform', transform_list, 'trf_second')
+        #wf.connect('inputspec', 'linear_reg_mtrx', transform_list, 'trf_second')
         wf.connect('inputspec', 'nonlinear_reg_mtrx', transform_list, 'trf_first')
 
-        applywarp = Node(interface=ants.ApplyTransforms(interpolation=interp, input_image_type=3), name='applywarp')
+        applywarp = Node(interface=ants.ApplyTransforms(
+            interpolation=interp,
+            input_image_type=3,
+            dimension=3
+        ), name='applywarp')
         wf.connect(transform_list, 'trflist', applywarp, 'transforms')
         wf.connect('inputspec', 'func', applywarp, 'input_image')
         wf.connect('inputspec', 'reference_brain', applywarp, 'reference_image')
     else:
         raise ValueError(f'%s is not a valid option for stdreg! Please choose \'fsl\' or \'ants\'!' % stdreg)
 
-    if func_is_3D:
-        qc_func2std = qc('qc_' + wf.name)
-        if stdreg == 'fsl':
-            wf.connect(applywarp, 'out_file', qc_func2std, 'func')
-        elif stdreg == 'ants':
-            wf.connect(applywarp, 'output_image', qc_func2std, 'func')
-        wf.connect('inputspec', 'reference_brain', qc_func2std, 'overlay')
+    qc_func2std = func2standard_qc('qc_' + wf.name)
+    if stdreg == 'fsl':
+        wf.connect(applywarp, 'out_file', qc_func2std, 'std_func')
+    elif stdreg == 'ants':
+        wf.connect(applywarp, 'output_image', qc_func2std, 'std_func')
+    wf.connect('inputspec', 'reference_brain', qc_func2std, 'overlay')
 
     # Output
     if stdreg == 'fsl':
@@ -105,6 +114,21 @@ def func2standard(wf, func_is_3D=True, stdreg='ants', interp="NearestNeighbor", 
         wf.connect(applywarp, 'out_file', 'sinker', 'func2std')
     elif stdreg == 'ants':
         wf.connect(applywarp, 'output_image', 'sinker', 'func2std')
+
+
+@QcPipeline(inputspec_fields=['overlay', 'func'],
+            outputspec_fields=['out_file'])
+def atlas2func_qc(wf, **kwargs):
+
+    qc_vol2png = vol2png(wf.name + '_vol2png')
+    wf.connect('inputspec', 'overlay', qc_vol2png, 'overlay_image')
+    wf.connect('inputspec', 'func', qc_vol2png, 'bg_image')
+
+    #  Output
+    wf.connect(qc_vol2png, 'out_file', 'outputspec', 'out_file')
+
+    # sinking
+    wf.connect(qc_vol2png, 'out_file', 'sinker', wf.name)
 
 
 @FuncPipeline(inputspec_fields=['atlas', 'anat', 'inv_linear_reg_mtrx', 'inv_nonlinear_reg_mtrx', 'func',
@@ -174,9 +198,9 @@ def atlas2func(wf, stdreg='ants', interp="NearestNeighbor", **kwargs):
     else:
         raise ValueError(f'%s is not a valid option for stdreg! Please choose \'fsl\' or \'ants\'!' % stdreg)
 
-    qc_atlas2func = qc('qc_' + wf.name)
+    qc_atlas2func = atlas2func_qc('qc_' + wf.name)
     if stdreg == 'fsl':
-        wf.connect(applywarp, 'out_file', qc_atlas2func, 'func')#wf.connect(applywarp, 'out_file', qc_atlas2func, 'overlay')
+        wf.connect(applywarp, 'out_file', qc_atlas2func, 'func')
     elif stdreg == 'ants':
         wf.connect(applywarp, 'output_image', qc_atlas2func, 'func')
     wf.connect('inputspec', 'example_func', qc_atlas2func, 'overlay')
