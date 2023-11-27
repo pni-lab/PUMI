@@ -550,8 +550,6 @@ class BidsApp:
         cli_args = self.parser.parse_args()
         cli_args_dict = vars(cli_args)
 
-        print(cli_args)
-
         # We need to extract the pipeline specific arguments like 'brr'.
         # We have a list of arguments that are BidsApp or nipype related.
         # If an argument is not in that list then it's such a pipeline specific argument.
@@ -609,8 +607,6 @@ class BidsApp:
             raise ValueError('The argument "bids_dir" has to be set!')
         else:
             self.bids_dir = cli_args.bids_dir if (cli_args.bids_dir is not None) else self.bids_dir
-
-        print(self.run_args)
 
         # Use specification from CLI if available. Otherwise, use the specification from the BidsApp-constructor.
         # If output_dir is None, BidsApp and PumiPipeline are going to read the location from settings.ini
