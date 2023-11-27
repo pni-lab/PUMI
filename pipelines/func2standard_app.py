@@ -188,7 +188,11 @@ func2standard_app = BidsApp(
     name='func2standard_app',
     bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
 )
-func2standard_app.parser.add_argument('--bbr', default='yes', type=lambda x: (str(x).lower() == ['true','1', 'yes']),
-                            help='Use BBR registration: yes/no (default: yes)')
+func2standard_app.parser.add_argument(
+    '--bbr',
+    default='yes',
+    type=lambda x: (str(x).lower() in ['true', '1', 'yes']),
+    help="Use BBR registration: yes/no (default: yes)"
+)
 
 func2standard_app.run()

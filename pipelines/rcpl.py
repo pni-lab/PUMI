@@ -452,7 +452,11 @@ rcpl_app = BidsApp(
     name='rcpl',
     bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
 )
-rcpl_app.parser.add_argument('--bbr', default='yes', type=lambda x: (str(x).lower() == ['true','1', 'yes']),
-                            help='Use BBR registration: yes/no (default: yes)')
+rcpl_app.parser.add_argument(
+    '--bbr',
+    default='yes',
+    type=lambda x: (str(x).lower() in ['true', '1', 'yes']),
+    help="Use BBR registration: yes/no (default: yes)"
+)
 
 rcpl_app.run()
