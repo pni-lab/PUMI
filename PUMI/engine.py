@@ -626,3 +626,29 @@ class BidsApp:
             **pipeline_specific_arguments,
             **self.kwargs
         )
+
+
+def save_software_versions(wf):
+    result = {'PUMI': get_versions()['version']}
+    # result is a dict where the keys are the interface types and the values the corresponding versions of the
+    # underlying software
+
+    for node_name in wf.list_node_names():
+        node = wf.get_node(node_name)
+        node_interface = node.interface
+        node_module = str(type(node_interface))  # e.g., "<class 'nipype.interfaces.fsl.utils.Reorient2Std'>"
+        node_module = node_module.replace("<class \'", "")  # e.g., "nipype.interfaces.fsl.utils.Reorient2Std'>"
+        node_module = node_module.replace("\'>", "")  # e.g., "nipype.interfaces.fsl.utils.Reorient2Std"
+        try:
+            version = node.interface.version
+            if version is None:
+                continue
+            else:
+                result[node_module] = version
+        except:
+            continue
+
+    path = str(Path(wf.sink_dir) / "software_versions.txt")
+    with open(path, "w") as f_obj:
+        for key, value in result.items():
+            f_obj.write('%s: %s\n' % (key, value))

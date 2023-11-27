@@ -2,7 +2,7 @@
 
 from nipype.interfaces.fsl import Reorient2Std
 from nipype.interfaces import afni
-from PUMI.engine import BidsPipeline, NestedNode as Node, FuncPipeline, GroupPipeline, BidsApp
+from PUMI.engine import BidsPipeline, NestedNode as Node, FuncPipeline, GroupPipeline, BidsApp, save_software_versions
 from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import func2anat
@@ -319,6 +319,7 @@ def rpn(wf, bbr=True, **kwargs):
     wf.connect('inputspec', 'bold', predict_pain_sensitivity_wf, 'in_files')
 
     wf.write_graph('rpn-signature.png')
+    save_software_versions(wf)
 
 
 rpn_app = BidsApp(
