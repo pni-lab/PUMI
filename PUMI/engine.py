@@ -520,7 +520,7 @@ class BidsApp:
         self.parser.add_argument(
             '--memory_gb',
             type=int,
-            help='Memory limit in GB. If not set, use 90% of the available memory'
+            help='Memory limit in GB. If not set, use 90 percent of the available memory'
                  'Caution: Does only work with the MultiProc-plugin!')
 
         self.parser.add_argument(
@@ -555,6 +555,7 @@ class BidsApp:
         # We have a list of arguments that are BidsApp or nipype related.
         # If an argument is not in that list then it's such a pipeline specific argument.
         not_pipeline_specific = [
+            'help',
             'bids_dir',
             'output_dir',
             'analysis_level',
