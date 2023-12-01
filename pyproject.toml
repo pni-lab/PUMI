@@ -28,7 +28,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.7 <3.12"
+python = ">=3.8"
 networkx = "<3"
 dot2tex = ">=2.11.3"
 templateflow = ">=0.8.0"
