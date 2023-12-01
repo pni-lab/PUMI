@@ -13,6 +13,7 @@ from hashlib import sha1
 import re
 import ast
 from PUMI import globals
+import subprocess
 
 def _parameterization_dir(param):
     """
@@ -628,28 +629,86 @@ class BidsApp:
         )
 
 
+def get_interface_version(interface):
+    """
+
+    Try to get the version number of the underlying tool used in an interface.
+
+    Return None if interface is a nipype in-house interface that does not use external software like FSL.
+    Otherwise, return name of the tool and the version number of the underlying used tool (or 'Unknown' if the
+    version could not be fetched).
+
+    """
+
+    # Nipype provides some in-house interfaces that do not use external software like FSL.
+    # We can exclude modules:
+    NIPYPE_IN_HOUSE_MODULES = [
+        'nipype.algorithms.',
+        'nipype.interfaces.image.',
+        'nipype.interfaces.io.',
+        'nipype.interfaces.mixins.',
+        'nipype.interfaces.utility.'
+    ]
+
+    interface_name = str(type(interface))  # e.g., "<class 'nipype.interfaces.fsl.utils.Reorient2Std'>"
+    interface_name = interface_name.replace("<class \'", "")  # e.g., "nipype.interfaces.fsl.utils.Reorient2Std'>"
+    interface_name = interface_name.replace("\'>", "")  # e.g., "nipype.interfaces.fsl.utils.Reorient2Std"
+    # Let's see if it's a nipype in-house interface
+    for in_house in NIPYPE_IN_HOUSE_MODULES:
+        if in_house in interface_name:
+            return None
+
+    tool_name = interface_name.split('.')[2]  # e.g., 'fsl', 'ants', 'afni'
+
+    try:
+        version = interface.version
+        if version is not None:
+            return tool_name, version
+    except AttributeError:
+        pass
+
+    if 'afni' in interface_name:
+        version_cmd = ['afni', '-ver']
+    elif 'ants' in interface_name:
+        version_cmd = ['antsRegistration', '--version']
+    elif 'c3' in interface_name:
+        version_cmd = ['c3d', '-version']
+    else:
+        return interface_name, 'Unknown'
+
+    try:
+        result = subprocess.run(version_cmd, capture_output=True, text=True)
+        return tool_name, result.stdout.strip()
+    except Exception as e:
+        print(f"Error getting version for {interface_name}: {e}")
+        return tool_name, 'Unknown'
+
+
 def save_software_versions(wf):
-    result = {'PUMI': get_versions()['version']}
-    # result is a dict where the keys are the interface types and the values the corresponding versions of the
-    # underlying software
+    """
+
+    Save PUMI version as well as software-version of FSL and other 'external' software that is used in a pipeline
+    in a textfile.
+
+    """
+
+    versions = {'PUMI': get_versions()['version']}
 
     for node_name in wf.list_node_names():
         node = wf.get_node(node_name)
-        node_interface = node.interface
-        node_module = str(type(node_interface))  # e.g., "<class 'nipype.interfaces.fsl.utils.Reorient2Std'>"
-        node_module = node_module.replace("<class \'", "")  # e.g., "nipype.interfaces.fsl.utils.Reorient2Std'>"
-        node_module = node_module.replace("\'>", "")  # e.g., "nipype.interfaces.fsl.utils.Reorient2Std"
-        try:
-            version = node.interface.version
-            if version is None:
-                continue
-            else:
-                result[node_module] = version
-        except:
-            continue
+        result = get_interface_version(interface=node.interface)
+
+        if result is None:
+            continue  # We can skip the external-tool-independent nipype in-house interfaces
+        else:
+            interface_name, version = result
+            versions[interface_name] = version
 
     path = Path(wf.sink_dir) / "software_versions.txt"
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(str(path), "w") as f_obj:
-        for key, value in result.items():
+        for key, value in versions.items():
             f_obj.write('%s: %s\n' % (key, value))
+        f_obj.write('\n---------------------------------------------\n')
+        f_obj.write('| CAUTION: This list might not be complete! |\n')
+        f_obj.write('---------------------------------------------\n')
