@@ -1,6 +1,6 @@
 import argparse
 from configparser import SafeConfigParser
-
+from pathlib import Path
 from PUMI._version import get_versions
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
@@ -648,7 +648,8 @@ def save_software_versions(wf):
         except:
             continue
 
-    path = str(Path(wf.sink_dir) / "software_versions.txt")
-    with open(path, "w") as f_obj:
+    path = Path(wf.sink_dir) / "software_versions.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(str(path), "w") as f_obj:
         for key, value in result.items():
             f_obj.write('%s: %s\n' % (key, value))
