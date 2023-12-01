@@ -28,7 +28,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.7"
+python = ">=3.7 <3.12"
 networkx = "<3"
 dot2tex = ">=2.11.3"
 templateflow = ">=0.8.0"
@@ -51,7 +51,7 @@ myst-parser = "*"
 nibabel = ">=5.0.0"
 hd-bet = { git = "https://github.com/MIC-DKFZ/HD-BET.git" }
 deepbet = "*"
-scikit-learn = "==1.1.2"
+scikit-learn = "1.3.2"
 
 [tool.poetry.dev-dependencies]
 
