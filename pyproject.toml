@@ -58,6 +58,7 @@ scikit-learn = "1.3.2"
 [tool.poetry.scripts]
 rpn_signature = 'pipelines.rpn_signature.rpn_app:run'
 rpn_signature_timeseries = 'pipelines.rpn_signature_timeseries.rpn_app:run'
+rcpl = 'pipelines.rcpl.rcpl_app:run'
 
 [tool.poetry-dynamic-versioning]
 enable = true
