@@ -12,6 +12,7 @@ from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeser
 from PUMI.utils import mist_modules, mist_labels, get_reference
 from PUMI.pipelines.func.func2standard import func2standard
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume
+from PUMI.engine import save_software_versions
 import traits
 import os
 
@@ -445,6 +446,7 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(predict_pain_sensitivity_rcpl_wf, 'out_file', collect_pain_predictions_wf, 'rcpl_out_file')
 
     wf.write_graph('RCPL-pipeline.png')
+    save_software_versions(wf)
 
 
 rcpl_app = BidsApp(
@@ -452,7 +454,11 @@ rcpl_app = BidsApp(
     name='rcpl',
     bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
 )
-rcpl_app.parser.add_argument('--bbr', default='yes', type=lambda x: (str(x).lower() == ['true','1', 'yes']),
-                            help='Use BBR registration: yes/no (default: yes)')
+rcpl_app.parser.add_argument(
+    '--bbr',
+    default='yes',
+    type=lambda x: (str(x).lower() in ['true', '1', 'yes']),
+    help="Use BBR registration: yes/no (default: yes)"
+)
 
 rcpl_app.run()
