@@ -388,6 +388,8 @@ def hcp(wf, bbr=True, **kwargs):
     """
     The HCP pipeline is the RCPL pipeline but with different inputs (two bold images with different phase encodings
     instead of one bold image) and with additional fieldmap correction.
+
+    CAUTION: This pipeline assumes that you converted the HCP dataset into the BIDS format!
     """
 
     print('* bbr:', bbr)
