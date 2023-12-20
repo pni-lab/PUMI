@@ -369,27 +369,47 @@ def collect_pain_predictions(wf, **kwargs):
         suffix="T1w",
         extension=['nii', 'nii.gz']
     ),
-    'bold': dict(
+    'bold_lr': dict(
         datatype='func',
-        suffix="bold",
+        suffix='bold',
+        run='1',
+        dir='LR',
+        extension=['nii', 'nii.gz']
+    ),
+    'bold_rl': dict(
+        datatype='func',
+        suffix='bold',
+        run='1',
+        dir='LR',
         extension=['nii', 'nii.gz']
     )
 })
-def rcpl(wf, bbr=True, **kwargs):
+def hcp(wf, bbr=True, **kwargs):
+    """
+    The HCP pipeline is the RCPL pipeline but with different inputs (two bold images with different phase encodings
+    instead of one bold image) and with additional fieldmap correction.
+    """
 
     print('* bbr:', bbr)
 
     reorient_struct_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_struct_wf")
     wf.connect('inputspec', 'T1w', reorient_struct_wf, 'in_file')
 
-    reorient_func_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_wf")
-    wf.connect('inputspec', 'bold', reorient_func_wf, 'in_file')
+    reorient_func_lr_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_lr_wf")
+    wf.connect(bold_lr_grabber, 'bold_lr', reorient_func_lr_wf, 'in_file')
+
+    reorient_func_rl_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_rl_wf")
+    wf.connect(bold_rl_grabber, 'bold_rl', reorient_func_rl_wf, 'in_file')
+
+    fieldmap_corr = fieldmap_correction('fieldmap_corr')
+    wf.connect(reorient_func_lr_wf, 'out_file', fieldmap_corr, 'func_1')
+    wf.connect(reorient_func_rl_wf, 'out_file', fieldmap_corr, 'func_2')
 
     anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf', bet_tool='deepbet')
     wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
 
     func2anat_wf = func2anat(name='func2anat_wf', bbr=bbr)
-    wf.connect(reorient_func_wf, 'out_file', func2anat_wf, 'func')
+    wf.connect(fieldmap_corr, 'out_file', func2anat_wf, 'func')
     wf.connect(anatomical_preprocessing_wf, 'brain', func2anat_wf, 'head')
     wf.connect(anatomical_preprocessing_wf, 'probmap_wm', func2anat_wf, 'anat_wm_segmentation')
     wf.connect(anatomical_preprocessing_wf, 'probmap_csf', func2anat_wf, 'anat_csf_segmentation')
@@ -401,7 +421,7 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func2anat_wf, 'ventricle_mask_in_funcspace', compcor_roi_wf, 'ventricle_mask')
 
     func_proc_wf = func_proc_despike_afni('func_proc_wf', bet_tool='deepbet', deepbet_n_dilate=2)
-    wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
+    wf.connect(fieldmap_corr, 'out_file', func_proc_wf, 'func')
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 
     pick_atlas_wf = mist_atlas('pick_atlas_wf')
@@ -435,30 +455,30 @@ def rcpl(wf, bbr=True, **kwargs):
 
     predict_pain_sensitivity_rpn_wf = predict_pain_sensitivity_rpn('predict_pain_sensitivity_rpn_wf')
     wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_rpn_wf, 'X')
-    wf.connect('inputspec', 'bold', predict_pain_sensitivity_rpn_wf, 'in_file')
+    wf.connect(fieldmap_corr, 'out_file', predict_pain_sensitivity_rpn_wf, 'in_file')
 
     predict_pain_sensitivity_rcpl_wf = predict_pain_sensitivity_rcpl('predict_pain_sensitivity_rcpl_wf')
     wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_rcpl_wf, 'X')
-    wf.connect('inputspec', 'bold', predict_pain_sensitivity_rcpl_wf, 'in_file')
+    wf.connect(fieldmap_corr, 'out_file', predict_pain_sensitivity_rcpl_wf, 'in_file')
 
     collect_pain_predictions_wf = collect_pain_predictions('collect_pain_predictions_wf')
     wf.connect(predict_pain_sensitivity_rpn_wf, 'out_file', collect_pain_predictions_wf, 'rpn_out_file')
     wf.connect(predict_pain_sensitivity_rcpl_wf, 'out_file', collect_pain_predictions_wf, 'rcpl_out_file')
 
-    wf.write_graph('RCPL-pipeline.png')
+    wf.write_graph('HCP-pipeline.png')
     save_software_versions(wf)
 
 
-rcpl_app = BidsApp(
-    pipeline=rcpl,
-    name='rcpl',
+hcp_app = BidsApp(
+    pipeline=hcp,
+    name='hcp',
     bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
 )
-rcpl_app.parser.add_argument(
+hcp_app.parser.add_argument(
     '--bbr',
     default='yes',
     type=lambda x: (str(x).lower() in ['true', '1', 'yes']),
     help="Use BBR registration: yes/no (default: yes)"
 )
 
-rcpl_app.run()
+hcp_app.run()
