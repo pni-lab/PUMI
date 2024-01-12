@@ -368,21 +368,19 @@ def collect_pain_predictions(wf, **kwargs):
 @BidsPipeline(output_query={
     'T1w': dict(
         datatype='anat',
-        suffix="T1w",
+        suffix='T1w',
         extension=['nii', 'nii.gz']
     ),
     'bold_lr': dict(
         datatype='func',
         suffix='bold',
-        run='1',
-        dir='LR',
+        acquisition='LR',
         extension=['nii', 'nii.gz']
     ),
     'bold_rl': dict(
         datatype='func',
         suffix='bold',
-        run='1',
-        dir='LR',
+        acquisition='RL',
         extension=['nii', 'nii.gz']
     )
 })
@@ -475,8 +473,7 @@ def hcp(wf, bbr=True, **kwargs):
 
 hcp_app = BidsApp(
     pipeline=hcp,
-    name='hcp',
-    bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
+    name='hcp'
 )
 hcp_app.parser.add_argument(
     '--bbr',
