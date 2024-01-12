@@ -14,6 +14,8 @@ import re
 import ast
 from PUMI import globals
 import subprocess
+import json
+
 
 def _parameterization_dir(param):
     """
@@ -685,15 +687,27 @@ def get_interface_version(interface):
         return tool_name, 'Unknown'
 
 
-def save_software_versions(wf):
+def create_dataset_description(wf,
+                               pipeline_description_name,
+                               dataset_description_name='Derivatives created by PUMI',
+                               bids_version='1.9.0'):
     """
 
-    Save PUMI version as well as software-version of FSL and other 'external' software that is used in a pipeline
-    in a textfile.
+    Create and save dataset description JSON for the derivatives created by PUMI that includes details about the
+    software versions used in the pipeline.
+
+    Parameters:
+        wf (Workflow object): The workflow object.
+        pipeline_description_name (str): Name of the used pipeline (e.g., 'RCPL-Pipeline').
+        dataset_description_name (str, optional): Name for the dataset. Default is 'Derivatives created by PUMI'.
+        bids_version (str, optional): The BIDS version used. Default is '1.9.0'.
+
+    Returns:
+        None. A JSON file is created in the workflow's specified sink directory.
 
     """
 
-    versions = {'PUMI': get_versions()['version']}
+    software_versions = {}
 
     for node_name in wf.list_node_names():
         node = wf.get_node(node_name)
@@ -703,13 +717,20 @@ def save_software_versions(wf):
             continue  # We can skip the external-tool-independent nipype in-house interfaces
         else:
             interface_name, version = result
-            versions[interface_name] = version
+            software_versions[interface_name] = version
 
-    path = Path(wf.sink_dir) / "software_versions.txt"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(str(path), "w") as f_obj:
-        for key, value in versions.items():
-            f_obj.write('%s: %s\n' % (key, value))
-        f_obj.write('\n---------------------------------------------\n')
-        f_obj.write('| CAUTION: This list might not be complete! |\n')
-        f_obj.write('---------------------------------------------\n')
+    dataset_description_path = Path(wf.sink_dir) / 'dataset_description.json'
+    dataset_description_path.parent.mkdir(parents=True, exist_ok=True)
+
+    dataset_description = {
+        'Name': dataset_description_name,
+        'BIDSVersion': bids_version,
+        'PipelineDescription': {
+            'Name': pipeline_description_name,
+            'Version': get_versions()['version'],
+            'Software': [{'Name': name, 'Version': version} for name, version in software_versions.items()]
+        }
+    }
+
+    with open(dataset_description_path, 'w') as outfile:
+        json.dump(dataset_description, outfile, indent=4)
