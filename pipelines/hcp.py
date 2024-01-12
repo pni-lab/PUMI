@@ -7,6 +7,8 @@ from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import func2anat
 from nipype.interfaces import utility
+
+from PUMI.pipelines.func.deconfound import fieldmap_correction
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels, get_reference
@@ -398,10 +400,10 @@ def hcp(wf, bbr=True, **kwargs):
     wf.connect('inputspec', 'T1w', reorient_struct_wf, 'in_file')
 
     reorient_func_lr_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_lr_wf")
-    wf.connect(bold_lr_grabber, 'bold_lr', reorient_func_lr_wf, 'in_file')
+    wf.connect('inputspec', 'bold_lr', reorient_func_lr_wf, 'in_file')
 
     reorient_func_rl_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_rl_wf")
-    wf.connect(bold_rl_grabber, 'bold_rl', reorient_func_rl_wf, 'in_file')
+    wf.connect('inputspec', 'bold_rl', reorient_func_rl_wf, 'in_file')
 
     fieldmap_corr = fieldmap_correction('fieldmap_corr')
     wf.connect(reorient_func_lr_wf, 'out_file', fieldmap_corr, 'func_1')
