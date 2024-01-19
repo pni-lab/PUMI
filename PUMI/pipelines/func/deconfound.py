@@ -30,7 +30,19 @@ def fieldmap_correction_qc(wf, volume='middle', **kwargs):
 
     """
 
-    def create_montage(vol_1, vol_2, vol_corrected):
+    def get_cut_cords(func, n_slices=10):
+        import nibabel as nib
+        import numpy as np
+
+        func_img = nib.load(func)
+        y_dim = func_img.shape[1]  # y-dimension (coronal direction) is the second dimension in the image shape
+
+        slices = np.linspace(-y_dim / 2, y_dim / 2, n_slices)
+        # slices might contain floats but this is not a problem since nilearn will round floats to the
+        # nearest integer value!
+        return slices
+
+    def create_montage(vol_1, vol_2, vol_corrected, n_slices=10):
         from matplotlib import pyplot as plt
         from pathlib import Path
         from nilearn import plotting
@@ -38,9 +50,12 @@ def fieldmap_correction_qc(wf, volume='middle', **kwargs):
 
         fig, axes = plt.subplots(3, 1, facecolor='black', figsize=(10, 15))
 
-        plotting.plot_anat(vol_1, display_mode='ortho', title='Image #1', black_bg=True, axes=axes[0])
-        plotting.plot_anat(vol_2, display_mode='ortho', title='Image #2', black_bg=True, axes=axes[1])
-        plotting.plot_anat(vol_corrected, display_mode='ortho', title='Corrected', black_bg=True, axes=axes[2])
+        plotting.plot_anat(vol_1, display_mode='y', cut_coords=get_cut_cords(vol_1, n_slices=n_slices),
+                           title='Image #1', black_bg=True, axes=axes[0])
+        plotting.plot_anat(vol_2, display_mode='y', cut_coords=get_cut_cords(vol_2, n_slices=n_slices),
+                           title='Image #2', black_bg=True, axes=axes[1])
+        plotting.plot_anat(vol_corrected, display_mode='y', cut_coords=get_cut_cords(vol_corrected, n_slices=n_slices),
+                           title='Corrected', black_bg=True, axes=axes[2])
 
         path = str(Path(os.getcwd() + '/fieldmap_correction_comparison.png'))
         plt.savefig(path)
@@ -66,7 +81,7 @@ def fieldmap_correction_qc(wf, volume='middle', **kwargs):
     wf.connect(vol_corrected, 'out_file', montage, 'vol_corrected')
 
     wf.connect(montage, 'out_file', 'outputspec', 'out_file')
-    wf.connect(montage, 'out_file', 'sinker', 'out_file')
+    wf.connect(montage, 'out_file', 'sinker', 'qc_fieldmap_correction')
 
 
 @FuncPipeline(inputspec_fields=['func_1', 'func_2'],
