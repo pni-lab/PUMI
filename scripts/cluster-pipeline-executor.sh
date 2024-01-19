@@ -9,10 +9,11 @@ NICE=5
 BRANCH='main'
 SUBMIT_DELAY=72
 CPUS_PER_TASK=15
+SKIP_CONVERSION=False
 ################################################################
 
 
-while getopts 'i:o:t:l:p:r:m:n:b:d:c:h' opt; do
+while getopts 'i:o:t:l:p:r:m:n:b:d:c:hs' opt; do
   case "$opt" in
     i) INDIR="$OPTARG";;
     o) OUTDIR="$OPTARG";;
@@ -25,6 +26,7 @@ while getopts 'i:o:t:l:p:r:m:n:b:d:c:h' opt; do
     b) BRANCH="$OPTARG";;
     d) SUBMIT_DELAY="$OPTARG";;
     c) CPUS_PER_TASK="$OPTARG";;
+    s) SKIP_CONVERSION=True;;
 
     ?|h)
       echo "-i      Input BIDS dataset"
@@ -38,6 +40,7 @@ while getopts 'i:o:t:l:p:r:m:n:b:d:c:h' opt; do
       echo "-b      Which PUMI GitHub branch to install (default: '${BRANCH}')"
       echo "-d      Minimum delay between submission of jobs in seconds (default: '${SUBMIT_DELAY}')"
       echo "-c      CPU's per task (default: '${CPUS_PER_TASK}')"
+      echo "-s      Skip conversion of docker image and pull from Dockerhub for every job (default: False). CAUTION: Pulling limit is exceeded very fast!"
       exit 1
       ;;
   esac
@@ -55,6 +58,7 @@ echo "Max Slurm jobs of user (-m): ${MAX_JOBS}"
 echo "Slurm nice value (-n): ${NICE}"
 echo "PUMI branch to use (-b): ${BRANCH}"
 echo "Minimum delay between submission of jobs in seconds (-d): ${SUBMIT_DELAY}"
+echo "Skip conversion of docker image (-s): ${SKIP_CONVERSION}"
 echo "--------------------------------------------------------------------"
 
 # Validation to ensure mandatory options are provided.
@@ -72,13 +76,17 @@ mkdir -p "jobs_scripts/${dataset_name}"  # Create directory which will contain t
 
 mkdir -p "${LOG_PATH}"  # Create directory where the jobs will store the slurm outputs in
 
-# Pull (and convert) PUMI image locally and then copy to NFS share where all the jobs can copy it from
-rm -rf ${TMP_PUMI}/apptainer_cache/
-mkdir -p ${TMP_PUMI}/apptainer_cache/
-APPTAINER_CACHEDIR=${TMP_PUMI}/apptainer_cache/ \
- apptainer pull ${TMP_PUMI}/PUMI.sif docker://pnilab/pumi:latest
-cp ${TMP_PUMI}/PUMI.sif ${LOG_PATH}/PUMI.sif
-rm -rf ${TMP_PUMI}
+if [ "$SKIP_CONVERSION" == "True" ]; then
+    apptainer_statement="docker://pnilab/pumi:latest"
+else
+    rm -rf ${TMP_PUMI}/apptainer_cache/
+    mkdir -p ${TMP_PUMI}/apptainer_cache/
+    # Pull (and convert) PUMI image locally and then copy to NFS share where all the jobs can copy it from
+    APPTAINER_CACHEDIR=${TMP_PUMI}/apptainer_cache/ apptainer pull ${TMP_PUMI}/PUMI.sif docker://pnilab/pumi:latest
+    cp ${TMP_PUMI}/PUMI.sif ${LOG_PATH}/PUMI.sif
+    rm -rf ${TMP_PUMI}
+    apptainer_statement=${TMP_PUMI}/apptainer_image/\${subject_id}/PUMI.sif
+fi
 
 mkdir -p "${OUTDIR}"
 
@@ -131,7 +139,7 @@ mkdir -p \${subject_apptainer_cache_dir}
 APPTAINER_CACHEDIR=\${subject_apptainer_cache_dir} \
 apptainer exec \
 --writable-tmpfs \
-${TMP_PUMI}/apptainer_image/${subject_id}/PUMI.sif \
+${apptainer_statement} \
 bash -c " \
 set -x; \
 git clone -b ${BRANCH} https://github.com/pni-lab/PUMI \${pumi_dir}; \
