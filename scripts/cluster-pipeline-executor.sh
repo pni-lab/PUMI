@@ -12,7 +12,7 @@ CPUS_PER_TASK=15
 ################################################################
 
 
-while getopts 'i:o:t:l:p:r:m:n:b:d:c:hs' opt; do
+while getopts 'i:o:t:l:p:r:m:n:b:d:c:s:h' opt; do
   case "$opt" in
     i) INDIR="$OPTARG";;
     o) OUTDIR="$OPTARG";;
