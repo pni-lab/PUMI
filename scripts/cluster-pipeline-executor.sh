@@ -138,7 +138,7 @@ mkdir -p \${subject_apptainer_cache_dir}
 APPTAINER_CACHEDIR=\${subject_apptainer_cache_dir} \
 apptainer exec \
 --writable-tmpfs \
-${apptainer_statement} \
+${TMP_PUMI}/apptainer_image/${subject_id}/PUMI.sif \
 bash -c " \
 set -x; \
 git clone -b ${BRANCH} https://github.com/pni-lab/PUMI \${pumi_dir}; \
