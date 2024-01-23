@@ -385,7 +385,7 @@ def rcpl(wf, bbr=True, **kwargs):
     reorient_func_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_wf")
     wf.connect('inputspec', 'bold', reorient_func_wf, 'in_file')
 
-    anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf', bet_tool='deepbet')
+    anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf', bet_tool='deepbet', reg_tool='FSL')
     wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
 
     func2anat_wf = func2anat(name='func2anat_wf', bbr=bbr)
