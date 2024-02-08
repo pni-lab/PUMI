@@ -286,7 +286,9 @@ def create_coregistration_qc(registered_brain, template, output_file=None, level
     else:
         if not output_file.startswith('/'):
             output_file = os.path.join(os.getcwd(), output_file)
+
     plot.savefig(output_file)
+    plot.close()
 
     return output_file
 
