@@ -207,14 +207,23 @@ def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode=
     import os
 
     if save_img:
+        # User wants to save the image directly and doesn't want to only get the plot object to modify it further
+        # before saving.
         if output_file is None:
-            roi_img_name = roi_img.split('/')[-1].split('.')[0]
+            roi_img_name = roi_img.split('/')[-1].split('.')[0]  # Get filename without extension.
+            # Plot will be saved in current working directory with the filename (without extension) of ROI image.
+            # but with the suffix '_plot.png'
             output_file = os.path.join(os.getcwd(), roi_img_name + '_plot.png')
         else:
+            # If the user has specified an absolute path, then we can directly use it.
+            # If we have only received a relative path, then we append this relative path to the current working
+            # directory.
             if not output_file.startswith('/'):
                 output_file = os.path.join(os.getcwd(), output_file)
     else:
-        output_file = None  # make sure that no file is created when save_img=False
+        output_file = None
+        # If output_file is None, then nilearn won't save the image.
+        # In this case, the user must close the plot themself! Otherwise this could lead to memory leaks!
 
     plot = plotting.plot_roi(roi_img, bg_img=bg_img, cut_coords=cut_coords, output_file=output_file,
                              display_mode=display_mode, figure=figure, axes=axes, title=title, annotate=annotate,
