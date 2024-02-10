@@ -106,9 +106,11 @@ def fieldmap_correction(wf, encoding_direction=['x-', 'x'], readout_times=[0.082
     Sinking:
         - 4d distortion corrected image.
 
-    For more information regarding the parameters:
+
+    For more information:
     https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup/ExampleTopupFollowedByApplytopup
     https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup/Faq#How_do_I_know_what_phase-encode_vectors_to_put_into_my_--datain_text_file.3F
+    https://www.humanconnectome.org/storage/app/media/documentation/s1200/HCP_S1200_Release_Appendix_I.pdf
 
     """
 
