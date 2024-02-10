@@ -86,7 +86,7 @@ def fieldmap_correction_qc(wf, volume='middle', **kwargs):
 
 @FuncPipeline(inputspec_fields=['func_1', 'func_2'],
               outputspec_fields=['out_file'])
-def fieldmap_correction(wf, encoding_direction=['y-', 'y'], readout_times=[0.08264, 0.08264], tr=0.72, **kwargs):
+def fieldmap_correction(wf, encoding_direction=['x-', 'x'], readout_times=[0.08264, 0.08264], tr=0.72, **kwargs):
     """
 
     Fieldmap correction pipeline.
@@ -108,6 +108,7 @@ def fieldmap_correction(wf, encoding_direction=['y-', 'y'], readout_times=[0.082
 
     For more information regarding the parameters:
     https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup/ExampleTopupFollowedByApplytopup
+    https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup/Faq#How_do_I_know_what_phase-encode_vectors_to_put_into_my_--datain_text_file.3F
 
     """
 
