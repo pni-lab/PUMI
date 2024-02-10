@@ -86,14 +86,14 @@ def fieldmap_correction_qc(wf, volume='middle', **kwargs):
 
 @FuncPipeline(inputspec_fields=['func_1', 'func_2'],
               outputspec_fields=['out_file'])
-def fieldmap_correction(wf, encoding_direction=['x-', 'x'], readout_times=[0.0522, 0.0522], tr=0.72, **kwargs):
+def fieldmap_correction(wf, encoding_direction=['x-', 'x'], trt=[0.0522, 0.0522], tr=0.72, **kwargs):
     """
 
     Fieldmap correction pipeline.
 
     Parameters:
         encoding_direction (list): List of encoding directions (default is left-right and right-left phase encoding).
-        readout_times (list): List of readout times (default adapted to rsfMRI data of the HCP WU 1200 dataset).
+        trt (list): List of total readout times (default adapted to rsfMRI data of the HCP WU 1200 dataset).
                               Default is:
                               1*(10**(-3))*EchoSpacingMS*EpiFactor = 1*(10**(-3))*0.58*90 = 0.0522 (for LR and RL image)
         tr (float): Repetition time (default adapted to rsfMRI data of the HCP WU 1200 dataset).
@@ -146,7 +146,7 @@ def fieldmap_correction(wf, encoding_direction=['x-', 'x'], readout_times=[0.052
     # Estimate susceptibility induced distortions
     topup = Node(fsl.TOPUP(), name='topup')
     topup.inputs.encoding_direction = encoding_direction
-    topup.inputs.readout_times = readout_times
+    topup.inputs.readout_times = trt
     wf.connect(merger, 'merged_file', topup, 'in_file')
 
     # The two original 4D files are also needed inside a list
