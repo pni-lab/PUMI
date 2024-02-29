@@ -109,36 +109,40 @@ echo "*************************************************************"
 echo "Starting on \$(hostname) at \$(date +"%T")"
 echo "*************************************************************"
 
-subject_data_in="${TMP_PUMI}/input/${subject_id}" # Create temporary directory which stores BIDS data for one subject
+subject_dir="${TMP_PUMI}/${subject_id}/"
+
+subject_data_in="\${subject_dir}/input/" # Create temporary directory which stores BIDS data for one subject
 rm -rf "\${subject_data_in}"
 mkdir -p "\${subject_data_in}"
 
-subject_data_out="${TMP_PUMI}/output/${subject_id}" # Create temporary directory which stores derivatives for one subject
+subject_data_out="\${subject_dir}/output/" # Create temporary directory which stores derivatives for one subject
 rm -rf "\${subject_data_out}"
 mkdir -p "\${subject_data_out}"
 
-subject_tmp="${TMP_PUMI}/tmp/${subject_id}" # Create temporary directory which stores derivatives for one subject
+subject_tmp="\${subject_dir}/tmp/" # Create temporary directory which stores derivatives for one subject
 rm -rf "\${subject_tmp}"
 mkdir -p "\${subject_tmp}"
 
 cp -vr "${subject_folder}" "\${subject_data_in}"
 cp -v "${dataset_description_path}" "\${subject_data_in}"  # Every valid BIDS dataset must contain description (otherwise Nipype raises BIDSValidationError)
 
-pumi_dir=${TMP_PUMI}/PUMI/${subject_id}/
+pumi_dir="\${subject_dir}/PUMI/"
 rm -rf \${pumi_dir}
 mkdir -p \${pumi_dir}  # Create folder in which we clone PUMI into (and parent folders if necessary)
 
-mkdir -p ${TMP_PUMI}/apptainer_image/${subject_id}/
-cp ${SIF_PATH} ${TMP_PUMI}/apptainer_image/${subject_id}/PUMI.sif
+apptainer_image_dir="\${subject_dir}/apptainer_image/"
+apptainer_image="\${apptainer_image_dir}/PUMI.sif"
+mkdir -p "\${apptainer_image_dir}"
+cp ${SIF_PATH} "\${apptainer_image}"
 
-subject_apptainer_cache_dir=${TMP_PUMI}/apptainer_cache/${subject_id}/
+subject_apptainer_cache_dir="\${subject_dir}/apptainer_app_cache/"
 rm -rf \${subject_apptainer_cache_dir}
 mkdir -p \${subject_apptainer_cache_dir}
 
 APPTAINER_CACHEDIR=\${subject_apptainer_cache_dir} \
 apptainer exec \
 --writable-tmpfs \
-${TMP_PUMI}/apptainer_image/${subject_id}/PUMI.sif \
+\${apptainer_image} \
 bash -c " \
 set -x; \
 git clone -b ${BRANCH} https://github.com/pni-lab/PUMI \${pumi_dir}; \
@@ -163,12 +167,7 @@ cp -vr \${subject_data_out}/* ${OUTDIR}/
 
 
 # Remove (most) files from cluster
-rm -rf "\${subject_data_in}"
-rm -rf "\${subject_data_out}"
-rm -rf "\${subject_tmp}"
-rm -rf "\${subject_apptainer_cache_dir}"
-rm -rf "${TMP_PUMI}/apptainer_image/${subject_id}"
-rm -rf "\${pumi_dir}"
+rm -rf "\${subject_dir}"
 
 echo "*************************************************************"
 echo "Ended on \$(hostname) at \$(date +"%T")"
