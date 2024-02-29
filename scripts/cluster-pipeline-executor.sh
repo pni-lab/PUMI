@@ -167,6 +167,8 @@ rm -rf "\${subject_data_in}"
 rm -rf "\${subject_data_out}"
 rm -rf "\${subject_tmp}"
 rm -rf "\${subject_apptainer_cache_dir}"
+rm -rf "${TMP_PUMI}/apptainer_image/${subject_id}"
+rm -rf "\${pumi_dir}"
 
 echo "*************************************************************"
 echo "Ended on \$(hostname) at \$(date +"%T")"
