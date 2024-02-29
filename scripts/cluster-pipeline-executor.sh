@@ -30,7 +30,7 @@ while getopts 'i:o:t:l:p:r:m:n:b:d:c:s:h' opt; do
     ?|h)
       echo "-i      Input BIDS dataset"
       echo "-o      Derivatives dir (i.e., where to store the results)"
-      echo "-t      Where to store temporary PUMI workflow files on the cluster (MUST BE SOMEWHERE IN /tmp !)"
+      echo "-t      Where to store temporary PUMI workflow files on the cluster (MUST BE SOMEWHERE IN /local !)"
       echo "-l      NFS directory that should be used to store the Slurm log files (+ Apptainer SIF file)"
       echo "-p      PUMI pipeline you want to run (default: '${PIPELINE}')"
       echo "-r      Nipype plugin params to limit resource usage (default: '${RESOURCES}')"
