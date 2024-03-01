@@ -68,9 +68,13 @@ if [ -z "${INDIR}" ] || [ -z "${OUTDIR}" ] || [ -z "${TMP_PUMI}" ] || [ -z "${LO
   exit 1
 fi
 
-if [[ "${TMP_PUMI}" != "/local/*" ]]; then
+if [[ "${TMP_PUMI}" == /local/* ]];
+then
+  echo "-t was specified to a sub-directory in /local. Great!"
+else
   echo "Error: -t must be set to a sub-directory in /local/"
   exit 1
+
 fi
 
 ############################# Main script begins here #########################################
