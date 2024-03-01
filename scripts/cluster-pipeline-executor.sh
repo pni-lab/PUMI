@@ -30,7 +30,7 @@ while getopts 'i:o:t:l:p:r:m:n:b:d:c:s:h' opt; do
     ?|h)
       echo "-i      Input BIDS dataset"
       echo "-o      Derivatives dir (i.e., where to store the results)"
-      echo "-t      Where to store temporary PUMI workflow files on the cluster (MUST BE SOMEWHERE IN /local !)"
+      echo "-t      Where to store temporary PUMI workflow files on the worker nodes (MUST BE an absolute path somewhere in /local/)"
       echo "-l      NFS directory that should be used to store the Slurm log files (+ Apptainer SIF file)"
       echo "-p      PUMI pipeline you want to run (default: '${PIPELINE}')"
       echo "-r      Nipype plugin params to limit resource usage (default: '${RESOURCES}')"
@@ -65,6 +65,11 @@ echo "--------------------------------------------------------------------"
 if [ -z "${INDIR}" ] || [ -z "${OUTDIR}" ] || [ -z "${TMP_PUMI}" ] || [ -z "${LOG_PATH}" ]; then
   echo "Error: Options -i, -o, -t and -l must be provided!"
   echo "You can call this software with the -h option to get information regarding the available options."
+  exit 1
+fi
+
+if [[ "${TMP_PUMI}" != "/local/*" ]]; then
+  echo "Error: -t must be set to a sub-directory in /local/"
   exit 1
 fi
 
