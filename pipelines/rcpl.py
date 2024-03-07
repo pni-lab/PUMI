@@ -2,7 +2,8 @@
 
 from nipype.interfaces.fsl import Reorient2Std
 from nipype.interfaces import afni
-from PUMI.engine import BidsPipeline, NestedNode as Node, FuncPipeline, GroupPipeline, BidsApp
+from PUMI.engine import BidsPipeline, NestedNode as Node, FuncPipeline, GroupPipeline, BidsApp, \
+    create_dataset_description
 from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import func2anat
@@ -12,7 +13,6 @@ from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeser
 from PUMI.utils import mist_modules, mist_labels, get_reference
 from PUMI.pipelines.func.func2standard import func2standard
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume
-from PUMI.engine import save_software_versions
 import traits
 import os
 
@@ -446,7 +446,7 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(predict_pain_sensitivity_rcpl_wf, 'out_file', collect_pain_predictions_wf, 'rcpl_out_file')
 
     wf.write_graph('RCPL-pipeline.png')
-    save_software_versions(wf)
+    create_dataset_description(wf, pipeline_description_name='RCPL-pipeline')
 
 
 rcpl_app = BidsApp(
