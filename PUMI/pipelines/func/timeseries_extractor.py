@@ -23,7 +23,7 @@ def extract_timeseries_nativespace_qc(wf, **kwargs):
     wf.connect('inputspec', 'timeseries', qc_timeseries, 'timeseries')
     wf.connect('inputspec', 'atlas', qc_timeseries, 'atlas')
     wf.connect('inputspec', 'modules', qc_timeseries, 'modules')
-    wf.connect(qc_timeseries, 'plotfile', 'sinker', 'regTimeseriesQC')
+    wf.connect(qc_timeseries, 'plotfile', 'sinker', 'qc_timeseries')
 
 
 @FuncPipeline(inputspec_fields=['atlas', 'labels', 'modules', 'anat', 'inv_linear_reg_mtrx', 'inv_nonlinear_reg_mtrx',

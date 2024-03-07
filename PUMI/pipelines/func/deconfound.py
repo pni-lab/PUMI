@@ -44,6 +44,7 @@ def fieldmap_correction_qc(wf, volume='middle', **kwargs):
 
         path = str(Path(os.getcwd() + '/fieldmap_correction_comparison.png'))
         plt.savefig(path)
+        plt.close(fig)
         return path
 
     vol_1 = pick_volume('vol_1', volume=volume)
