@@ -366,11 +366,13 @@ def collect_pain_predictions(wf, **kwargs):
 @BidsPipeline(output_query={
     'T1w': dict(
         datatype='anat',
+        session='01',
         suffix="T1w",
         extension=['nii', 'nii.gz']
     ),
     'bold': dict(
         datatype='func',
+        session='01',
         suffix="bold",
         extension=['nii', 'nii.gz']
     )
