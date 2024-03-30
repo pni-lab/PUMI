@@ -372,7 +372,6 @@ def collect_pain_predictions(wf, **kwargs):
     'bold': dict(
         datatype='func',
         suffix="bold",
-        task="rest",
         extension=['nii', 'nii.gz']
     )
 })
