@@ -453,7 +453,7 @@ def rcpl(wf, bbr=True, **kwargs):
 rcpl_app = BidsApp(
     pipeline=rcpl,
     name='rcpl',
-    bids_dir='../data_in/ds003346'  # if you pass a cli argument this will be written over!
+    bids_dir='../data_in/ds004109'  # if you pass a cli argument this will be written over!
 )
 rcpl_app.parser.add_argument(
     '--bbr',
