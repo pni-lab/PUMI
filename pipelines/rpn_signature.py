@@ -240,10 +240,12 @@ def collect_predictions(wf):
     'T1w': dict(
         datatype='anat',
         suffix="T1w",
+        run='01',
         extension=['nii', 'nii.gz']
     ),
     'bold': dict(
         datatype='func',
+        run='01',
         suffix="bold",
         extension=['nii', 'nii.gz']
     )
