@@ -367,11 +367,13 @@ def collect_pain_predictions(wf, **kwargs):
     'T1w': dict(
         datatype='anat',
         suffix="T1w",
+        run='01',
         extension=['nii', 'nii.gz']
     ),
     'bold': dict(
         datatype='func',
         suffix="bold",
+        run='01',
         extension=['nii', 'nii.gz']
     )
 })
