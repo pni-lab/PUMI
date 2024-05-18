@@ -118,7 +118,7 @@ echo "*************************************************************"
 echo "Starting on \$(hostname) at \$(date +"%T")"
 echo "*************************************************************"
 
-subject_dir="${TMP_PUMI}/${subject_id}/"
+subject_dir="${TMP_PUMI}/${subject_id}"
 
 subject_data_in="\${subject_dir}/input/" # Create temporary directory which stores BIDS data for one subject
 rm -rf "\${subject_data_in}"
@@ -132,8 +132,8 @@ subject_tmp="\${subject_dir}/tmp/" # Create temporary directory which stores der
 rm -rf "\${subject_tmp}"
 mkdir -p "\${subject_tmp}"
 
-cp -vr "${subject_folder}" "\${subject_data_in}"
-cp -v "${dataset_description_path}" "\${subject_data_in}"  # Every valid BIDS dataset must contain description (otherwise Nipype raises BIDSValidationError)
+rsync -a --copy-links "${subject_folder}" "\${subject_data_in}"
+rsync -a --copy-links "${dataset_description_path}" "\${subject_data_in}"  # Every valid BIDS dataset must contain description (otherwise Nipype raises BIDSValidationError)
 
 pumi_dir="\${subject_dir}/PUMI/"
 rm -rf \${pumi_dir}
