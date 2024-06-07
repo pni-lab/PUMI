@@ -14,7 +14,7 @@ from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeser
 from PUMI.utils import mist_modules, mist_labels, get_reference
 from PUMI.pipelines.func.func2standard import func2standard
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume
-from PUMI.engine import save_software_versions
+from PUMI.engine import create_dataset_description
 import traits
 import os
 
@@ -453,7 +453,7 @@ def hcp(wf, bbr=True, **kwargs):
     wf.connect(predict_pain_sensitivity_rcpl_wf, 'out_file', collect_pain_predictions_wf, 'rcpl_out_file')
 
     wf.write_graph('HCP-pipeline.png')
-    save_software_versions(wf)
+    create_dataset_description(wf, pipeline_description_name='HCP-LR-pipeline')
 
 
 hcp_app = BidsApp(
