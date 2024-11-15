@@ -3,6 +3,7 @@ import nipype.interfaces.fsl as fsl
 import nipype.interfaces.ants as ants
 from PUMI.engine import NestedNode as Node
 from PUMI.pipelines.anat.anat2mni import anat2mni_fsl, anat2mni_ants_hardcoded
+from PUMI.pipelines.multimodal.masks import create_ventricle_mask
 from PUMI.pipelines.anat.segmentation import bet_fsl, tissue_segmentation_fsl, bet_hd, bet_deepbet
 from PUMI.engine import AnatPipeline
 from PUMI.utils import get_reference
@@ -70,11 +71,27 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     else:
         raise ValueError('reg_tool can be \'ANTS\' or \'FSL\' but not ' + reg_tool)
 
+    # Handle ventricle mask logic
+    ventricle_mask = wf.cfg_parser.get('TEMPLATES', 'ventricle_mask', fallback='')
+    csf_probseg = wf.cfg_parser.get('TEMPLATES', 'csf_probseg', fallback='')
 
-    # resample 2mm-std ventricle to the actual standard space
-    resample_std_ventricle = Node(interface=afni.Resample(outputtype='NIFTI_GZ',
-                                                          in_file=get_reference(wf, 'ventricle_mask')),
-                                  name='resample_std_ventricle')
+    if ventricle_mask:
+        resample_std_ventricle = Node(
+            interface=afni.Resample(outputtype='NIFTI_GZ', in_file=get_reference(wf, 'ventricle_mask')),
+            name='resample_std_ventricle'
+        )
+    elif csf_probseg:
+        create_ventricle_mask_wf = create_ventricle_mask(name='create_ventricle_mask_wf')
+        create_ventricle_mask_wf.get_node('inputspec').inputs.csf_probseg = get_reference(wf, 'csf_probseg')
+        create_ventricle_mask_wf.get_node('inputspec').inputs.template = get_reference(wf, 'brain')
+
+        resample_std_ventricle = Node(
+            interface=afni.Resample(outputtype='NIFTI_GZ'),
+            name='resample_std_ventricle'
+        )
+        wf.connect(create_ventricle_mask_wf, 'out_file', resample_std_ventricle, 'in_file')
+    else:
+        raise ValueError("Either 'ventricle_mask' or 'csf_probseg' must be specified in settings.ini!")
 
     # transform std ventricle mask to anat space, applying the invers warping filed
     if reg_tool == 'FSL':
