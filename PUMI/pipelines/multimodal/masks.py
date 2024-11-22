@@ -81,7 +81,6 @@ def create_ventricle_mask(wf, fallback_threshold=0, fallback_dilate_mask=0, **kw
         ValueError: If ventricle labels are not defined in the configuration file.
     """
 
-
     # Load ventricle labels from settings.ini
     ventricle_labels = wf.cfg_parser.get('TEMPLATES', 'ventricle_labels', fallback='')
     ventricle_labels = [int(label) for label in ventricle_labels.replace(' ', '').split(',')]
