@@ -1,3 +1,6 @@
+from multiprocessing.managers import Value
+from pathlib import Path
+
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model import ElasticNet
 from sklearn.pipeline import Pipeline
@@ -147,15 +150,17 @@ def get_fallback_reference(ref_type):
 def get_ref_from_templateflow(query):
     """
     Try to get the specified reference from templateflow and return the absolute path to the file.
-    The schema for the query is 'template/file'.
-    Note: 'tpl-' in the template specification (NOT the file specification!) can be omitted.
+    The schema for the query is either 'template/file' or 'file'.
     Look at the available references at 'https://www.templateflow.org/browse/'
 
-    A possible query would be: 'tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz'
-    Also okay: 'MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz'
+    A possible query would be: 'tpl-MNI152Lin_res-02_T1w.nii.gz'
+    Also okay:
+    - 'tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz'
+    - 'MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz'
+
 
     Parameters:
-        query (str): The query string for the template reference, in the format 'template/file'.
+        query (str): The query string for the template reference, in the format 'template/file' or 'file'.
 
     Returns:
         str: The absolute path to the requested file.
@@ -164,22 +169,42 @@ def get_ref_from_templateflow(query):
         ValueError: If the query format is incorrect.
         Exception: If the specified file is not found in the templateflow archive.
     """
-    # Clean up the path and remove unnecessary parts
-    path = query.lstrip('/')
-    path = path.lstrip('tpl-')
 
-    # Validate schema
-    if path.count('/') != 1:
-        raise ValueError(f'Illegal schema. Please provide your query in the form template/file and not {query}')
+    if query.count('/') == 1:
+        query = query.split('/')[1]
 
-    template_dir, template_file = path.split('/')
-    search_result = map(os.path.abspath, tflow.get(template_dir))
+    components = {}
+    for sub_string in query.split('_'):
 
-    # Find the file in the search result
-    match = next((result for result in search_result if template_file in result), None)
+        if '-' in sub_string:
+            key, value = sub_string.split('-')
 
-    if match:
-        return match
+            if key == 'tpl':
+                components['template'] = value
+            elif key == 'res':
+                components['resolution'] = value
+            else:
+                components[key] = value
+        else:
+            # Handle suffix and extension
+            first_dot_idx = sub_string.index('.')
+            components['suffix'] = sub_string[:first_dot_idx]
+            components['extension'] = sub_string[first_dot_idx:]
+
+    print(f'Generated templateflow search query for {query}: {components}')
+
+    search_result = tflow.get(**components)
+    if isinstance(search_result, list):
+        for path in search_result:
+            if Path(path).name == query:
+                search_result = path
+                break
+
+    if isinstance(search_result, list):
+        raise ValueError(f'{query} is not specific enough and yields multiple results: {search_result}')
+
+    if search_result:
+        return search_result
     else:
         raise Exception(
             f'Could not find the specified file. Are you sure {query} is available in the templateflow archive?'
