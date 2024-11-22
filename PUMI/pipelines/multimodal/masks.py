@@ -2,6 +2,7 @@ from PUMI.engine import QcPipeline, GroupPipeline
 from PUMI.engine import NestedNode as Node
 import nipype.interfaces.fsl as fsl
 from nipype.interfaces.utility import Function
+from PUMI.utils import get_reference
 
 
 @QcPipeline(inputspec_fields=['ventricle_mask', 'template'],
@@ -54,36 +55,79 @@ def qc(wf, **kwargs):
 
 @GroupPipeline(inputspec_fields=['csf_probseg', 'template'],
                outputspec_fields=['out_file'])
-def create_ventricle_mask(wf, fallback_threshold=0.7, **kwargs):
+def create_ventricle_mask(wf, fallback_threshold=0, fallback_dilate_mask=0, **kwargs):
     """
-    Pipeline for creating ventricle masks.
+    Pipeline for generating a ventricle mask based on CSF probability segmentation and an atlas.
+
+    This pipeline generates a ventricle mask by thresholding the CSF probability map,
+    combining it with atlas-defined ventricle labels, and optionally dilating the resulting mask.
 
     Inputs:
         csf_probseg (str): Path to the CSF probability segmentation file.
-        template (str): Path to the template file used as the background for QC images.
+        template (str): Path to the template image file used for QC.
 
     Outputs:
         out_file (str): Path to the generated ventricle mask file.
 
     Parameters:
         wf (Workflow): The workflow object.
-        fallback_threshold (float): Threshold for binarizing the ventricle mask,
-            used only if no threshold is set in settings.ini.
+        fallback_threshold (float, optional): Default threshold for the CSF probability map thresholding.
+            Used if not defined in the settings file (default: 0).
+        fallback_dilate_mask (int, optional): Default dilation value for the ventricle mask.
+            Used if not defined in the settings file (default: 0).
         kwargs (dict): Additional arguments for the workflow.
-    """
-    threshold = float(wf.cfg_parser.get('FSL', 'ImageMaths_ventricle_threshold', fallback=fallback_threshold))
 
-    binary_mask = Node(interface=fsl.ImageMaths(op_string=f'-thr {threshold} -bin'), name='binary_mask')
-    binary_mask.inputs.suffix = 'ventricle_mask'
-    wf.connect('inputspec', 'csf_probseg', binary_mask, 'in_file')
+    Raises:
+        ValueError: If ventricle labels are not defined in the configuration file.
+    """
+
+
+    # Load ventricle labels from settings.ini
+    ventricle_labels = wf.cfg_parser.get('TEMPLATES', 'ventricle_labels', fallback='')
+    ventricle_labels = [int(label) for label in ventricle_labels.replace(' ', '').split(',')]
+    if len(ventricle_labels) == 0:
+        raise ValueError('You need to define ventricle labels in settings.ini!')
+
+    # Threshold ventricle labels individually
+    threshold_nodes = []
+    atlas = get_reference(wf, 'atlas')
+
+    for label in ventricle_labels:
+        node = Node(fsl.ImageMaths(op_string=f"-thr {label} -uthr {label} -bin"), name=f'threshold_ventricle_{label}')
+        node.inputs.in_file = atlas
+        wf.add_nodes([node])
+        threshold_nodes.append(node)
+
+    # Use MultiImageMaths to combine all ventricle masks using -max
+    combine_ventricles_op_string = " ".join(["-add %s"] * (len(threshold_nodes) - 1))
+    combine_ventricles = Node(fsl.MultiImageMaths(op_string=combine_ventricles_op_string), name='combine_ventricles')
+    wf.connect(threshold_nodes[0], 'out_file', combine_ventricles, 'in_file')
+    for n in threshold_nodes[1:]:
+        wf.connect(n, 'out_file', combine_ventricles, 'operand_files')
+
+    # Dilate ventricle mask
+    dilate_mask_value = int(wf.cfg_parser.get('FSL', 'ImageMaths_dilate_ventricle_mask', fallback=fallback_dilate_mask))
+    dilate_mask_op_string = '-dilM ' * dilate_mask_value + '-bin'
+    dilate_ventricle_mask = Node(fsl.ImageMaths(op_string=dilate_mask_op_string), name='dilate_ventricle_mask')
+    wf.connect(combine_ventricles, 'out_file', dilate_ventricle_mask, 'in_file')
+
+    # Threshold CSF probability map
+    threshold = float(wf.cfg_parser.get('FSL', 'ImageMaths_ventricle_threshold', fallback=fallback_threshold))
+    threshold_csf = Node(fsl.ImageMaths(op_string=f'-thr {threshold} -bin'), name='threshold_csf')
+    wf.connect('inputspec', 'csf_probseg', threshold_csf, 'in_file')
+
+    # Multiply the combined ventricle mask with the CSF mask
+    combine_csf_ventricles = Node(fsl.MultiImageMaths(op_string='-mul %s'), name='combine_csf_ventricles')
+    wf.connect(threshold_csf, 'out_file', combine_csf_ventricles, 'in_file')
+    wf.connect(dilate_ventricle_mask, 'out_file', combine_csf_ventricles, 'operand_files')
 
     # QC
     qc_create_ventricle_mask = qc(name='qc_create_ventricle_mask', qc_dir=wf.qc_dir)
-    wf.connect(binary_mask, 'out_file', qc_create_ventricle_mask, 'ventricle_mask')
+    wf.connect(combine_csf_ventricles, 'out_file', qc_create_ventricle_mask, 'ventricle_mask')
     wf.connect('inputspec', 'template', qc_create_ventricle_mask, 'template')
 
     # Sinking
-    wf.connect(binary_mask, 'out_file', 'sinker', 'create_ventricle_mask')
+    wf.connect(combine_csf_ventricles, 'out_file', 'sinker', 'create_ventricle_mask')
 
-    # Output
-    wf.connect(binary_mask, 'out_file', 'outputspec', 'out_file')
+    # Outputspec
+    wf.connect(combine_csf_ventricles, 'out_file', 'outputspec', 'out_file')
