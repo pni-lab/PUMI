@@ -1,4 +1,4 @@
-from PUMI.engine import AnatPipeline, QcPipeline
+from PUMI.engine import QcPipeline
 from PUMI.interfaces.HDBet import HDBet
 from PUMI.utils import create_segmentation_qc
 from nipype.interfaces import fsl
@@ -322,11 +322,6 @@ def tissue_segmentation_fsl(wf, priormap=True, **kwargs):
 
      """
 
-    if priormap:
-        priorprob_csf = os.path.join(os.environ['FSLDIR'], '/data/standard/tissuepriors/avg152T1_csf.hdr')
-        priorprob_gm = os.path.join(os.environ['FSLDIR'], '/data/standard/tissuepriors/avg152T1_gray.hdr')
-        priorprob_wm = os.path.join(os.environ['FSLDIR'], '/data/standard/tissuepriors/avg152T1_white.hdr')
-
     fast = Node(interface=fsl.FAST(), name='fast')
     fast.inputs.img_type = 1
     fast.inputs.segments = True
@@ -355,9 +350,6 @@ def tissue_segmentation_fsl(wf, priormap=True, **kwargs):
     wf.connect(split_probability_maps, 'out3', 'sinker', 'fast_wm')
 
     # output
-    wf.get_node('outputspec').inputs.probmap_csf = priorprob_csf
-    wf.get_node('outputspec').inputs.probmap_gm = priorprob_gm
-    wf.get_node('outputspec').inputs.probmap_wm = priorprob_wm
     wf.connect(fast, 'mixeltype', 'outputspec', 'mixeltype')
     wf.connect(fast, 'partial_volume_map', 'outputspec', 'partial_volume_map')
     wf.connect(split_probability_maps, 'out1', 'outputspec', 'probmap_csf')
