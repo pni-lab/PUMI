@@ -3,7 +3,7 @@ from nipype.interfaces.fsl import Reorient2Std
 from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.engine import NestedWorkflow as Workflow
 from PUMI.engine import NestedNode as Node
-from PUMI.pipelines.anat.func_to_anat import bbr
+from PUMI.pipelines.anat.func_to_anat import func2anat
 from nipype.interfaces import BIDSDataGrabber
 from nipype.utils.filemanip import list_to_filename
 import os
@@ -65,7 +65,7 @@ wf.connect(path_extractor_func, 'out_file', reorient_func, 'in_file')
 anat_proc = anat_proc('brain_extraction')
 wf.connect(reorient_anat, 'out_file', anat_proc, 'in_file')
 
-bbr = bbr('bbr')
+bbr = func2anat('func2anat')
 wf.connect(reorient_func, 'out_file', bbr, 'func')
 wf.connect(anat_proc, 'brain', bbr, 'head')  # todo: rename head to brain if everytime brain should be passed
 wf.connect(anat_proc, 'probmap_wm', bbr, 'anat_wm_segmentation')

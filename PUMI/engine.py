@@ -1,17 +1,20 @@
-import os
-from glob import glob
-import warnings
+import argparse
 from configparser import SafeConfigParser
-
+from pathlib import Path
+from PUMI._version import get_versions
 from nipype.pipeline.engine.workflows import *
 from nipype.pipeline.engine.nodes import *
 import nipype.interfaces.utility as utility
 from nipype.interfaces import BIDSDataGrabber
 from nipype.interfaces.io import DataSink
-from nipype import IdentityInterface, Function
+from nipype import Function
 from nipype.utils.filemanip import list_to_filename
 from hashlib import sha1
 import re
+import ast
+from PUMI import globals
+import subprocess
+import json
 
 
 def _parameterization_dir(param):
@@ -168,29 +171,23 @@ class PumiPipeline:
 
         from functools import wraps
 
-        @wraps(pipeline_fun) # So that decorated functions can be documented properly
+        @wraps(pipeline_fun)  # So that decorated functions can be documented properly
         def wrapper(name, base_dir='.', sink_dir=None, qc_dir=None, **kwargs):
 
-            cfg_parser = SafeConfigParser()
-            cfg_parser.read(os.path.join(os.path.dirname(__file__), 'settings.ini'))
-
             if sink_dir is None:
-                default_sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
-                if default_sink_dir.startswith('/'):
-                    sink_dir = default_sink_dir
-                else:
-                    sink_dir = os.path.abspath(default_sink_dir)
+                sink_dir = globals.cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
+                if not sink_dir.startswith('/'):
+                    sink_dir = os.path.abspath(sink_dir)
+
             if qc_dir is None:
-                default_qc_dir = cfg_parser.get('SINKING', 'qc_dir', fallback='derivatives/qc')
-                if default_qc_dir.startswith('/'):
-                    qc_dir = default_qc_dir
-                else:
-                    qc_dir = os.path.abspath(default_qc_dir)
+                qc_dir = globals.cfg_parser.get('SINKING', 'qc_dir', fallback='qc')
+                if not qc_dir.startswith('/'):
+                    qc_dir = os.path.abspath(os.path.join(sink_dir, qc_dir))
 
             wf = NestedWorkflow(name, base_dir)
             wf.sink_dir = sink_dir
             wf.qc_dir = qc_dir
-            wf.cfg_parser = cfg_parser
+            wf.cfg_parser = globals.cfg_parser
 
             if len(self.inputspec_fields) != 0:
                 inputspec = NestedNode(
@@ -303,8 +300,12 @@ class GroupPipeline(PumiPipeline):
         regexp_sub = [] if regexp_sub is None else regexp_sub
         substitutions = []
 
+        cfg_parser = SafeConfigParser()
+        cfg_parser.read('settings.ini')
+
+        sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
         if default_regexp_sub:
-            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>\g<3>')]
+            substitutions = [(r'(.*\/)([^\/]+)\/([^\/]+)$', r'\g<1>//group/\g<2>/\g<3>')]
 
         substitutions.extend(regexp_sub)
         super().__init__(inputspec_fields, outputspec_fields, substitutions)
@@ -333,6 +334,7 @@ class BidsPipeline(PumiPipeline):
             self.output_query = {
                 'T1w': dict(
                     datatype='anat',
+                    suffix='T1w',
                     extension=['nii', 'nii.gz']
                 ),
                 #'rest': dict(   # todo: how to get rests only
@@ -368,38 +370,25 @@ class BidsPipeline(PumiPipeline):
 
             # default: multiproc
             if run_args is None:
-                run_args = {'plugin':'MultiProc'}
-
-            cfg_parser = SafeConfigParser()
-            cfg_parser.read(os.path.join(os.path.dirname(__file__), 'settings.ini'))
+                run_args = {'plugin': 'MultiProc'}
 
             if sink_dir is None:
-                default_sink_dir = cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
-                if default_sink_dir.startswith('/'):
-                    sink_dir = default_sink_dir
-                else:
-                    sink_dir = os.path.abspath(os.path.join(base_dir, default_sink_dir))
-            else:
-                # Set default sink dir globally
-                # todo: implement override in configparser?
-                warnings.warn('Setting global sink_dir: Not yet implemented!\nModify settings.ini instead.')
+                sink_dir = globals.cfg_parser.get('SINKING', 'sink_dir', fallback='derivatives')
+            if not sink_dir.startswith('/'):
+                sink_dir = os.path.abspath(sink_dir)
+            globals.cfg_parser.set('SINKING', 'sink_dir', sink_dir)
 
             if qc_dir is None:
-                default_qc_dir = cfg_parser.get('SINKING', 'qc_dir', fallback='derivatives/qc')
-                if default_qc_dir.startswith('/'):
-                    qc_dir = default_qc_dir
-                else:
-                    qc_dir = os.path.abspath(default_qc_dir)
-            else:
-                # Set default qc dir globally
-                # todo: implement override in configparser?
-                warnings.warn('Setting global qc_dir: Not yet implemented!\nModify settings.ini instead.')
+                qc_dir = globals.cfg_parser.get('SINKING', 'qc_dir', fallback='qc')
+            if not qc_dir.startswith('/'):
+                qc_dir = os.path.abspath(os.path.join(sink_dir, qc_dir))
+            globals.cfg_parser.set('SINKING', 'qc_dir', qc_dir)
 
             # main workflow
             wf = NestedWorkflow(name, base_dir)
             wf.sink_dir = sink_dir
             wf.qc_dir = qc_dir
-            wf.cfg_parser = cfg_parser
+            wf.cfg_parser = globals.cfg_parser
 
             # instead of inputspec, we need a bidsgrabber
 
@@ -464,3 +453,284 @@ class BidsPipeline(PumiPipeline):
             return wf
 
         return wrapper
+
+
+class BidsApp:
+
+    def __init__(self, pipeline, name, bids_dir=None, output_dir=None, analysis_level=None, participant_label=None,
+                 working_dir='.', run_args=None, description=None, **kwargs):
+
+        if description is None:
+            self.parser = argparse.ArgumentParser()
+        else:
+            self.parser = argparse.ArgumentParser(description=description)
+
+        self.parser.add_argument(
+            '--bids_dir',
+            required=False,  # It's not required to supply agument via CLI, via BidsApp constructor is also fine!
+            help='Root directory of the BIDS-compliant input dataset.'
+        )
+
+        self.parser.add_argument(
+            '--output_dir',
+            required=False,  # Not required to give via CLI, also possible to pass parameter via BidsApp constructor
+            help='Directory where the results will be stored.'
+        )
+
+        self.parser.add_argument(
+            '--analysis_level',
+            required=False,
+            choices=['participant'],
+            help='Level of the analysis that will be performed. Default is participant.'
+
+        )
+
+        self.parser.add_argument(
+            '--participant_label',
+            required=False,
+            help='Space delimited list of participant-label(s) (e.g. "001 002 003"). '
+                 'Perform the tool on the given participants or if this parameter is not '
+                 'provided then perform the procedure on all subjects.',
+            nargs="+"
+        )
+
+        self.parser.add_argument(
+            '--version',
+            action='version',
+            version='Version {}'.format(get_versions()['version']),
+            help='Print version of PUMI'
+        )
+
+        self.parser.add_argument(
+            '--working_dir',
+            type=str,
+            help='Directory where temporary data will be stored. Default is the current working directory.'
+        )
+
+        self.parser.add_argument(
+            '--plugin',
+            type=str,
+            help='Nipype plugin (e.g. MultiProc, Slurm). If not set, MultiProc is used.'
+        )
+
+        self.parser.add_argument(
+            '--n_procs',
+            type=int,
+            help='Amount of threads to execute in parallel. If not set, the amount of CPU cores is used.'
+                 'Caution: Does only work with the MultiProc-plugin!')
+
+        self.parser.add_argument(
+            '--memory_gb',
+            type=int,
+            help='Memory limit in GB. If not set, use 90 percent of the available memory'
+                 'Caution: Does only work with the MultiProc-plugin!')
+
+        self.parser.add_argument(
+            '--plugin_args',
+            type=str,
+            help='Nipype plugin arguments in dictionary format encapsulated in a string (e. g. "{\'memory_gb\': 6})"'
+                 'Caution: If you set --plugin_args, you must also set --plugin1'
+                 'If you specified --n_procs or --memory_gb outside of your --plugin_args specification, then it will '
+                 'be ignored!'
+        )
+
+        self.pipeline = pipeline  # mandatory via script
+        self.name = name  # mandatory via script
+        self.bids_dir = bids_dir
+        self.output_dir = output_dir
+        self.analysis_level = analysis_level
+        self.participant_label = participant_label
+        self.working_dir = working_dir
+        self.kwargs = kwargs
+
+        if run_args is None:
+            self.run_args = {}
+        else:
+            self.run_args = run_args
+
+    def run(self):
+
+        cli_args = self.parser.parse_args()
+        cli_args_dict = vars(cli_args)
+
+        # We need to extract the pipeline specific arguments like 'brr'.
+        # We have a list of arguments that are BidsApp or nipype related.
+        # If an argument is not in that list then it's such a pipeline specific argument.
+        not_pipeline_specific = [
+            'help',
+            'bids_dir',
+            'output_dir',
+            'analysis_level',
+            'participant_label',
+            'version',
+            'working_dir',
+            'plugin',
+            'plugin_args',
+            'n_procs',
+            'memory_gb'
+        ]
+
+        pipeline_specific_arguments = {}
+        for key in cli_args_dict:
+            if key in not_pipeline_specific:
+                continue
+            else:
+                pipeline_specific_arguments[key] = cli_args_dict[key]
+
+        # Now we extract the nipype runtime arguments.
+        # We prioritize arguments given via CLI. If an argument is not provided via CLI, check if it's provided via
+        # the BidsApp constructor. If this is also not the case, use default of nipype or own specify own default value.
+
+        if cli_args.plugin_args is not None:
+            # If plugin_args was specified via CLI then we don't have to search for any other nipype running arguments
+            # We just have to check that --plugin was also specified.
+            if cli_args.plugin is None:
+                raise ValueError('Error: If you specify --plugin_args, then you must also specify --plugin')
+            plugin_args_dict = ast.literal_eval(cli_args.plugin_args)
+            self.run_args = {'plugin': cli_args.plugin, 'plugin_args': plugin_args_dict}
+        else:
+            if cli_args.plugin is not None:  # parameter specified via CLI
+                self.run_args['plugin'] = cli_args.plugin
+            elif 'plugin' not in self.run_args:  # parameter not specified via CLI or BidsApp constructor
+                self.run_args['plugin'] = 'MultiProc'  # we have to use a default value
+
+            if self.run_args['plugin'] == 'MultiProc':
+
+                if 'plugin_args' not in self.run_args:  # plugin_args also not set via constructor (nor CLI as we know)
+                    self.run_args['plugin_args'] = {}
+
+                if cli_args.n_procs is not None:
+                    self.run_args['plugin_args']['n_procs'] = cli_args.n_procs
+                # No problem if it's not set via CLI or BidsApp constructor. Nipype will handle this!
+
+                if cli_args.memory_gb is not None:
+                    self.run_args['plugin_args']['memory_gb'] = cli_args.memory_gb
+                # Also not a problem if not set! Nipype will deal with this!
+
+        if (cli_args.bids_dir is None) and (self.bids_dir is None):
+            raise ValueError('The argument "bids_dir" has to be set!')
+        else:
+            self.bids_dir = cli_args.bids_dir if (cli_args.bids_dir is not None) else self.bids_dir
+
+        # Use specification from CLI if available. Otherwise, use the specification from the BidsApp-constructor.
+        # If output_dir is None, BidsApp and PumiPipeline are going to read the location from settings.ini
+        self.output_dir = cli_args.output_dir if (cli_args.output_dir is not None) else self.output_dir
+        self.participant_label = cli_args.participant_label if (cli_args.participant_label is not None) else self.participant_label
+        self.working_dir = cli_args.working_dir if (cli_args.working_dir is not None) else self.working_dir
+
+        # todo: integrate analysis_level
+
+        self.pipeline(
+            self.name,
+            bids_dir=self.bids_dir,
+            sink_dir=self.output_dir,
+            base_dir=self.working_dir,
+            subjects=self.participant_label,
+            run_args=self.run_args,
+            **pipeline_specific_arguments,
+            **self.kwargs
+        )
+
+
+def get_interface_version(interface):
+    """
+
+    Try to get the version number of the underlying tool used in an interface.
+
+    Return None if interface is a nipype in-house interface that does not use external software like FSL.
+    Otherwise, return name of the tool and the version number of the underlying used tool (or 'Unknown' if the
+    version could not be fetched).
+
+    """
+
+    # Nipype provides some in-house interfaces that do not use external software like FSL.
+    # We can exclude modules:
+    NIPYPE_IN_HOUSE_MODULES = [
+        'nipype.algorithms.',
+        'nipype.interfaces.image.',
+        'nipype.interfaces.io.',
+        'nipype.interfaces.mixins.',
+        'nipype.interfaces.utility.'
+    ]
+
+    interface_name = str(type(interface))  # e.g., "<class 'nipype.interfaces.fsl.utils.Reorient2Std'>"
+    interface_name = interface_name.replace("<class \'", "")  # e.g., "nipype.interfaces.fsl.utils.Reorient2Std'>"
+    interface_name = interface_name.replace("\'>", "")  # e.g., "nipype.interfaces.fsl.utils.Reorient2Std"
+    # Let's see if it's a nipype in-house interface
+    for in_house in NIPYPE_IN_HOUSE_MODULES:
+        if in_house in interface_name:
+            return None
+
+    tool_name = interface_name.split('.')[2]  # e.g., 'fsl', 'ants', 'afni'
+
+    try:
+        version = interface.version
+        if version is not None:
+            return tool_name, version
+    except AttributeError:
+        pass
+
+    if 'afni' in interface_name:
+        version_cmd = ['afni', '-ver']
+    elif 'ants' in interface_name:
+        version_cmd = ['antsRegistration', '--version']
+    elif 'c3' in interface_name:
+        version_cmd = ['c3d', '-version']
+    else:
+        return interface_name, 'Unknown'
+
+    try:
+        result = subprocess.run(version_cmd, capture_output=True, text=True)
+        return tool_name, result.stdout.strip()
+    except Exception as e:
+        print(f"Error getting version for {interface_name}: {e}")
+        return tool_name, 'Unknown'
+
+
+def create_dataset_description(wf,
+                               pipeline_description_name,
+                               dataset_description_name='Derivatives created by PUMI',
+                               bids_version='1.9.0'):
+    """
+
+    Create and save dataset description JSON for the derivatives created by PUMI that includes details about the
+    software versions used in the pipeline.
+
+    Parameters:
+        wf (Workflow object): The workflow object.
+        pipeline_description_name (str): Name of the used pipeline (e.g., 'RCPL-Pipeline').
+        dataset_description_name (str, optional): Name for the dataset. Default is 'Derivatives created by PUMI'.
+        bids_version (str, optional): The BIDS version used. Default is '1.9.0'.
+
+    Returns:
+        None. A JSON file is created in the workflow's specified sink directory.
+
+    """
+
+    software_versions = {}
+
+    for node_name in wf.list_node_names():
+        node = wf.get_node(node_name)
+        result = get_interface_version(interface=node.interface)
+
+        if result is None:
+            continue  # We can skip the external-tool-independent nipype in-house interfaces
+        else:
+            interface_name, version = result
+            software_versions[interface_name] = version
+
+    dataset_description_path = Path(wf.sink_dir) / 'dataset_description.json'
+    dataset_description_path.parent.mkdir(parents=True, exist_ok=True)
+
+    dataset_description = {
+        'Name': dataset_description_name,
+        'BIDSVersion': bids_version,
+        'PipelineDescription': {
+            'Name': pipeline_description_name,
+            'Version': get_versions()['version'],
+            'Software': [{'Name': name, 'Version': version} for name, version in software_versions.items()]
+        }
+    }
+
+    with open(dataset_description_path, 'w') as outfile:
+        json.dump(dataset_description, outfile, indent=4)

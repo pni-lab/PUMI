@@ -1,0 +1,264 @@
+# This Dockerfile is written with the help of the output of Neurodocker
+
+FROM debian:buster-slim
+ARG DEBIAN_FRONTEND=noninteractive
+
+LABEL maintainer="Tamas Spisak <tamas.spisak@uk-essen.de>"
+
+ARG NB_USER="pumi"
+ARG NB_UID="1000"
+ARG NB_GID="100"
+
+USER root
+
+# [ROOT] SET UP CONDA:
+
+ENV CONDA_DIR="/opt/miniconda-latest" \
+    PATH="/opt/miniconda-latest/bin:$PATH"
+
+RUN apt-get update --yes && apt-get upgrade --yes && apt-get install --yes --no-install-recommends \
+    git \
+    bzip2 \
+    ca-certificates \
+    curl \
+        && rm -rf /var/lib/apt/lists/* \
+        && export PATH="/opt/miniconda-latest/bin:$PATH" \
+        && echo "Downloading Miniconda installer ..." \
+        && conda_installer="/tmp/miniconda.sh" \
+        && curl -fsSL -o "$conda_installer" https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        && bash "$conda_installer" -b -p /opt/miniconda-latest \
+        && rm -f "$conda_installer" \
+        && conda update -yq -nbase conda \
+        && conda config --system --prepend channels conda-forge \
+        && conda config --set channel_priority strict \
+        && conda config --system --set auto_update_conda false \
+        && conda config --system --set show_channel_urls true \
+        # Enable `conda activate`
+        && conda init bash \
+        && conda install -y  --name base \
+               "python=3.9" \
+        # Clean up
+        && sync && conda clean --all --yes && sync \
+        && rm -rf ~/.cache/pip/*
+
+# **********************************************************************************************************************
+
+# [ROOT] CREATE USER:
+# The following part for the user-creation is adapted from Jupyter Docker Stacks
+# https://github.com/jupyter/docker-stacks/blob/main/docker-stacks-foundation/Dockerfile
+
+ENV HOME="/home/${NB_USER}"
+
+RUN apt-get update --yes && apt-get upgrade --yes && apt-get install --yes --no-install-recommends \
+    bzip2 \
+    ca-certificates \
+    sudo && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN echo "auth requisite pam_deny.so" >> /etc/pam.d/su && \
+    sed -i.bak -e 's/^%admin/#%admin/' /etc/sudoers && \
+    sed -i.bak -e 's/^%sudo/#%sudo/' /etc/sudoers && \
+    useradd -l -m -s /bin/bash -N -u "${NB_UID}" "${NB_USER}" && \
+    mkdir -p "${CONDA_DIR}" && \
+    chown "${NB_USER}:${NB_GID}" "${CONDA_DIR}" && \
+    chmod g+w /etc/passwd
+
+# fix permissions
+RUN chgrp -R "${NB_GID}" "${HOME}" && chmod -R g+rwX "${HOME}" && find "${HOME}" -type d -exec chmod +6000 {} +
+RUN chgrp -R "${NB_GID}" "${CONDA_DIR}" && chmod -R g+rwX "${CONDA_DIR}" && find "${CONDA_DIR}" -type d -exec chmod +6000 {} +
+
+# **********************************************************************************************************************
+
+# [ROOT] INSTALL AFNI:
+
+RUN apt-get update -qq \
+           && apt-get install -y -q --no-install-recommends \
+                  git \
+           && rm -rf /var/lib/apt/lists/*
+ENV PATH="/opt/afni-latest:$PATH" \
+    AFNI_PLUGINPATH="/opt/afni-latest"
+RUN apt-get update -qq \
+    && apt-get install -y -q --no-install-recommends \
+           ca-certificates \
+           curl \
+           ed \
+           gsl-bin \
+           libgl1-mesa-dri \
+           libglib2.0-0 \
+           libglu1-mesa-dev \
+           libglw1-mesa \
+           libgomp1 \
+           libjpeg62 \
+           libxm4 \
+           multiarch-support \
+           netpbm \
+           tcsh \
+           xfonts-base \
+           xvfb \
+    && rm -rf /var/lib/apt/lists/* \
+    && _reproenv_tmppath="$(mktemp -t tmp.XXXXXXXXXX.deb)" \
+    && curl -fsSL --retry 5 -o "${_reproenv_tmppath}" http://mirrors.kernel.org/debian/pool/main/libx/libxp/libxp6_1.0.2-2_amd64.deb \
+    && apt-get install --yes -q "${_reproenv_tmppath}" \
+    && rm "${_reproenv_tmppath}" \
+    && _reproenv_tmppath="$(mktemp -t tmp.XXXXXXXXXX.deb)" \
+    && curl -fsSL --retry 5 -o "${_reproenv_tmppath}" http://snapshot.debian.org/archive/debian-security/20160113T213056Z/pool/updates/main/libp/libpng/libpng12-0_1.2.49-1%2Bdeb7u2_amd64.deb \
+    && apt-get install --yes -q "${_reproenv_tmppath}" \
+    && rm "${_reproenv_tmppath}" \
+    && apt-get update -qq \
+    && apt-get install --yes --quiet --fix-missing \
+    && rm -rf /var/lib/apt/lists/* \
+    && gsl_path="$(find / -name 'libgsl.so.??' || printf '')" \
+    && if [ -n "$gsl_path" ]; then \
+         ln -sfv "$gsl_path" "$(dirname $gsl_path)/libgsl.so.0"; \
+    fi \
+    && ldconfig \
+    && mkdir -p /opt/afni-latest \
+    && echo "Downloading AFNI ..." \
+    && curl -fL https://afni.nimh.nih.gov/pub/dist/tgz/linux_openmp_64.tgz \
+    | tar -xz -C /opt/afni-latest --strip-components 1
+
+# **********************************************************************************************************************
+
+# [ROOT] INSTALL ANTS:
+
+ENV ANTSPATH="/opt/ants-2.3.4/" \
+    PATH="/opt/ants-2.3.4:$PATH"
+RUN apt-get update -qq \
+    && apt-get install -y -q --no-install-recommends \
+           ca-certificates \
+           curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Downloading ANTs ..." \
+    && mkdir -p /opt/ants-2.3.4 \
+    && curl -fsSL https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz \
+    | tar -xz -C /opt/ants-2.3.4 --strip-components 1
+
+# **********************************************************************************************************************
+
+# [ROOT] INSTALL Convert3D:
+
+ENV C3DPATH="/opt/convert3d-1.0.0" \
+    PATH="/opt/convert3d-1.0.0/bin:$PATH"
+
+RUN apt-get update -qq \
+    && apt-get install -y -q --no-install-recommends \
+           ca-certificates \
+           curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Downloading Convert3D ..." \
+    && mkdir -p /opt/convert3d-1.0.0 \
+    && curl -fsSL https://sourceforge.net/projects/c3d/files/c3d/1.0.0/c3d-1.0.0-Linux-x86_64.tar.gz/download \
+    | tar -xz -C /opt/convert3d-1.0.0 --strip-components 1
+
+# **********************************************************************************************************************
+
+# [ROOT] INSTALL FSL:
+
+ENV FSLDIR="/opt/fsl-6.0.1" \
+    PATH="/opt/fsl-6.0.1/bin:$PATH" \
+    FSLOUTPUTTYPE="NIFTI_GZ" \
+    FSLMULTIFILEQUIT="TRUE" \
+    FSLTCLSH="/opt/fsl-6.0.1/bin/fsltclsh" \
+    FSLWISH="/opt/fsl-6.0.1/bin/fslwish" \
+    FSLLOCKDIR="" \
+    FSLMACHINELIST="" \
+    FSLREMOTECALL="" \
+    FSLGECUDAQ="cuda.q"
+RUN apt-get update -qq \
+    && apt-get install -y -q --no-install-recommends \
+           bc \
+           ca-certificates \
+           curl \
+           dc \
+           file \
+           libfontconfig1 \
+           libfreetype6 \
+           libgl1-mesa-dev \
+           libgl1-mesa-dri \
+           libglu1-mesa-dev \
+           libgomp1 \
+           libice6 \
+           libopenblas-base \
+           libxcursor1 \
+           libxft2 \
+           libxinerama1 \
+           libxrandr2 \
+           libxrender1 \
+           libxt6 \
+           nano \
+           sudo \
+           wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Downloading FSL ..." \
+    && mkdir -p /opt/fsl-6.0.1 \
+    && curl -fL https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.1-centos7_64.tar.gz \
+    | tar -xz -C /opt/fsl-6.0.1 --strip-components 1 \
+    && echo "Installing FSL conda environment ..." \
+    && bash /opt/fsl-6.0.1/etc/fslconf/fslpython_install.sh -f /opt/fsl-6.0.1
+
+# **********************************************************************************************************************
+
+USER ${NB_UID}
+
+# [USER] INSTALL REQUIRED PUMI PACKAGES:
+
+RUN conda install -y --name base \
+    "python=3.8" \
+    "networkx<3" \
+    "jupyter" \
+    "jupyterlab" \
+    "jupyter_contrib_nbextensions" \
+    "traits" \
+    "pandas" \
+    "matplotlib" \
+    "scikit-learn==1.1.2" \
+    "scikit-image" \
+    "seaborn" \
+    "nbformat" \
+    "nb_conda" \
+    "numpy" \
+    "scipy" \
+    "numpydoc" \
+    "nbsphinx" \
+    "pytest" \
+    "nipype" \
+    "graphviz" \
+    "nilearn" \
+    "seaborn" \
+    "graphviz" \
+    "nbsphinx" \
+    "pybids" \
+    "poetry" \
+    "poetry-dynamic-versioning" \
+    "dot2tex" \
+    "click"
+
+RUN pip install --no-cache-dir  \
+    "pydeface" \
+    "neurodocker==0.8.0" \
+    "templateflow" \
+    "nipy" \
+    "duecredit" \
+    "nbval" \
+    "datalad[full]" \
+    "git+https://github.com/MIC-DKFZ/HD-BET"
+
+# **********************************************************************************************************************
+
+# [USER] SET WORKDIR & CREATE PUMI OUTPUT DIRECTORY:
+
+WORKDIR "${HOME}"
+
+RUN mkdir -p "${HOME}"/PUMI/data_out
+
+# **********************************************************************************************************************
+
+USER root
+
+# [ROOT] FIX PERMISSIONS:
+
+RUN chgrp -R "${NB_GID}" "${HOME}" && chmod -R g+rwX "${HOME}" && find "${HOME}" -type d -exec chmod +6000 {} +
+
+# **********************************************************************************************************************
+
+USER ${NB_UID}

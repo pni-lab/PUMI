@@ -3,7 +3,7 @@ import nipype.interfaces.fsl as fsl
 import nipype.interfaces.ants as ants
 from PUMI.engine import NestedNode as Node
 from PUMI.pipelines.anat.anat2mni import anat2mni_fsl, anat2mni_ants_hardcoded
-from PUMI.pipelines.anat.segmentation import bet_fsl, tissue_segmentation_fsl, bet_hd
+from PUMI.pipelines.anat.segmentation import bet_fsl, tissue_segmentation_fsl, bet_hd, bet_deepbet
 from PUMI.engine import AnatPipeline
 from PUMI.utils import get_reference
 
@@ -16,15 +16,15 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     """
 
     Performs processing of anatomical images:
-    - brain extraction (with either FSL or HD-BET)
+    - brain extraction (with either FSL, HD-BET or deepbet)
     - tissue type segmentation with FSL
     - spatial standardization (with either FSL or ANTS)
 
-    ATTENTION: Images should be already "reoriented" (e.g. with fsl fslreorient2std)
+    ATTENTION: Images should be already "reoriented" (e.g. with fsl fslreorient2std)!
 
     Parameters:
-        bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL' or 'HD-BET'
-        reg_tool (str): Set to registration tool you want to use. Can be 'FSL' or 'ANTS'
+        bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL', 'HD-BET' or 'deepbet'.
+        reg_tool (str): Set to registration tool you want to use. Can be 'FSL' or 'ANTS'.
 
     Inputs:
         brain (str): Path to the brain which should be segmented.
@@ -56,8 +56,10 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
         bet_wf = bet_fsl('bet_fsl')
     elif bet_tool == 'HD-BET':
         bet_wf = bet_hd('hd-bet')
+    elif bet_tool == 'deepbet':
+        bet_wf = bet_deepbet('deepbet')
     else:
-        raise ValueError('bet_tool can be \'FSL\' or \'HD-BET\' but not ' + bet_tool)
+        raise ValueError('bet_tool can be \'FSL\', \'HD-BET\' or \'deepbet\' but not ' + bet_tool)
 
     tissue_segmentation_wf = tissue_segmentation_fsl('tissue_segmentation_fsl')
 

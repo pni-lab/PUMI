@@ -23,7 +23,7 @@ def extract_timeseries_nativespace_qc(wf, **kwargs):
     wf.connect('inputspec', 'timeseries', qc_timeseries, 'timeseries')
     wf.connect('inputspec', 'atlas', qc_timeseries, 'atlas')
     wf.connect('inputspec', 'modules', qc_timeseries, 'modules')
-    wf.connect(qc_timeseries, 'plotfile', 'sinker', 'regTimeseriesQC')
+    wf.connect(qc_timeseries, 'plotfile', 'sinker', 'qc_timeseries')
 
 
 @FuncPipeline(inputspec_fields=['atlas', 'labels', 'modules', 'anat', 'inv_linear_reg_mtrx', 'inv_nonlinear_reg_mtrx',
@@ -36,14 +36,12 @@ def extract_timeseries_nativespace(wf, global_signal=True, **kwargs):
 
     # transform atlas back to native EPI spaces!
     atlas2native = atlas2func('atlas2native', stdreg='ants')
-    wf.connect('inputspec', 'atlas', atlas2native, 'inputspec.atlas')
-    wf.connect('inputspec', 'anat', atlas2native, 'inputspec.anat')
+    wf.connect('inputspec', 'atlas', atlas2native, 'atlas')
+    wf.connect('inputspec', 'anat', atlas2native, 'anat')
     wf.connect('inputspec', 'inv_linear_reg_mtrx', atlas2native, 'inv_linear_reg_mtrx')
     wf.connect('inputspec', 'inv_nonlinear_reg_mtrx', atlas2native, 'inv_nonlinear_reg_mtrx')
     wf.connect('inputspec', 'func', atlas2native, 'func')
     wf.connect('inputspec', 'gm_mask', atlas2native, 'example_func')
-    wf.connect('inputspec', 'confounds', atlas2native, 'confounds')
-    wf.connect('inputspec', 'confound_names', atlas2native, 'confound_names')
 
     # extract timeseries
     extract_timeseries = Node(interface=utility.Function(input_names=['labels', 'labelmap', 'func', 'mask', 'global_signal'],
@@ -51,7 +49,7 @@ def extract_timeseries_nativespace(wf, global_signal=True, **kwargs):
                                                          function=TsExtractor),
                                      name='extract_timeseries')
     extract_timeseries.inputs.global_signal = global_signal
-    wf.connect(atlas2native, 'atlas2func', extract_timeseries, 'labelmap')
+    wf.connect(atlas2native, 'out_file', extract_timeseries, 'labelmap')
     wf.connect('inputspec', 'labels', extract_timeseries, 'labels')
     wf.connect('inputspec', 'gm_mask', extract_timeseries, 'mask')
     wf.connect('inputspec', 'func', extract_timeseries, 'func')
