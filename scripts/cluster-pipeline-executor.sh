@@ -150,7 +150,6 @@ mkdir -p \${subject_apptainer_cache_dir}
 
 APPTAINER_CACHEDIR=\${subject_apptainer_cache_dir} \
 apptainer exec \
---writable-tmpfs \
 \${apptainer_image} \
 bash -c " \
 set -x; \
