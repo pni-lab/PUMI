@@ -45,16 +45,16 @@ def fieldmap_correction_qc(wf, volume='first', **kwargs):
         # nearest integer value!
         return slices
 
-    def create_montage(vol_1, vol_2, vol_corrected, n_slices=10):
+    def create_montage(vol_main, vol_fmap, vol_corrected, n_slices=10):
         from matplotlib import pyplot as plt
         from pathlib import Path
         from nilearn import plotting
 
         fig, axes = plt.subplots(3, 1, facecolor='black', figsize=(10, 15))
 
-        plotting.plot_anat(vol_1, display_mode='y', cut_coords=get_cut_cords(vol_1, n_slices=n_slices),
+        plotting.plot_anat(vol_main, display_mode='y', cut_coords=get_cut_cords(vol_main, n_slices=n_slices),
                            title='Image #1', black_bg=True, axes=axes[0])
-        plotting.plot_anat(vol_2, display_mode='y', cut_coords=get_cut_cords(vol_2, n_slices=n_slices),
+        plotting.plot_anat(vol_fmap, display_mode='y', cut_coords=get_cut_cords(vol_fmap, n_slices=n_slices),
                            title='Image #2', black_bg=True, axes=axes[1])
         plotting.plot_anat(vol_corrected, display_mode='y', cut_coords=get_cut_cords(vol_corrected, n_slices=n_slices),
                            title='Corrected', black_bg=True, axes=axes[2])
