@@ -33,22 +33,22 @@ def fieldmap_correction_qc(wf, volume='first', **kwargs):
 
     """
 
-    def get_cut_cords(func, n_slices=10):
-        import nibabel as nib
-        import numpy as np
-
-        func_img = nib.load(func)
-        y_dim = func_img.shape[1]  # y-dimension (coronal direction) is the second dimension in the image shape
-
-        slices = np.linspace(-y_dim / 2, y_dim / 2, n_slices)
-        # slices might contain floats but this is not a problem since nilearn will round floats to the
-        # nearest integer value!
-        return slices
-
     def create_montage(vol_main, vol_fmap, vol_corrected, n_slices=10):
         from matplotlib import pyplot as plt
         from pathlib import Path
         from nilearn import plotting
+
+        def get_cut_cords(func, n_slices=10):
+            import nibabel as nib
+            import numpy as np
+
+            func_img = nib.load(func)
+            y_dim = func_img.shape[1]  # y-dimension (coronal direction) is the second dimension in the image shape
+
+            slices = np.linspace(-y_dim / 2, y_dim / 2, n_slices)
+            # slices might contain floats but this is not a problem since nilearn will round floats to the
+            # nearest integer value!
+            return slices
 
         fig, axes = plt.subplots(3, 1, facecolor='black', figsize=(10, 15))
 
