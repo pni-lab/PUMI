@@ -30,10 +30,10 @@ def qc(wf, registered_func_volume='middle', func_2_volume='middle', **kwargs):
     wf.connect(one_registered_func_volume, 'out_file', qc_vol2png, 'overlay_image')
     wf.connect(one_func_2_volume, 'out_file', qc_vol2png, 'bg_image')
 
-    #  Output
+    # Output
     wf.connect(qc_vol2png, 'out_file', 'outputspec', 'out_file')
 
-    # sinking
+    # Sinking
     wf.connect(qc_vol2png, 'out_file', 'sinker', wf.name)
 
 
