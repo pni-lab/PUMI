@@ -5,9 +5,65 @@ from nipype.algorithms import confounds
 from nipype.interfaces import afni, fsl, utility
 from PUMI.engine import NestedNode as Node, QcPipeline
 from PUMI.engine import FuncPipeline
+from PUMI.pipelines.anat.segmentation import bet_deepbet
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume, timecourse2png
-from PUMI.utils import calc_friston_twenty_four, calculate_FD_Jenkinson, mean_from_txt, max_from_txt
+from PUMI.utils import calc_friston_twenty_four, calculate_FD_Jenkinson, mean_from_txt, max_from_txt, \
+    create_segmentation_qc
 from PUMI.plot.carpet_plot import plot_carpet
+
+
+@QcPipeline(inputspec_fields=['background', 'overlay'],
+            outputspec_fields=['out_file'])
+def qc_fieldmap_correction(wf, overlay_volume='middle', **kwargs):
+
+    def create_fieldmap_plot(overlay, background):
+        from PUMI.utils import plot_roi
+
+        _, output_file = plot_roi(roi_img=overlay, bg_img=background)
+
+        return output_file
+
+    overlay_vol = pick_volume('overlay_vol', overlay_volume)
+    wf.connect('inputspec', 'overlay', overlay_vol, 'in_file')
+
+    plot = Node(Function(input_names=['overlay', 'background'],
+                         output_names=['out_file'],
+                         function=create_fieldmap_plot),
+                name='plot')
+
+    wf.connect('inputspec', 'background', plot, 'background')
+    wf.connect(overlay_vol, 'out_file', plot, 'overlay')
+
+    wf.connect(plot, 'out_file', 'sinker', 'qc_fieldmap_correction')
+
+    # output
+    wf.connect(plot, 'out_file', 'outputspec', 'out_file')
+
+
+@FuncPipeline(inputspec_fields=['main_image', 'anat_img', 'phasediff_img', 'phasediff_json', 'magnitude_img'],
+              outputspec_fields=['out_file'])
+def fieldmap_correction_FUGUE(wf, n_erode=2, **kwargs):
+
+    bet_magnitude_img = bet_deepbet('bet_magnitude_img', n_dilute=-n_erode)
+    wf.connect('inputspec', 'magnitude_img', bet_magnitude_img, 'in_file')
+
+    prepare_fieldmap = Node(fsl.PrepareFieldmap(), name='prepare_fieldmap')
+    #todo: prepare_fieldmap.inputs.delta_TE = float in ms
+    wf.connect(bet_magnitude_img, 'out_file', prepare_fieldmap, 'in_magnitude')
+    wf.connect('inputspec', 'phasediff_img', prepare_fieldmap, 'in_phase')
+
+    fugue = Node(fsl.FUGUE(
+        dwell_time=0.000324999,    # EffectiveEchoSpacing
+        asym_se_time=0.00246
+    ), name='fugue')
+    wf.connect(prepare_fieldmap, 'out_fieldmap', fugue, 'fmap_in_file')
+    wf.connect('inputspec', 'main_image', fugue, 'in_file')
+
+    qc = qc_fieldmap_correction('qc_fieldmap_correction')
+    wf.connect(fugue, 'unwarped_file', qc, 'overlay')
+    wf.connect('inputspec', 'anat_img', qc, 'background')
+
+    wf.connect(fugue, 'unwarped_file', 'outputspec', 'out_file')
 
 
 @FuncPipeline(inputspec_fields=['in_file'],
