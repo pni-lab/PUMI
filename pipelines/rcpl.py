@@ -8,6 +8,8 @@ from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import func2anat
 from nipype.interfaces import utility
+
+from PUMI.pipelines.func.func2func import func2func
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels, get_reference
@@ -373,6 +375,11 @@ def collect_pain_predictions(wf, **kwargs):
         datatype='func',
         suffix="bold",
         extension=['nii', 'nii.gz']
+    ),
+    'sbref': dict(
+        datatype='func',
+        suffix="sbref",
+        extension=['nii', 'nii.gz']
     )
 })
 def rcpl(wf, bbr=True, **kwargs):
@@ -385,11 +392,18 @@ def rcpl(wf, bbr=True, **kwargs):
     reorient_func_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_wf")
     wf.connect('inputspec', 'bold', reorient_func_wf, 'in_file')
 
+    reorient_sbref_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_sbref_wf")
+    wf.connect('inputspec', 'sbref', reorient_sbref_wf, 'in_file')
+
     anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf', bet_tool='deepbet')
     wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
 
+    func2sbref = func2func('func2sbref')
+    wf.connect(reorient_func_wf, 'out_file', func2sbref, 'func_1')
+    wf.connect(reorient_sbref_wf, 'out_file', func2sbref, 'func_2')
+
     func2anat_wf = func2anat(name='func2anat_wf', bbr=bbr)
-    wf.connect(reorient_func_wf, 'out_file', func2anat_wf, 'func')
+    wf.connect(func2sbref, 'out_file', func2anat_wf, 'func')
     wf.connect(anatomical_preprocessing_wf, 'brain', func2anat_wf, 'head')
     wf.connect(anatomical_preprocessing_wf, 'probmap_wm', func2anat_wf, 'anat_wm_segmentation')
     wf.connect(anatomical_preprocessing_wf, 'probmap_csf', func2anat_wf, 'anat_csf_segmentation')
@@ -401,7 +415,7 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func2anat_wf, 'ventricle_mask_in_funcspace', compcor_roi_wf, 'ventricle_mask')
 
     func_proc_wf = func_proc_despike_afni('func_proc_wf', bet_tool='deepbet', deepbet_n_dilate=2)
-    wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
+    wf.connect(func2sbref, 'out_file', func_proc_wf, 'func')
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 
     pick_atlas_wf = mist_atlas('pick_atlas_wf')
