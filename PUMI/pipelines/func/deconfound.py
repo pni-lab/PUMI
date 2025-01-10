@@ -10,7 +10,7 @@ from PUMI.plot.carpet_plot import plot_carpet
 
 @QcPipeline(inputspec_fields=['main', 'fmap', 'func_corrected'],
               outputspec_fields=['out_file'])
-def fieldmap_correction_qc(wf, volume='first', **kwargs):
+def qc_fieldmap_correction_topup(wf, volume='first', **kwargs):
     """
 
     Generate quality control image for the fieldmap correction consisting of a montage image
@@ -91,7 +91,7 @@ def fieldmap_correction_qc(wf, volume='first', **kwargs):
 
 @FuncPipeline(inputspec_fields=['main', 'main_json', 'fmap', 'fmap_json'],
               outputspec_fields=['out_file'])
-def fieldmap_correction(wf, num_volumes=5, **kwargs):
+def fieldmap_correction_topup(wf, num_volumes=5, **kwargs):
     """
 
     Perform fieldmap correction on the functional data using FSL's TOPUP.
@@ -219,7 +219,7 @@ def fieldmap_correction(wf, num_volumes=5, **kwargs):
     wf.connect(topup, 'out_movpar', apply_topup, 'in_topup_movpar')
     wf.connect(topup, 'out_enc_file', apply_topup, 'encoding_file')
 
-    qc_fieldmap_correction = fieldmap_correction_qc('qc_fieldmap_correction')
+    qc_fieldmap_correction = qc_fieldmap_correction_topup('qc_fieldmap_correction')
     wf.connect('inputspec', 'main', qc_fieldmap_correction, 'main')
     wf.connect('inputspec', 'fmap', qc_fieldmap_correction, 'fmap')
     wf.connect(topup, 'out_corrected', qc_fieldmap_correction, 'func_corrected')
