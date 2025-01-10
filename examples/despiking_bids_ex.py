@@ -4,7 +4,7 @@ from PUMI.pipelines.func.deconfound import despiking_afni
 
 ROOT_DIR = os.path.dirname(os.getcwd())
 
-input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # path where the bids data is located
+input_dir = os.path.join(ROOT_DIR, 'data_in/pumi-unittest')  # path where the bids data is located
 output_dir = os.path.join(ROOT_DIR,
                           'data_out')  # path where the folder 'BET' will be created for the results of this script
 working_dir = os.path.join(ROOT_DIR,
