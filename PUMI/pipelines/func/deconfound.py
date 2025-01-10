@@ -12,6 +12,24 @@ from PUMI.plot.carpet_plot import plot_carpet
 @QcPipeline(inputspec_fields=['background', 'overlay'],
             outputspec_fields=['out_file'])
 def qc_fieldmap_correction_fugue(wf, overlay_volume='middle', **kwargs):
+    """
+    Generate a quality check (QC) image for the FUGUE fieldmap correction workflow.
+
+    Parameters:
+        overlay_volume (str): The volume of the overlay image to be used for the QC plot.
+         Options are "first", "middle", "last", or an integer specifying the volume index.
+         Default is "middle".
+
+    Inputs:
+        background (str): Path to the anatomical background image.
+        overlay (str): Path to the overlay image (e.g., the unwarped functional scan).
+
+    Outputs:
+        out_file (str): Path to the generated QC image.
+
+    Sinking:
+        - Generated QC image showing the overlay on the background.
+    """
 
     def create_fieldmap_plot(overlay, background):
         from PUMI.utils import plot_roi
@@ -41,6 +59,28 @@ def qc_fieldmap_correction_fugue(wf, overlay_volume='middle', **kwargs):
                                 'magnitude_img'],
               outputspec_fields=['out_file'])
 def fieldmap_correction_fugue(wf, **kwargs):
+    """
+    Perform fieldmap correction using FSL's FUGUE.
+
+    This pipeline uses the magnitude and phase-difference images to generate a fieldmap and then applies
+    fieldmap correction to a functional image.
+
+    Inputs:
+        main_img (str): Path to the 4D functional image to be corrected.
+        main_json (str): Path to the JSON metadata file for the functional image.
+        anat_img (str): Path to the anatomical image for QC background.
+        phasediff_img (str): Path to the phase-difference image.
+        phasediff_json (str): Path to the JSON metadata file for the phase-difference image.
+        magnitude_img (str): Path to the magnitude image.
+
+    Outputs:
+        out_file (str): Path to the fieldmap-corrected functional image.
+
+    Sinking:
+        - Fieldmap-corrected functional image.
+        - QC images for the fieldmap correction.
+
+    """
 
     bet_magnitude_img = bet_deepbet('bet_magnitude_img', sinking_name='magnitude_img_segm')
     wf.connect('inputspec', 'magnitude_img', bet_magnitude_img, 'in_file')
