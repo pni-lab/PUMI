@@ -37,22 +37,60 @@ def qc_fieldmap_correction_fugue(wf, overlay_volume='middle', **kwargs):
     wf.connect(plot, 'out_file', 'outputspec', 'out_file')
 
 
-@FuncPipeline(inputspec_fields=['main_img', 'anat_img', 'phasediff_img', 'phasediff_json', 'magnitude_img'],
+@FuncPipeline(inputspec_fields=['main_img', 'main_json', 'anat_img', 'phasediff_img', 'phasediff_json',
+                                'magnitude_img'],
               outputspec_fields=['out_file'])
 def fieldmap_correction_fugue(wf, **kwargs):
 
     bet_magnitude_img = bet_deepbet('bet_magnitude_img', sinking_name='magnitude_img_segm')
     wf.connect('inputspec', 'magnitude_img', bet_magnitude_img, 'in_file')
 
+    def get_fieldmap_parameters(main_json, phasediff_json):
+        import json
+
+        with open(main_json, 'r') as f:
+            main_metadata = json.load(f)
+
+        with open(phasediff_json, 'r') as f:
+            phasediff_metadata = json.load(f)
+
+        # Extract dwell_time (EffectiveEchoSpacing)
+        dwell_time = main_metadata.get('EffectiveEchoSpacing')  # In seconds
+
+        if dwell_time is None:
+            raise ValueError(f'{main_json} does not contain EffectiveEchoSpacing')
+
+        # Extract and calculate delta_TE (in ms)
+        echo_time_1 = phasediff_metadata.get('EchoTime1')  # In seconds
+        echo_time_2 = phasediff_metadata.get('EchoTime2')  # In seconds
+
+        if echo_time_1 is None:
+            raise ValueError(f'{main_json} does not contain EchoTime1')
+
+        if echo_time_2 is None:
+            raise ValueError(f'{main_json} does not contain EchoTime2')
+
+        asym_se_time = abs(echo_time_2 - echo_time_1) # In seconds
+        delta_TE = asym_se_time * 1000  # Convert to ms
+
+        return dwell_time, delta_TE, asym_se_time
+
+    get_params = Node(Function(
+        input_names=['main_json', 'phasediff_json'],
+        output_names=['dwell_time', 'delta_TE', 'asym_se_time'],
+        function=get_fieldmap_parameters
+    ), name='get_params')
+    wf.connect('inputspec', 'phasediff_json', get_params, 'phasediff_json')
+    wf.connect('inputspec', 'main_json', get_params, 'main_json')
+
     prepare_fieldmap = Node(fsl.PrepareFieldmap(), name='prepare_fieldmap')
-    #todo: prepare_fieldmap.inputs.delta_TE = float in ms
+    wf.connect(get_params, 'delta_TE', prepare_fieldmap, 'delta_TE')
     wf.connect(bet_magnitude_img, 'out_file', prepare_fieldmap, 'in_magnitude')
     wf.connect('inputspec', 'phasediff_img', prepare_fieldmap, 'in_phase')
 
-    fugue = Node(fsl.FUGUE(
-        dwell_time=0.000324999,    # EffectiveEchoSpacing
-        asym_se_time=0.00246
-    ), name='fugue')
+    fugue = Node(fsl.FUGUE(), name='fugue')
+    wf.connect(get_params, 'dwell_time', fugue, 'dwell_time')
+    wf.connect(get_params, 'asym_se_time', fugue, 'asym_se_time')
     wf.connect(prepare_fieldmap, 'out_fieldmap', fugue, 'fmap_in_file')
     wf.connect('inputspec', 'main_img', fugue, 'in_file')
 

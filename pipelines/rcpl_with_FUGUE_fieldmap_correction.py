@@ -416,6 +416,7 @@ def rcpl(wf, bbr=True, **kwargs):
 
     fieldmap_correction = fieldmap_correction_fugue('fieldmap_correction')
     wf.connect(reorient_func_wf, 'out_file', fieldmap_correction, 'main_img')
+    wf.connect('inputspec', 'bold_json', fieldmap_correction, 'main_json')
     wf.connect(reorient_phasediff_img_wf, 'out_file', fieldmap_correction, 'phasediff_img')
     wf.connect('inputspec', 'phasediff_json', fieldmap_correction, 'phasediff_json')
     wf.connect(reorient_magnitude_img_wf, 'out_file', fieldmap_correction, 'magnitude_img')
