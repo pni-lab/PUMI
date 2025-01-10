@@ -1,5 +1,3 @@
-import os
-from pathlib import Path
 from nipype import Function
 from nipype.algorithms import confounds
 from nipype.interfaces import afni, fsl, utility
@@ -7,8 +5,7 @@ from PUMI.engine import NestedNode as Node, QcPipeline
 from PUMI.engine import FuncPipeline
 from PUMI.pipelines.anat.segmentation import bet_deepbet
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume, timecourse2png
-from PUMI.utils import calc_friston_twenty_four, calculate_FD_Jenkinson, mean_from_txt, max_from_txt, \
-    create_segmentation_qc
+from PUMI.utils import calc_friston_twenty_four, calculate_FD_Jenkinson, mean_from_txt, max_from_txt
 from PUMI.plot.carpet_plot import plot_carpet
 
 
