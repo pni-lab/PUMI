@@ -33,12 +33,13 @@ def fieldmap_correction_qc(wf, volume='first', **kwargs):
 
     """
 
-    def create_montage(vol_main, vol_fmap, vol_corrected, n_slices=10):
+    def create_montage(vol_main, vol_fmap, vol_corrected, n_slices=3):
         from matplotlib import pyplot as plt
         from pathlib import Path
         from nilearn import plotting
+        import os
 
-        def get_cut_cords(func, n_slices=10):
+        def get_cut_cords(func, n_slices=3):
             import nibabel as nib
             import numpy as np
 
@@ -50,8 +51,8 @@ def fieldmap_correction_qc(wf, volume='first', **kwargs):
             # nearest integer value!
             return slices
 
-        fig, axes = plt.subplots(3, 1, facecolor='black', figsize=(10, 15))
-
+        fig, axes = plt.subplots(3, 1, facecolor='black', figsize=(12, 18))
+        plt.subplots_adjust(hspace=0.4)
         plotting.plot_anat(vol_main, display_mode='y', cut_coords=get_cut_cords(vol_main, n_slices=n_slices),
                            title='Image #1', black_bg=True, axes=axes[0])
         plotting.plot_anat(vol_fmap, display_mode='y', cut_coords=get_cut_cords(vol_fmap, n_slices=n_slices),
@@ -59,8 +60,9 @@ def fieldmap_correction_qc(wf, volume='first', **kwargs):
         plotting.plot_anat(vol_corrected, display_mode='y', cut_coords=get_cut_cords(vol_corrected, n_slices=n_slices),
                            title='Corrected', black_bg=True, axes=axes[2])
 
-        path = Path.cwd() / 'fieldmap_correction_comparison.png'
-        plt.savefig(path)
+        #path = Path.cwd() / 'fieldmap_correction_comparison.png'
+        path = os.path.join(os.getcwd(), 'fieldmap_correction_comparison.png')
+        plt.savefig(path, dpi=300)
         plt.close(fig)
         return path
 
@@ -209,20 +211,10 @@ def fieldmap_correction(wf, num_volumes=5, **kwargs):
     wf.connect(retrieve_image_params, 'total_readout_time', topup, 'readout_times')
     wf.connect(retrieve_image_params, 'encoding_direction', topup, 'encoding_direction')
 
-    # The two original 4D files are also needed inside a list
-    main_and_fmap_to_list = Node(Function(
-        input_names=['item_1', 'item_2'],
-        output_names=['output'],
-        function=combine_items_to_list),
-        name='main_and_fmap_to_list'
-    )
-    wf.connect('inputspec', 'main', main_and_fmap_to_list, 'item_1')
-    wf.connect('inputspec', 'fmap', main_and_fmap_to_list, 'item_2')
-
     # Apply result of fsl.TOPUP to our original data
     # Result will be one 4D distortion corrected image
-    apply_topup = Node(fsl.ApplyTOPUP(), name='apply_topup')
-    wf.connect(main_and_fmap_to_list, 'output', apply_topup, 'in_files')
+    apply_topup = Node(fsl.ApplyTOPUP(method='jac'), name='apply_topup')
+    wf.connect('inputspec', 'main', apply_topup, 'in_files')
     wf.connect(topup, 'out_fieldcoef', apply_topup, 'in_topup_fieldcoef')
     wf.connect(topup, 'out_movpar', apply_topup, 'in_topup_movpar')
     wf.connect(topup, 'out_enc_file', apply_topup, 'encoding_file')
