@@ -40,7 +40,7 @@ def qc_fieldmap_correction_fugue(wf, overlay_volume='middle', **kwargs):
     wf.connect(plot, 'out_file', 'outputspec', 'out_file')
 
 
-@FuncPipeline(inputspec_fields=['main_image', 'anat_img', 'phasediff_img', 'phasediff_json', 'magnitude_img'],
+@FuncPipeline(inputspec_fields=['main_img', 'anat_img', 'phasediff_img', 'phasediff_json', 'magnitude_img'],
               outputspec_fields=['out_file'])
 def fieldmap_correction_fugue(wf, **kwargs):
 
@@ -57,7 +57,7 @@ def fieldmap_correction_fugue(wf, **kwargs):
         asym_se_time=0.00246
     ), name='fugue')
     wf.connect(prepare_fieldmap, 'out_fieldmap', fugue, 'fmap_in_file')
-    wf.connect('inputspec', 'main_image', fugue, 'in_file')
+    wf.connect('inputspec', 'main_img', fugue, 'in_file')
 
     qc = qc_fieldmap_correction_fugue('qc_fieldmap_correction')
     wf.connect(fugue, 'unwarped_file', qc, 'overlay')
