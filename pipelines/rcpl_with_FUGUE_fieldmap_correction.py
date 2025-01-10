@@ -9,7 +9,7 @@ from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import func2anat
 from nipype.interfaces import utility
 
-from PUMI.pipelines.func.deconfound import fieldmap_correction_FUGUE
+from PUMI.pipelines.func.deconfound import fieldmap_correction_fugue
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels, get_reference
@@ -414,7 +414,7 @@ def rcpl(wf, bbr=True, **kwargs):
     reorient_magnitude_img_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_magnitude_img_wf")
     wf.connect('inputspec', 'magnitude_img', reorient_magnitude_img_wf, 'in_file')
 
-    fieldmap_correction = fieldmap_correction_FUGUE('fieldmap_correction')
+    fieldmap_correction = fieldmap_correction_fugue('fieldmap_correction')
     wf.connect(reorient_func_wf, 'out_file', fieldmap_correction, 'main_image')
     wf.connect(reorient_phasediff_img_wf, 'out_file', fieldmap_correction, 'phasediff_img')
     wf.connect('inputspec', 'phasediff_json', fieldmap_correction, 'phasediff_json')

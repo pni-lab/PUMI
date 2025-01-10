@@ -14,7 +14,7 @@ from PUMI.plot.carpet_plot import plot_carpet
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
             outputspec_fields=['out_file'])
-def qc_fieldmap_correction(wf, overlay_volume='middle', **kwargs):
+def qc_fieldmap_correction_fugue(wf, overlay_volume='middle', **kwargs):
 
     def create_fieldmap_plot(overlay, background):
         from PUMI.utils import plot_roi
@@ -42,7 +42,7 @@ def qc_fieldmap_correction(wf, overlay_volume='middle', **kwargs):
 
 @FuncPipeline(inputspec_fields=['main_image', 'anat_img', 'phasediff_img', 'phasediff_json', 'magnitude_img'],
               outputspec_fields=['out_file'])
-def fieldmap_correction_FUGUE(wf, **kwargs):
+def fieldmap_correction_fugue(wf, **kwargs):
 
     bet_magnitude_img = bet_deepbet('bet_magnitude_img', sinking_name='magnitude_img_segm')
     wf.connect('inputspec', 'magnitude_img', bet_magnitude_img, 'in_file')
@@ -59,7 +59,7 @@ def fieldmap_correction_FUGUE(wf, **kwargs):
     wf.connect(prepare_fieldmap, 'out_fieldmap', fugue, 'fmap_in_file')
     wf.connect('inputspec', 'main_image', fugue, 'in_file')
 
-    qc = qc_fieldmap_correction('qc_fieldmap_correction')
+    qc = qc_fieldmap_correction_fugue('qc_fieldmap_correction')
     wf.connect(fugue, 'unwarped_file', qc, 'overlay')
     wf.connect('inputspec', 'anat_img', qc, 'background')
 
