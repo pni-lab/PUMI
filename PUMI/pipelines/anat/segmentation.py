@@ -15,7 +15,7 @@ from nipype.interfaces import utility
 
 @QcPipeline(inputspec_fields=['background', 'overlay'],
             outputspec_fields=['out_file'])
-def qc_segmentation(wf, fmri=False, **kwargs):
+def qc_segmentation(wf, sinking_name=None, fmri=False, **kwargs):
     """
 
     Create quality check images for background extraction workflows
@@ -39,7 +39,9 @@ def qc_segmentation(wf, fmri=False, **kwargs):
     wf.connect('inputspec', 'overlay', plot, 'overlay')
 
     # sinking
-    if fmri:
+    if sinking_name:
+        wf.connect(plot, 'out_file', 'sinker', sinking_name)
+    elif fmri:
         wf.connect(plot, 'out_file', 'sinker', 'qc_func_segmentation')
     else:
         wf.connect(plot, 'out_file', 'sinker', 'qc_anat_segmentation')
@@ -154,7 +156,7 @@ def bet_fsl(wf, fmri=False, volume='middle', **kwargs):
 
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file', 'brain_mask', 'tiv'])
-def bet_deepbet(wf, fmri=False, volume='middle', threshold=0.5, n_dilate=0, no_gpu=False, **kwargs):
+def bet_deepbet(wf, fmri=False, volume='middle', threshold=0.5, n_dilate=0, no_gpu=False, sinking_name=None, **kwargs):
     """
 
     Perform brain extraction with deepbet.
@@ -230,11 +232,11 @@ def bet_deepbet(wf, fmri=False, volume='middle', threshold=0.5, n_dilate=0, no_g
         background = pick_volume('qc_background', volume=volume)
         wf.connect('inputspec', 'in_file', background, 'in_file')
 
-        qc = qc_segmentation(name='qc_segmentation', fmri=True, qc_dir=wf.qc_dir)
+        qc = qc_segmentation(name='qc_segmentation', sinking_name=sinking_name, fmri=True, qc_dir=wf.qc_dir)
         wf.connect(overlay, 'out_file', qc, 'overlay')
         wf.connect(background, 'out_file', qc, 'background')
     else:
-        qc = qc_segmentation(name='qc_segmentation', qc_dir=wf.qc_dir)
+        qc = qc_segmentation(name='qc_segmentation', sinking_name=sinking_name, qc_dir=wf.qc_dir)
         wf.connect(bet, 'out_file', qc, 'overlay')
         wf.connect('inputspec', 'in_file', qc, 'background')
 

@@ -42,9 +42,9 @@ def qc_fieldmap_correction(wf, overlay_volume='middle', **kwargs):
 
 @FuncPipeline(inputspec_fields=['main_image', 'anat_img', 'phasediff_img', 'phasediff_json', 'magnitude_img'],
               outputspec_fields=['out_file'])
-def fieldmap_correction_FUGUE(wf, n_erode=2, **kwargs):
+def fieldmap_correction_FUGUE(wf, **kwargs):
 
-    bet_magnitude_img = bet_deepbet('bet_magnitude_img', n_dilute=-n_erode)
+    bet_magnitude_img = bet_deepbet('bet_magnitude_img', sinking_name='magnitude_img_segm')
     wf.connect('inputspec', 'magnitude_img', bet_magnitude_img, 'in_file')
 
     prepare_fieldmap = Node(fsl.PrepareFieldmap(), name='prepare_fieldmap')
