@@ -8,6 +8,8 @@ from PUMI.pipelines.anat.anat_proc import anat_proc
 from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import func2anat
 from nipype.interfaces import utility
+
+from PUMI.pipelines.func.deconfound import fieldmap_correction_topup
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels, get_reference
@@ -366,13 +368,30 @@ def collect_pain_predictions(wf, **kwargs):
 @BidsPipeline(output_query={
     'T1w': dict(
         datatype='anat',
-        suffix="T1w",
+        suffix='T1w',
         extension=['nii', 'nii.gz']
     ),
     'bold': dict(
         datatype='func',
-        suffix="bold",
+        suffix='bold',
         extension=['nii', 'nii.gz']
+    ),
+    'bold_json': dict(
+        datatype='func',
+        suffix='bold',
+        extension='.json'
+    ),
+    'fmap': dict(
+        datatype='fmap',
+        acquisition='bold',
+        suffix='epi',
+        extension=['nii', 'nii.gz']
+    ),
+    'fmap_json': dict(
+        datatype='fmap',
+        acquisition='bold',
+        suffix='epi',
+        extension='.json'
     )
 })
 def rcpl(wf, bbr=True, **kwargs):
@@ -385,11 +404,20 @@ def rcpl(wf, bbr=True, **kwargs):
     reorient_func_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_wf")
     wf.connect('inputspec', 'bold', reorient_func_wf, 'in_file')
 
+    reorient_fmap_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_fmap_wf")
+    wf.connect('inputspec', 'fmap', reorient_fmap_wf, 'in_file')
+
+    fieldmap_corr = fieldmap_correction_topup('fieldmap_corr')
+    wf.connect(reorient_func_wf, 'out_file', fieldmap_corr, 'main')
+    wf.connect('inputspec', 'bold_json', fieldmap_corr, 'main_json')
+    wf.connect(reorient_fmap_wf, 'out_file', fieldmap_corr, 'fmap')
+    wf.connect('inputspec', 'fmap_json', fieldmap_corr, 'fmap_json')
+
     anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf', bet_tool='deepbet')
     wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
 
     func2anat_wf = func2anat(name='func2anat_wf', bbr=bbr)
-    wf.connect(reorient_func_wf, 'out_file', func2anat_wf, 'func')
+    wf.connect(fieldmap_corr, 'out_file', func2anat_wf, 'func')
     wf.connect(anatomical_preprocessing_wf, 'brain', func2anat_wf, 'head')
     wf.connect(anatomical_preprocessing_wf, 'probmap_wm', func2anat_wf, 'anat_wm_segmentation')
     wf.connect(anatomical_preprocessing_wf, 'probmap_csf', func2anat_wf, 'anat_csf_segmentation')
@@ -401,7 +429,7 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func2anat_wf, 'ventricle_mask_in_funcspace', compcor_roi_wf, 'ventricle_mask')
 
     func_proc_wf = func_proc_despike_afni('func_proc_wf', bet_tool='deepbet', deepbet_n_dilate=2)
-    wf.connect(reorient_func_wf, 'out_file', func_proc_wf, 'func')
+    wf.connect(fieldmap_corr, 'out_file', func_proc_wf, 'func')
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 
     pick_atlas_wf = mist_atlas('pick_atlas_wf')
@@ -435,11 +463,11 @@ def rcpl(wf, bbr=True, **kwargs):
 
     predict_pain_sensitivity_rpn_wf = predict_pain_sensitivity_rpn('predict_pain_sensitivity_rpn_wf')
     wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_rpn_wf, 'X')
-    wf.connect('inputspec', 'bold', predict_pain_sensitivity_rpn_wf, 'in_file')
+    wf.connect(fieldmap_corr, 'out_file', predict_pain_sensitivity_rpn_wf, 'in_file')
 
     predict_pain_sensitivity_rcpl_wf = predict_pain_sensitivity_rcpl('predict_pain_sensitivity_rcpl_wf')
     wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_rcpl_wf, 'X')
-    wf.connect('inputspec', 'bold', predict_pain_sensitivity_rcpl_wf, 'in_file')
+    wf.connect(fieldmap_corr, 'out_file', predict_pain_sensitivity_rcpl_wf, 'in_file')
 
     collect_pain_predictions_wf = collect_pain_predictions('collect_pain_predictions_wf')
     wf.connect(predict_pain_sensitivity_rpn_wf, 'out_file', collect_pain_predictions_wf, 'rpn_out_file')
