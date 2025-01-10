@@ -9,7 +9,7 @@ from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import func2anat
 from nipype.interfaces import utility
 
-from PUMI.pipelines.func.deconfound import fieldmap_correction
+from PUMI.pipelines.func.deconfound import fieldmap_correction_topup
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels, get_reference
@@ -407,7 +407,7 @@ def rcpl(wf, bbr=True, **kwargs):
     reorient_fmap_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_fmap_wf")
     wf.connect('inputspec', 'fmap', reorient_fmap_wf, 'in_file')
 
-    fieldmap_corr = fieldmap_correction('fieldmap_corr')
+    fieldmap_corr = fieldmap_correction_topup('fieldmap_corr')
     wf.connect(reorient_func_wf, 'out_file', fieldmap_corr, 'main')
     wf.connect('inputspec', 'bold_json', fieldmap_corr, 'main_json')
     wf.connect(reorient_fmap_wf, 'out_file', fieldmap_corr, 'fmap')
