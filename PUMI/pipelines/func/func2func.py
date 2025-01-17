@@ -24,7 +24,7 @@ def qc(wf, registered_func_volume='middle', func_2_volume='middle', **kwargs):
     wf.connect('inputspec', 'registered_func', one_registered_func_volume, 'in_file')
 
     one_func_2_volume = pick_volume('one_func_2_volume', volume=func_2_volume, sink=False)
-    wf.connect('inputspec', 'registered_func', one_func_2_volume, 'in_file')
+    wf.connect('inputspec', 'func_2', one_func_2_volume, 'in_file')
 
     qc_vol2png = vol2png(wf.name + '_vol2png')
     wf.connect(one_registered_func_volume, 'out_file', qc_vol2png, 'overlay_image')
