@@ -10,7 +10,7 @@ from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 
 ROOT_DIR = os.path.dirname(os.getcwd())
 
-input_dir = os.path.join(ROOT_DIR, 'data_in/bids')  # path where the bids data is located
+input_dir = os.path.join(ROOT_DIR, 'data_in/pumi-unittest')  # path where the bids data is located
 output_dir = os.path.join(ROOT_DIR, 'data_out')  # path for the folder with the results of this script
 working_dir = os.path.join(ROOT_DIR, 'data_out')  # path for the workflow folder
 
