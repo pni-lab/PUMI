@@ -1,3 +1,6 @@
+from multiprocessing.managers import Value
+from pathlib import Path
+
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model import ElasticNet
 from sklearn.pipeline import Pipeline
@@ -43,126 +46,169 @@ def get_config(wf, section, config):
         return os.path.join(os.getcwd(), path)
 
 
-def get_reference(wf, type, ref=None):
+def get_reference(wf, ref_type=None, ref_path=None, allow_fsl_fallbacks=False):
     """
-    Returns the absolute path to the desired reference.
-    Possible values for the type parameter are 'head', 'brain', 'brain_mask' or 'ventricle_mask'.
+    Retrieves the reference path based on the provided type or path.
 
-    If ref = None, the method looks in the settings.ini for specified paths (and source specifications) for the desired reference in
-    the TEMPLATES section.
+    Parameters:
+        wf (object): The workflow object.
+        ref_type (str, optional): The type of reference to fetch (e.g., 'head'). Defaults to None.
+        ref_path (str, optional): Local or templateflow path to the reference. Defaults to None.
+        allow_fsl_fallbacks (bool, optional): Whether to allow fallback references from FSL. Defaults to False.
 
-    If no path was specified, the respective 2mm reference from FSL's standard repertoire is returned.
-    If a path was specified, it looks if also a source was specified.
-    If no source was specified (or the source is 'local'), then it's going to search local.
-    If a local search is performed, it is checked if the path starts with a '/'. If so, this path is considered as
-    an absolute path, otherwise the path is considered relative to the FSL-Dir (NOT the current working directory)!
-    If the source is 'templateflow' or also 'tf', it is tried to get the reference from templateflow.
+    Returns:
+        str: The resolved reference path.
 
-    Some possible path specification without use of templateflow:
-    'head = data/standard/MNI152_T1_2mm.nii.gz' or
-    'head = data/standard/MNI152_T1_2mm.nii.gz; source=local' or
-    'head = /usr/local/fsl/data/standard/MNI152_T1_2mm_brain.nii.gz'
+    Raises:
+        Exception: If both ref_type and ref_path are not provided.
+        ValueError: If the source in ref_path is not 'local' or 'templateflow'/'tf'.
 
-    Possible path specification with use of templateflow:
-    'head = tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz; source=templateflow'
-
-    The 'tpl-' in the folder/template specification (NOT the file specification!) can also be omitted.
-    Also 'tf' can be used as abbreviation for templateflow.
-
-    So this is also okay:
-    'head = MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz; source=tf'
-
-    Be aware that 'head', 'brain' and 'brain_mask' must also be lowercased in the settings.ini!
+    Notes:
+        - ref_path, if given, takes priority over ref_type
+        - Example ref_path's:
+            - 'data/standard/MNI152_T1_2mm.nii.gz; source=fsl'
+            - 'tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz; source=templateflow'
+            - 'MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz; source=tf'
     """
-    if type not in ['head', 'brain', 'brain_mask', 'ventricle_mask']:
-        raise ValueError('Can only provide references for \'head\', \'brain\', \'brain_mask\', \'ventricle_mask\'')
+    if (not ref_type) and (not ref_path):
+        raise Exception('It is not allowed to leave both ref_type and ref_path unset!')
 
-    if ref is None:
-        query = wf.cfg_parser.get('TEMPLATES', type, fallback='')
-        query = query.replace(' ', '')
+    # If no ref_path is provided, try fetching from settings.ini
+    if not ref_path:
+        ref_path = wf.cfg_parser.get('TEMPLATES', ref_type, fallback='')
+        if allow_fsl_fallbacks:
+             ref_path = ref_path or get_fallback_reference(ref_type)
+
+        if ref_path == '':
+            raise Exception(f'allow_fsl_fallbacks is set to False, but ref path was not supplied nor was a suitable path defined for {ref_type} in settings.ini!')
+
+    return parse_reference_path(ref_path)
+
+
+def parse_reference_path(path):
+    """
+    Parse and resolve the reference path, handling various sources such as 'absolute', 'templateflow', and 'fsl'.
+
+    Parameters:
+        path (str): The reference path, possibly including a source identifier (e.g., 'source=templateflow').
+
+    Returns:
+        str: The resolved reference path.
+
+    Raises:
+        ValueError: If the source in the path is invalid or unsupported.
+    """
+    path = path.replace(' ', '')
+    if ';source=' not in path:
+        path += ';source=absolute'
+
+    # Parse path and source, then handle accordingly
+    path, source = path.split(';source=')
+    if source == 'absolute':
+        path = path
+    elif source in {'templateflow', 'tf'}:
+        path = get_ref_from_templateflow(path)
+    elif source == 'fsl':
+        path = os.path.join(os.environ['FSLDIR'], path)
     else:
-        query = ref
-
-    div = len(query.split(';source='))
-    if div == 1:  # no occurrence of ';source=' (no source specification) -> search locally
-        return get_ref_locally(wf, type)
-    elif div == 2:  # one occurrence of ';source=' (source was specified) -> look at the specification
-        path, source = query.split(';source=')
-        if source == 'local':
-            return get_ref_locally(wf, type)
-        elif source == 'templateflow' or source == 'tf':
-            return get_ref_from_templateflow(path)
-        else:  # No valid source was provided
-            raise ValueError(
-                f'Source can be \'local\' or \'templateflow\' (\'tf\'). %s is not a valid option!' % source
-            )
-    else:  # more than one occurrence of ';source='
         raise ValueError(
-            f'Check your settings.ini! Your path for %s contains the more than one source specification' % ref
+            f"Invalid source '{source}'. Allowed values are 'local' or 'templateflow' (or 'tf')."
         )
+
+    return path
+
+
+def get_fallback_reference(ref_type):
+    """
+    Returns the fallback reference path based on the given reference type.
+
+    Parameters:
+        ref_type (str): The type of reference for which the path is needed. Valid types are 'head', 'brain', 'brain_mask', 'ventricle_mask'.
+
+    Returns:
+        str: The file path of the fallback reference.
+
+    Raises:
+        Exception: If the provided ref_type is not valid.
+    """
+    fallback_references = {
+        'head': os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm.nii.gz'),
+        'brain': os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm_brain.nii.gz'),
+        'brain_mask': os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm_brain_mask_dil.nii.gz'),
+        'ventricle_mask': os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm_VentricleMask.nii.gz'),
+    }
+
+    ref_path = fallback_references.get(ref_type, '')
+
+    if ref_path:
+        return  ref_path
+    else:
+        raise Exception(f'{ref_type} is not one of the valid fallback reference: {fallback_references.keys()}')
+
 
 
 def get_ref_from_templateflow(query):
     """
     Try to get the specified reference from templateflow and return the absolute path to the file.
-    The schema for the query is 'template/file'.
-    Note: 'tpl-' in the template specification (NOT the file specification!) can be omitted.
+    The schema for the query is either 'template/file' or 'file'.
     Look at the available references at 'https://www.templateflow.org/browse/'
 
-    A possible query would be: 'tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz'
-    Also okay: 'MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz'
+    A possible query would be: 'tpl-MNI152Lin_res-02_T1w.nii.gz'
+    Also okay:
+    - 'tpl-MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz'
+    - 'MNI152Lin/tpl-MNI152Lin_res-02_T1w.nii.gz'
+
+
+    Parameters:
+        query (str): The query string for the template reference, in the format 'template/file' or 'file'.
+
+    Returns:
+        str: The absolute path to the requested file.
+
+    Raises:
+        ValueError: If the query format is incorrect.
+        Exception: If the specified file is not found in the templateflow archive.
     """
-    path = query
-    if path.startswith('/'):
-        path = path.replace('/', '', 1)
-    if path.startswith('tpl-'):
-        path = path.replace('tpl-', '', 1)
 
-    if len(path.split('/')) != 2:
-        raise ValueError(
-            f'Illegal schema. Please provide your query in the form template/file and not %s' % query
-        )
+    if query.count('/') == 1:
+        query = query.split('/')[1]
 
-    template_dir, template_file = path.split('/')
-    search_result = list(map(os.path.abspath, list(tflow.get(template_dir))))
+    components = {}
+    for sub_string in query.split('_'):
 
-    template_in_result = [template_file in path for path in search_result]
-    if any(template_in_result):
-        return search_result[template_in_result.index(True)]
+        if '-' in sub_string:
+            key, value = sub_string.split('-')
+
+            if key == 'tpl':
+                components['template'] = value
+            elif key == 'res':
+                components['resolution'] = value
+            else:
+                components[key] = value
+        else:
+            # Handle suffix and extension
+            first_dot_idx = sub_string.index('.')
+            components['suffix'] = sub_string[:first_dot_idx]
+            components['extension'] = sub_string[first_dot_idx:]
+
+    print(f'Generated templateflow search query for {query}: {components}')
+
+    search_result = tflow.get(**components)
+    if isinstance(search_result, list):
+        for path in search_result:
+            if Path(path).name == query:
+                search_result = path
+                break
+
+    if isinstance(search_result, list):
+        raise ValueError(f'{query} is not specific enough and yields multiple results: {search_result}')
+
+    if search_result:
+        return search_result
     else:
         raise Exception(
-            f'Could not find the specified file. Are you sure %s is available in the templateflow archive?' % query
+            f'Could not find the specified file. Are you sure {query} is available in the templateflow archive?'
         )
-
-
-def get_ref_locally(wf, ref):
-    """
-    Try to get the reference locally and return the absolute path to the file
-    Possible values for the ref parameter are 'head', 'brain', 'brain_mask' or 'ventricle_mask'.
-
-    The method looks in the settings.ini for specified paths for the desired reference in the TEMPLATES section.
-
-    If no path was specified, the respective 2mm reference from FSL's standard repertoire is returned.
-    If a path was specified, it is checked if the path starts with a '/'. If so, this path is considered as
-    an absolute path, otherwise the path is considered relative to the FSL-Dir (NOT the current working directory)!
-    """
-    if ref not in ['head', 'brain', 'brain_mask', 'ventricle_mask']:
-        raise ValueError('Can only provide references for \'head\', \'brain\', \'brain_mask\', \'ventricle_mask\'')
-
-    path = wf.cfg_parser.get('TEMPLATES', ref, fallback='')
-
-    if path == '':  # provide fallback values
-        if ref == 'head':
-            return os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm.nii.gz')
-        elif ref == 'brain':
-            return os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm_brain.nii.gz')
-        else:
-            return os.path.join(os.environ['FSLDIR'], 'data/standard/MNI152_T1_2mm_brain_mask_dil.nii.gz')
-
-    if path.startswith('/'):  # absolute path
-        return path
-    else:  # relative path to the FSL-Dir
-        return os.path.join(os.environ['FSLDIR'], path)
 
 
 def plot_roi(roi_img, bg_img=None, cut_coords=5, output_file=None, display_mode='mosaic', figure=None, axes=None,
