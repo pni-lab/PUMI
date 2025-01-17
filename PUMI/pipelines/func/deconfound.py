@@ -3,6 +3,7 @@ from nipype.algorithms import confounds
 from nipype.interfaces import afni, fsl, utility
 from PUMI.engine import NestedNode as Node, QcPipeline
 from PUMI.engine import FuncPipeline
+from PUMI.pipelines.anat.segmentation import bet_deepbet
 from PUMI.pipelines.multimodal.image_manipulation import pick_volume, timecourse2png
 from PUMI.utils import calc_friston_twenty_four, calculate_FD_Jenkinson, mean_from_txt, max_from_txt
 from PUMI.plot.carpet_plot import plot_carpet
@@ -87,8 +88,57 @@ def qc_fieldmap_correction_topup(wf, volume='first', **kwargs):
 
     wf.connect(montage, 'out_file', 'outputspec', 'out_file')
     wf.connect(montage, 'out_file', 'sinker', 'qc_fieldmap_correction')
+    
 
+@QcPipeline(inputspec_fields=['background', 'overlay'],
+            outputspec_fields=['out_file'])
+def qc_fieldmap_correction_fugue(wf, overlay_volume='middle', **kwargs):
+    """
+    Generate a quality check (QC) image for the FUGUE fieldmap correction workflow.
 
+    Parameters:
+        overlay_volume (str): The volume of the overlay image to be used for the QC plot.
+         Options are "first", "middle", "last", or an integer specifying the volume index.
+         Default is "middle".
+
+    Inputs:
+        background (str): Path to the anatomical background image.
+        overlay (str): Path to the overlay image (e.g., the unwarped functional scan).
+
+    Outputs:
+        out_file (str): Path to the generated QC image.
+
+    Sinking:
+        - Generated QC image showing the overlay on the background.
+    """
+
+    def create_fieldmap_plot(overlay, background):
+        from PUMI.utils import plot_roi
+
+        _, output_file = plot_roi(roi_img=overlay, bg_img=background)
+
+        return output_file
+
+    overlay_vol = pick_volume('overlay_vol', overlay_volume)
+    wf.connect('inputspec', 'overlay', overlay_vol, 'in_file')
+
+    overlay_bet = bet_deepbet('overlay_bet')
+    wf.connect(overlay_vol, 'out_file', overlay_bet, 'in_file')
+
+    plot = Node(Function(input_names=['overlay', 'background'],
+                         output_names=['out_file'],
+                         function=create_fieldmap_plot),
+                name='plot')
+
+    wf.connect('inputspec', 'background', plot, 'background')
+    wf.connect(overlay_bet, 'out_file', plot, 'overlay')
+
+    wf.connect(plot, 'out_file', 'sinker', 'qc_fieldmap_correction')
+
+    # output
+    wf.connect(plot, 'out_file', 'outputspec', 'out_file')
+
+    
 @FuncPipeline(inputspec_fields=['main', 'main_json', 'fmap', 'fmap_json'],
               outputspec_fields=['out_file'])
 def fieldmap_correction_topup(wf, num_volumes=5, **kwargs):
@@ -227,6 +277,92 @@ def fieldmap_correction_topup(wf, num_volumes=5, **kwargs):
     wf.connect(apply_topup, 'out_corrected', 'outputspec', 'out_file')
     wf.connect(apply_topup, 'out_corrected', 'sinker', 'out_file')
 
+    
+@FuncPipeline(inputspec_fields=['main_img', 'main_json', 'anat_img', 'phasediff_img', 'phasediff_json',
+                                'magnitude_img'],
+              outputspec_fields=['out_file'])
+def fieldmap_correction_fugue(wf, **kwargs):
+    """
+    Perform fieldmap correction using FSL's FUGUE.
+
+    This pipeline uses the magnitude and phase-difference images to generate a fieldmap and then applies
+    fieldmap correction to a functional image.
+
+    Inputs:
+        main_img (str): Path to the 4D functional image to be corrected.
+        main_json (str): Path to the JSON metadata file for the functional image.
+        anat_img (str): Path to the anatomical image for QC background.
+        phasediff_img (str): Path to the phase-difference image.
+        phasediff_json (str): Path to the JSON metadata file for the phase-difference image.
+        magnitude_img (str): Path to the magnitude image.
+
+    Outputs:
+        out_file (str): Path to the fieldmap-corrected functional image.
+
+    Sinking:
+        - Fieldmap-corrected functional image.
+        - QC images for the fieldmap correction.
+
+    """
+
+    bet_magnitude_img = bet_deepbet('bet_magnitude_img', sinking_name='magnitude_img_segm')
+    wf.connect('inputspec', 'magnitude_img', bet_magnitude_img, 'in_file')
+
+    def get_fieldmap_parameters(main_json, phasediff_json):
+        import json
+
+        with open(main_json, 'r') as f:
+            main_metadata = json.load(f)
+
+        with open(phasediff_json, 'r') as f:
+            phasediff_metadata = json.load(f)
+
+        # Extract dwell_time (EffectiveEchoSpacing)
+        dwell_time = main_metadata.get('EffectiveEchoSpacing')  # In seconds
+
+        if dwell_time is None:
+            raise ValueError(f'{main_json} does not contain EffectiveEchoSpacing')
+
+        # Extract and calculate delta_TE (in ms)
+        echo_time_1 = phasediff_metadata.get('EchoTime1')  # In seconds
+        echo_time_2 = phasediff_metadata.get('EchoTime2')  # In seconds
+
+        if echo_time_1 is None:
+            raise ValueError(f'{main_json} does not contain EchoTime1')
+
+        if echo_time_2 is None:
+            raise ValueError(f'{main_json} does not contain EchoTime2')
+
+        asym_se_time = abs(echo_time_2 - echo_time_1) # In seconds
+        delta_TE = asym_se_time * 1000  # Convert to ms
+
+        return dwell_time, delta_TE, asym_se_time
+
+    get_params = Node(Function(
+        input_names=['main_json', 'phasediff_json'],
+        output_names=['dwell_time', 'delta_TE', 'asym_se_time'],
+        function=get_fieldmap_parameters
+    ), name='get_params')
+    wf.connect('inputspec', 'phasediff_json', get_params, 'phasediff_json')
+    wf.connect('inputspec', 'main_json', get_params, 'main_json')
+
+    prepare_fieldmap = Node(fsl.PrepareFieldmap(), name='prepare_fieldmap')
+    wf.connect(get_params, 'delta_TE', prepare_fieldmap, 'delta_TE')
+    wf.connect(bet_magnitude_img, 'out_file', prepare_fieldmap, 'in_magnitude')
+    wf.connect('inputspec', 'phasediff_img', prepare_fieldmap, 'in_phase')
+
+    fugue = Node(fsl.FUGUE(), name='fugue')
+    wf.connect(get_params, 'dwell_time', fugue, 'dwell_time')
+    wf.connect(get_params, 'asym_se_time', fugue, 'asym_se_time')
+    wf.connect(prepare_fieldmap, 'out_fieldmap', fugue, 'fmap_in_file')
+    wf.connect('inputspec', 'main_img', fugue, 'in_file')
+
+    qc = qc_fieldmap_correction_fugue('qc_fieldmap_correction')
+    wf.connect(fugue, 'unwarped_file', qc, 'overlay')
+    wf.connect('inputspec', 'anat_img', qc, 'background')
+
+    wf.connect(fugue, 'unwarped_file', 'outputspec', 'out_file')
+    
 
 @FuncPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['out_file'])
