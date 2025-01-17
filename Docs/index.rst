@@ -13,6 +13,8 @@ Developer Documentation
 
 `Developing the Documentation <dev_docs.html>`_
 
+`Running PUMI Pipelines on a SLURM Cluster <running_on_slurm_cluster.html>`_
+
 `Running PUMI pipelines in a docker container <running_with_docker.html>`_
 
 
