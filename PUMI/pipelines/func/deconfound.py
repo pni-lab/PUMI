@@ -41,13 +41,16 @@ def qc_fieldmap_correction_fugue(wf, overlay_volume='middle', **kwargs):
     overlay_vol = pick_volume('overlay_vol', overlay_volume)
     wf.connect('inputspec', 'overlay', overlay_vol, 'in_file')
 
+    overlay_bet = bet_deepbet('overlay_bet')
+    wf.connect(overlay_vol, 'out_file', overlay_bet, 'in_file')
+
     plot = Node(Function(input_names=['overlay', 'background'],
                          output_names=['out_file'],
                          function=create_fieldmap_plot),
                 name='plot')
 
     wf.connect('inputspec', 'background', plot, 'background')
-    wf.connect(overlay_vol, 'out_file', plot, 'overlay')
+    wf.connect(overlay_bet, 'out_file', plot, 'overlay')
 
     wf.connect(plot, 'out_file', 'sinker', 'qc_fieldmap_correction')
 
