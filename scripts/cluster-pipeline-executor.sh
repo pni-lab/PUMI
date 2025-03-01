@@ -9,10 +9,11 @@ NICE=5
 BRANCH='main'
 SUBMIT_DELAY=72
 CPUS_PER_TASK=15
+CUSTOM_SETTINGS=""
 ################################################################
 
 
-while getopts 'i:o:t:l:p:r:m:n:b:d:c:s:h' opt; do
+while getopts 'i:o:t:l:p:r:m:n:b:d:c:s:f:h' opt; do
   case "$opt" in
     i) INDIR="$OPTARG";;
     o) OUTDIR="$OPTARG";;
@@ -26,6 +27,7 @@ while getopts 'i:o:t:l:p:r:m:n:b:d:c:s:h' opt; do
     d) SUBMIT_DELAY="$OPTARG";;
     c) CPUS_PER_TASK="$OPTARG";;
     s) SIF_PATH="$OPTARG";;
+    f) CUSTOM_SETTINGS="$OPTARG";;
 
     ?|h)
       echo "-i      Input BIDS dataset"
@@ -40,6 +42,7 @@ while getopts 'i:o:t:l:p:r:m:n:b:d:c:s:h' opt; do
       echo "-d      Minimum delay between submission of jobs in seconds (default: '${SUBMIT_DELAY}')"
       echo "-c      CPU's per task (default: '${CPUS_PER_TASK}')"
       echo "-s      Path to Image SIF file. If not provided, pull and convert latest docker image."
+      echo "-f      Path to custom settings.ini. Only used when cloning from GitHub. If not set, use default settings."
       exit 1
       ;;
   esac
@@ -58,6 +61,7 @@ echo "Slurm nice value (-n): ${NICE}"
 echo "PUMI branch to use (-b): ${BRANCH}"
 echo "Minimum delay between submission of jobs in seconds (-d): ${SUBMIT_DELAY}"
 echo "Path to Image SIF file (-s): ${SIF_PATH}"
+echo "Path to custom settings.ini file (-f): ${CUSTOM_SETTINGS}"
 echo "--------------------------------------------------------------------"
 
 # Validation to ensure mandatory options are provided.
@@ -74,8 +78,17 @@ then
 else
   echo "Error: -t must be set to a sub-directory in /local/"
   exit 1
-
 fi
+
+ echo "Cloning PUMI branch '${BRANCH}' from GitHub."
+ CLONE_CMD="git clone -b ${BRANCH} https://github.com/pni-lab/PUMI \${pumi_dir};"
+ if [ -n "$CUSTOM_SETTINGS" ]; then
+    echo "Will override cloned settings.ini with custom settings from: $CUSTOM_SETTINGS"
+    SETTINGS_OVERWRITE_CMD="cp \"$CUSTOM_SETTINGS\" \${pumi_dir}/PUMI/settings.ini;"
+ else
+    SETTINGS_OVERWRITE_CMD=""
+fi
+
 
 ############################# Main script begins here #########################################
 
@@ -154,14 +167,16 @@ apptainer exec \
 \${apptainer_image} \
 bash -c " \
 set -x; \
-git clone -b ${BRANCH} https://github.com/pni-lab/PUMI \${pumi_dir}; \
-source activate base;
+${CLONE_CMD} \
+source activate base; \
 pip install -e \${pumi_dir} --no-cache-dir; \
+${SETTINGS_OVERWRITE_CMD} \
 python3 \${pumi_dir}/pipelines/${PIPELINE} \
 ${RESOURCES} \
 --working_dir \${subject_tmp} \
 --bids_dir=\${subject_data_in} \
 --output_dir=\${subject_data_out} "
+
 
 echo "******************** SUBJECT TMP TREE ****************************"
 tree \${subject_tmp}
