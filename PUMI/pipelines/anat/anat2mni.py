@@ -165,7 +165,7 @@ def anat2mni_ants(wf,
 
     # Create png images for quality check
     anat2mni_ants_qc = qc(name='anat2mni_ants_qc', qc_dir=wf.qc_dir)
-    anat2mni_ants_qc.inputs.ref_brain = ref_brain
+    anat2mni_ants_qc.get_node('inputspec').inputs.ref_brain = ref_brain
     wf.connect(image_transform, 'output_image', anat2mni_ants_qc, 'in_file')
 
     # sinking

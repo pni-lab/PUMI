@@ -2,7 +2,7 @@ import nipype.interfaces.afni as afni
 import nipype.interfaces.fsl as fsl
 import nipype.interfaces.ants as ants
 from PUMI.engine import NestedNode as Node
-from PUMI.pipelines.anat.anat2mni import anat2mni_fsl, anat2mni_ants_hardcoded
+from PUMI.pipelines.anat.anat2mni import anat2mni_fsl, anat2mni_ants_hardcoded, anat2mni_ants
 from PUMI.pipelines.multimodal.masks import create_ventricle_mask
 from PUMI.pipelines.anat.segmentation import bet_fsl, tissue_segmentation_fsl, bet_hd, bet_deepbet
 from PUMI.engine import AnatPipeline
@@ -13,7 +13,7 @@ from PUMI.utils import get_reference
               outputspec_fields=['brain', 'brain_mask', 'head', 'probmap_gm', 'probmap_wm', 'probmap_csf',
                                  'probmap_ventricle', 'parvol_gm', 'parvol_wm', 'parvol_csf', 'partvol_map',
                                  'anat2mni_warpfield', 'mni2anat_warpfield', 'std_brain', 'std_template'])
-def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
+def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS_HARDCODED', **kwargs):
     """
 
     Performs processing of anatomical images:
@@ -68,21 +68,28 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
 
     # Step 2: Transform head from anatomical space to MNI space
 
+    reg_tool = wf.cfg_parser.get('ANAT2MNI', 'reg_tool', fallback=reg_tool).strip()
+
     if reg_tool == 'FSL':
         anat2mni_wf = anat2mni_fsl('anat2mni_fsl')
     elif reg_tool == 'ANTS':
+        anat2mni_wf = anat2mni_ants('anat2mni_ants')
+    elif reg_tool == 'ANTS_HARDCODED':
         anat2mni_wf = anat2mni_ants_hardcoded('anat2mni_ants_hardcoded')
     else:
-        raise ValueError('reg_tool can be \'ANTS\' or \'FSL\' but not ' + reg_tool)
-
+        raise ValueError('reg_tool can be \'ANTS\', \'ANTS_HARDCODED\' or \'FSL\' but not ' + reg_tool)
     wf.connect('inputspec', 'in_file', anat2mni_wf, 'head')
     wf.connect(bet_wf, 'out_file', anat2mni_wf, 'brain')
+
 
     # Step 3: Apply tissue segmentation
 
     tissue_segmentation_wf = tissue_segmentation_fsl('tissue_segmentation_fsl')
     wf.connect(bet_wf, 'out_file', tissue_segmentation_wf, 'brain')
-    wf.connect(anat2mni_wf, 'inv_linear_xfm', tissue_segmentation_wf, 'stand2anat_xfm')  # Used to transform FSL priors to subject space
+    if reg_tool == 'ANTS':
+        wf.connect(anat2mni_wf, 'inv_xfm', tissue_segmentation_wf, 'stand2anat_xfm')  # Used to transform FSL priors to subject space
+    else:
+        wf.connect(anat2mni_wf, 'inv_linear_xfm', tissue_segmentation_wf, 'stand2anat_xfm')  # Used to transform FSL priors to subject space
 
     # Step 4: If needed, create ventricle mask, afterward resample ventricle mask to MNI space
 
@@ -109,17 +116,19 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     wf.connect(anat2mni_wf, 'std_template', resample_std_ventricle, 'master')
 
     # Step 5: Transform ventricle mask from MNI space to anat space
-
     if reg_tool == 'FSL':
         unwarp_ventricle = Node(interface=fsl.ApplyWarp(), name='unwarp_ventricle')
         wf.connect(resample_std_ventricle, 'out_file', unwarp_ventricle, 'in_file')
         wf.connect('inputspec', 'in_file', unwarp_ventricle, 'ref_file')
         wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', unwarp_ventricle, 'field_file')
-    elif reg_tool == 'ANTS':
+    elif reg_tool in ['ANTS', 'ANTS_HARDCODED']:
         unwarp_ventricle = Node(interface=ants.ApplyTransforms(), name='unwarp_ventricle')
         wf.connect(resample_std_ventricle, 'out_file', unwarp_ventricle, 'input_image')
         wf.connect('inputspec', 'in_file', unwarp_ventricle, 'reference_image')
-        wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', unwarp_ventricle, 'transforms')
+        if reg_tool == 'ANTS_HARDCODED':
+            wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', unwarp_ventricle, 'transforms')
+        else:
+            wf.connect(anat2mni_wf, 'inv_xfm', unwarp_ventricle, 'transforms')
 
     # Step 6: Mask csf segmentation with anat-space ventricle mask
 
@@ -127,7 +136,7 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     wf.connect(tissue_segmentation_wf, 'probmap_csf', anat_ventricle_mask, 'in_file')
     if reg_tool == 'FSL':
         wf.connect(unwarp_ventricle, 'out_file', anat_ventricle_mask, 'in_file2')
-    elif reg_tool == 'ANTS':
+    else:
         wf.connect(unwarp_ventricle, 'output_image', anat_ventricle_mask, 'in_file2')
 
     # Outputs
@@ -135,8 +144,12 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     wf.connect('inputspec', 'in_file', 'outputspec', 'head')
     wf.connect(bet_wf, 'out_file', 'outputspec', 'brain')
     wf.connect(bet_wf, 'brain_mask', 'outputspec', 'brain_mask')
-    wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', 'outputspec', 'mni2anat_warpfield')
-    wf.connect(anat2mni_wf, 'nonlinear_xfm', 'outputspec', 'anat2mni_warpfield')
+    if reg_tool == 'ANTS':
+        wf.connect(anat2mni_wf, 'inv_xfm', 'outputspec', 'mni2anat_warpfield')
+        wf.connect(anat2mni_wf, 'xfm', 'outputspec', 'anat2mni_warpfield')
+    else:
+        wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', 'outputspec', 'mni2anat_warpfield')
+        wf.connect(anat2mni_wf, 'nonlinear_xfm', 'outputspec', 'anat2mni_warpfield')
     wf.connect(anat2mni_wf, 'output_brain', 'outputspec', 'std_brain')
     wf.connect(anat2mni_wf, 'std_template', 'outputspec', 'std_template')
     wf.connect(anat_ventricle_mask, 'out_file', 'outputspec', 'probmap_ventricle')
