@@ -1,5 +1,6 @@
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
+from PUMI.pipelines.multimodal.image_manipulation import vol2png
 from PUMI.utils import get_reference, get_config, create_coregistration_qc, registration_ants_hardcoded
 from nipype import Function
 from nipype.interfaces import fsl
@@ -24,18 +25,17 @@ def qc(wf, **kwargs):
         - The quality check image
 
     """
-    plot = Node(Function(input_names=['registered_brain', 'template'],
-                         output_names=['out_file'],
-                         function=create_coregistration_qc),
-                name='plot')
-    wf.connect('inputspec', 'in_file', plot, 'registered_brain')
-    wf.connect('inputspec', 'ref_brain', plot, 'template')
+
+    # Create png images for quality check
+    anat2mni_qc = vol2png('anat2mni_qc')
+    wf.connect('inputspec', 'ref_brain', anat2mni_qc, 'bg_image')
+    wf.connect('inputspec', 'in_file', anat2mni_qc, 'overlay_image')
 
     # sinking
-    wf.connect(plot, 'out_file', 'sinker', 'qc_anat2mni')
+    wf.connect(anat2mni_qc, 'out_file', 'sinker', 'qc_anat2mni')
 
     # output
-    wf.connect(plot, 'out_file', 'outputspec', 'out_file')
+    wf.connect(anat2mni_qc, 'out_file', 'outputspec', 'out_file')
 
 
 @AnatPipeline(inputspec_fields=['brain', 'head'],
