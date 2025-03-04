@@ -80,16 +80,6 @@ else
   exit 1
 fi
 
- echo "Cloning PUMI branch '${BRANCH}' from GitHub."
- CLONE_CMD="git clone -b ${BRANCH} https://github.com/pni-lab/PUMI \${pumi_dir};"
- if [ -n "$CUSTOM_SETTINGS" ]; then
-    echo "Will override cloned settings.ini with custom settings from: $CUSTOM_SETTINGS"
-    SETTINGS_OVERWRITE_CMD="cp \"$CUSTOM_SETTINGS\" \${pumi_dir}/PUMI/settings.ini;"
- else
-    SETTINGS_OVERWRITE_CMD=""
-fi
-
-
 ############################# Main script begins here #########################################
 
 dataset_name=$(basename "$INDIR")
@@ -152,6 +142,14 @@ pumi_dir="\${subject_dir}/PUMI/"
 rm -rf \${pumi_dir}
 mkdir -p \${pumi_dir}  # Create folder in which we clone PUMI into (and parent folders if necessary)
 
+echo "Cloning PUMI..."
+git clone -b ${BRANCH} https://github.com/pni-lab/PUMI "\${pumi_dir}"
+
+if [ -n "${CUSTOM_SETTINGS}" ]; then
+    echo "Overwriting settings.ini with custom settings from: ${CUSTOM_SETTINGS}"
+    cp "${CUSTOM_SETTINGS}" "\${pumi_dir}/PUMI/settings.ini"
+fi
+
 apptainer_image_dir="\${subject_dir}/apptainer_image/"
 apptainer_image="\${apptainer_image_dir}/PUMI.sif"
 mkdir -p "\${apptainer_image_dir}"
@@ -167,7 +165,6 @@ apptainer exec \
 \${apptainer_image} \
 bash -c " \
 set -x; \
-${CLONE_CMD} \
 source activate base; \
 pip install -e \${pumi_dir} --no-cache-dir; \
 ${SETTINGS_OVERWRITE_CMD} \
