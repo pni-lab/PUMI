@@ -112,7 +112,7 @@ for subject_folder in ${INDIR}/sub-*; do
     cat << EOF > "${job_path}"
 #!/bin/bash
 #SBATCH --job-name=${subject_id}_${dataset_name}
-#SBATCH --time=3:00:00
+#SBATCH --time=24:00:00
 #SBATCH --nice=${NICE}
 #SBATCH --output="${LOG_PATH}/${subject_id}.out"
 #SBATCH --cpus-per-task ${CPUS_PER_TASK}
