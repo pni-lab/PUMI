@@ -86,13 +86,9 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS_HARDCODED', **kwargs):
 
     tissue_segmentation_wf = tissue_segmentation_fsl('tissue_segmentation_fsl')
     wf.connect(bet_wf, 'out_file', tissue_segmentation_wf, 'brain')
-    if reg_tool == 'ANTS':
-        wf.connect(anat2mni_wf, 'inv_xfm', tissue_segmentation_wf, 'stand2anat_xfm')  # Used to transform FSL priors to subject space
-    else:
-        wf.connect(anat2mni_wf, 'inv_linear_xfm', tissue_segmentation_wf, 'stand2anat_xfm')  # Used to transform FSL priors to subject space
+    wf.connect(anat2mni_wf, 'inv_linear_xfm', tissue_segmentation_wf, 'stand2anat_xfm')  # Used to transform FSL priors to subject space
 
     # Step 4: If needed, create ventricle mask, afterward resample ventricle mask to MNI space
-
     std_ventricle_mask_file = wf.cfg_parser.get('TEMPLATES', 'ventricle_mask', fallback='')
     std_csf_probseg_file = wf.cfg_parser.get('TEMPLATES', 'csf_probseg', fallback='')
 

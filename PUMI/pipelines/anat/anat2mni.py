@@ -113,7 +113,7 @@ def anat2mni_fsl(wf,
 
 
 @AnatPipeline(inputspec_fields=['brain', 'head'],
-              outputspec_fields=['output_brain', 'xfm', 'inv_xfm', 'std_template'])
+              outputspec_fields=['output_brain', 'xfm', 'inv_xfm', 'inv_linear_xfm', 'std_template'])
 def anat2mni_ants(wf,
                   ref_head=None,
                   ref_brain=None,
@@ -128,6 +128,17 @@ def anat2mni_ants(wf,
         ref_head = get_reference(wf, 'head')
     if ref_brain is None:
         ref_brain = get_reference(wf, 'brain')
+
+    # Calculate linear transformation with FSL (necessary for segmentation with fsl fast if priors are set).
+    linear_reg = Node(interface=fsl.FLIRT(), name='linear_reg')
+    linear_reg.inputs.cost = 'corratio'
+    linear_reg.inputs.reference = ref_brain
+    wf.connect('inputspec', 'brain', linear_reg, 'in_file')
+
+    # Calculate the inverse of the linear transformation
+    inv_linear_reg = Node(interface=fsl.utils.ConvertXFM(), name='inv_linear_reg')
+    inv_linear_reg.inputs.invert_xfm = True
+    wf.connect(linear_reg, 'out_matrix_file', inv_linear_reg, 'in_file')
 
     reg = Node(interface=Registration(), name="reg")
     reg.inputs.fixed_image = ref_head
@@ -176,6 +187,7 @@ def anat2mni_ants(wf,
     wf.get_node('outputspec').inputs.std_template = ref_brain
     wf.connect(reg, 'composite_transform', 'outputspec', 'xfm')
     wf.connect(reg, 'inverse_composite_transform', 'outputspec', 'inv_xfm')
+    wf.connect(inv_linear_reg, 'out_file', 'outputspec', 'inv_linear_xfm')
     wf.connect(image_transform, 'output_image', 'outputspec', 'output_brain')
 
 
