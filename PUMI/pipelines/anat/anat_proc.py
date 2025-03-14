@@ -4,10 +4,10 @@ import nipype.interfaces.ants as ants
 from PUMI.engine import NestedNode as Node
 from PUMI.pipelines.anat.anat2mni import anat2mni_fsl, anat2mni_ants_hardcoded, anat2mni_ants
 from PUMI.pipelines.multimodal.masks import create_ventricle_mask
-from PUMI.pipelines.anat.segmentation import bet_fsl, tissue_segmentation_fsl, bet_hd, bet_deepbet
+from PUMI.pipelines.anat.segmentation import bet_fsl, tissue_segmentation_fsl, bet_hd, bet_deepbet, \
+    template_tissue_segmentation_fsl
 from PUMI.engine import AnatPipeline
 from PUMI.utils import get_reference
-
 
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['brain', 'brain_mask', 'head', 'probmap_gm', 'probmap_wm', 'probmap_csf',
@@ -108,7 +108,18 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS_HARDCODED', **kwargs):
         )
         wf.connect(create_ventricle_mask_wf, 'out_file', resample_std_ventricle, 'in_file')
     else:
-        raise ValueError("Either 'ventricle_mask' or 'csf_probseg' must be specified in settings.ini!")
+        template_tissue_segmentation_wf = template_tissue_segmentation_fsl('template_tissue_segmentation_wf')
+        template_tissue_segmentation_wf.get_node('inputspec').inputs.in_file = get_reference(wf, 'brain')
+
+        create_ventricle_mask_wf = create_ventricle_mask(name='create_ventricle_mask_wf')
+        wf.connect(template_tissue_segmentation_wf, 'probmap_csf', create_ventricle_mask_wf, 'csf_probseg')
+        create_ventricle_mask_wf.get_node('inputspec').inputs.template = get_reference(wf, 'brain')
+
+        resample_std_ventricle = Node(
+            interface=afni.Resample(outputtype='NIFTI_GZ'),
+            name='resample_std_ventricle'
+        )
+        wf.connect(create_ventricle_mask_wf, 'out_file', resample_std_ventricle, 'in_file')
     wf.connect(anat2mni_wf, 'std_template', resample_std_ventricle, 'master')
 
     # Step 5: Transform ventricle mask from MNI space to anat space
