@@ -3,16 +3,17 @@ from PUMI.engine import NestedNode as Node
 import nipype.interfaces.fsl as fsl
 from nipype.interfaces.utility import Function
 from PUMI.utils import get_reference
+import nipype.interfaces.ants as ants
 
 
-@QcPipeline(inputspec_fields=['ventricle_mask', 'template'],
+@QcPipeline(inputspec_fields=['mask', 'template'],
             outputspec_fields=['out_file'])
-def qc(wf, **kwargs):
+def qc(wf, filename, **kwargs):
     """
     Pipeline for generating QC images for ventricle mask creation.
 
     Inputs:
-        ventricle_mask (str): Path to the ventricle mask file.
+        mask (str): Path to the mask file.
         template (str): Path to the template image file.
 
     Outputs:
@@ -23,9 +24,9 @@ def qc(wf, **kwargs):
         kwargs (dict): Additional arguments for the workflow.
     """
 
-    def create_image(ventricle_mask, template):
+    def create_image(mask, template):
         """
-        Create a QC image overlaying the ventricle mask on the template.
+        Create a QC image overlaying the mask on the template.
 
         Parameters:
             ventricle_mask (str): Path to the ventricle mask file.
@@ -36,18 +37,18 @@ def qc(wf, **kwargs):
         """
         from PUMI.utils import plot_roi
 
-        _, out_file = plot_roi(roi_img=ventricle_mask, bg_img=template, cmap='winter', save_img=True)
+        _, out_file = plot_roi(roi_img=mask, bg_img=template, cmap='winter', save_img=True)
         return out_file
 
-    plot = Node(Function(input_names=['ventricle_mask', 'template'],
+    plot = Node(Function(input_names=['mask', 'template'],
                          output_names=['out_file'],
                          function=create_image),
                 name='plot')
-    wf.connect('inputspec', 'ventricle_mask', plot, 'ventricle_mask')
+    wf.connect('inputspec', 'mask', plot, 'mask')
     wf.connect('inputspec', 'template', plot, 'template')
 
     # Sinking
-    wf.connect(plot, 'out_file', 'sinker', 'qc_ventricle_mask')
+    wf.connect(plot, 'out_file', 'sinker', filename)
 
     # Output
     wf.connect(plot, 'out_file', 'outputspec', 'out_file')
@@ -121,8 +122,8 @@ def create_ventricle_mask(wf, fallback_threshold=0, fallback_dilate_mask=0, **kw
     wf.connect(dilate_ventricle_mask, 'out_file', combine_csf_ventricles, 'operand_files')
 
     # QC
-    qc_create_ventricle_mask = qc(name='qc_create_ventricle_mask', qc_dir=wf.qc_dir)
-    wf.connect(combine_csf_ventricles, 'out_file', qc_create_ventricle_mask, 'ventricle_mask')
+    qc_create_ventricle_mask = qc(name='qc_create_ventricle_mask', filename='qc_create_ventricle_mask', qc_dir=wf.qc_dir)
+    wf.connect(combine_csf_ventricles, 'out_file', qc_create_ventricle_mask, 'mask')
     wf.connect('inputspec', 'template', qc_create_ventricle_mask, 'template')
 
     # Sinking
@@ -130,3 +131,46 @@ def create_ventricle_mask(wf, fallback_threshold=0, fallback_dilate_mask=0, **kw
 
     # Outputspec
     wf.connect(combine_csf_ventricles, 'out_file', 'outputspec', 'out_file')
+
+
+@GroupPipeline(inputspec_fields=['mask'],
+               outputspec_fields=['out_file'])
+def resample_mask(wf, resolution=1.0, apply_smoothing=False, qc_filename='qc_resampled_mask', **kwargs):
+    """
+    Pipeline for resampling an atlas to a specified resolution using ANTS.
+
+    This pipeline resamples an atlas to a specified resolution using ANTS' ResampleImage
+    and creates QC images to verify the resampling.
+
+    Inputs:
+        mask (str): Path to the input mask file (any resolution).
+
+    Outputs:
+        out_file (str): Path to the resampled 1mm atlas file.
+
+    Parameters:
+        wf (Workflow): The workflow object.
+        resolution (float): The resolution to resample the atlas to.
+        kwargs (dict): Additional arguments for the workflow.
+    """
+    # Resample atlas to 1mm using ANTS
+    resample = Node(ants.ResampleImageBySpacing(), name='resample_mask')
+    resample.inputs.dimension = 3
+    resample.inputs.out_spacing = (resolution, resolution, resolution)
+    resample.inputs.apply_smoothing = apply_smoothing
+    wf.connect('inputspec', 'mask', resample, 'input_image')
+    
+    # Ensure binary values with thresholding
+    threshold = Node(fsl.ImageMaths(op_string='-thr 0.5 -bin'), name='threshold')
+    wf.connect(resample, 'output_image', threshold, 'in_file')
+
+    # Create QC images
+    qc_resampled_atlas = qc(name=qc_filename, filename=qc_filename, qc_dir=wf.qc_dir)
+    wf.connect(threshold, 'out_file', qc_resampled_atlas, 'mask')
+    wf.connect('inputspec', 'mask', qc_resampled_atlas, 'template')
+
+    # Sinking
+    wf.connect(threshold, 'out_file', 'sinker', 'resampled_atlas_1mm')
+
+    # Outputspec
+    wf.connect(threshold, 'out_file', 'outputspec', 'out_file')
