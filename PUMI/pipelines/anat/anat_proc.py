@@ -98,54 +98,43 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS_HARDCODED', resample_ventricle_
     should_resample_to_1mm = wf.cfg_parser.getboolean('ANAT_PROC', 'resample_ventricle_mask_to_1mm', fallback=resample_ventricle_mask_to_1mm_fallback)
     should_smooth_ventricle_mask_before_resampling = wf.cfg_parser.getboolean('ANAT_PROC', 'smooth_ventricle_mask_before_resampling', fallback=smooth_ventricle_mask_before_resampling_fallback)
     
+    # Initialize resample_to_1mm workflow if needed
+    resample_to_1mm = None
     if should_resample_to_1mm:
-        # Add the resample_mask workflow for 1mm resampling
         resample_to_1mm = resample_mask(
             name='resample_ventricle_mask_to_1mm_wf',
             resolution=1.0,
             apply_smoothing=should_smooth_ventricle_mask_before_resampling
         )
 
+    resample_std_ventricle = Node(
+        interface=afni.Resample(outputtype='NIFTI_GZ'),
+        name='resample_std_ventricle'
+    )
+
     if std_ventricle_mask_file:
+
+        # Use existing ventricle mask (but resample to 1mm if requested)
         if should_resample_to_1mm:
-            # If we have an existing mask and should resample to 1mm
             resample_to_1mm.get_node('inputspec').inputs.mask = get_reference(wf, 'ventricle_mask')
-            
-            resample_std_ventricle = Node(
-                interface=afni.Resample(outputtype='NIFTI_GZ'),
-                name='resample_std_ventricle'
-            )
             wf.connect(resample_to_1mm, 'out_file', resample_std_ventricle, 'in_file')
         else:
-            # If we have an existing mask and should not resample to 1mm
-            resample_std_ventricle = Node(
-                interface=afni.Resample(outputtype='NIFTI_GZ', in_file=get_reference(wf, 'ventricle_mask')),
-                name='resample_std_ventricle'
-            )
-        
+            resample_std_ventricle.inputs.in_file = get_reference(wf, 'ventricle_mask')
+    
     elif std_csf_probseg_file:
-        # Create mask at original resolution first
+        # Create mask from CSF probability segmentation
         create_ventricle_mask_wf = create_ventricle_mask(name='create_ventricle_mask_wf')
         create_ventricle_mask_wf.get_node('inputspec').inputs.csf_probseg = get_reference(wf, 'csf_probseg')
         create_ventricle_mask_wf.get_node('inputspec').inputs.template = get_reference(wf, 'brain')
 
         if should_resample_to_1mm:
-            # Then resample to 1mm using the resample_mask workflow
             wf.connect(create_ventricle_mask_wf, 'out_file', resample_to_1mm, 'mask')
-            
-            resample_std_ventricle = Node(
-                interface=afni.Resample(outputtype='NIFTI_GZ'),
-                name='resample_std_ventricle'
-            )
             wf.connect(resample_to_1mm, 'out_file', resample_std_ventricle, 'in_file')
         else:
-            resample_std_ventricle = Node(
-                interface=afni.Resample(outputtype='NIFTI_GZ'),
-                name='resample_std_ventricle'
-            )
             wf.connect(create_ventricle_mask_wf, 'out_file', resample_std_ventricle, 'in_file')
+    
     else:
-        # Create mask at original resolution first
+        # Create mask from template tissue segmentation
         template_tissue_segmentation_wf = template_tissue_segmentation_fsl('template_tissue_segmentation_wf')
         template_tissue_segmentation_wf.get_node('inputspec').inputs.in_file = get_reference(wf, 'brain')
 
@@ -154,22 +143,11 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS_HARDCODED', resample_ventricle_
         create_ventricle_mask_wf.get_node('inputspec').inputs.template = get_reference(wf, 'brain')
 
         if should_resample_to_1mm:
-            # Then resample to 1mm using the resample_mask workflow
             wf.connect(create_ventricle_mask_wf, 'out_file', resample_to_1mm, 'mask')
-            
-            resample_std_ventricle = Node(
-                interface=afni.Resample(outputtype='NIFTI_GZ'),
-                name='resample_std_ventricle'
-            )
             wf.connect(resample_to_1mm, 'out_file', resample_std_ventricle, 'in_file')
         else:
-            resample_std_ventricle = Node(
-                interface=afni.Resample(outputtype='NIFTI_GZ'),
-                name='resample_std_ventricle'
-            )
             wf.connect(create_ventricle_mask_wf, 'out_file', resample_std_ventricle, 'in_file')
 
-    # Connect to standard template space (this remains the same)
     wf.connect(anat2mni_wf, 'std_template', resample_std_ventricle, 'master')
 
     # Step 5: Transform ventricle mask from MNI space to anat space
