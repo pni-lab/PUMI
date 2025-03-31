@@ -170,7 +170,7 @@ def resample_mask(wf, resolution=1.0, apply_smoothing=False, **kwargs):
     wf.connect('inputspec', 'mask', qc_resampled_mask, 'template')
 
     # Sinking
-    wf.connect(threshold, 'out_file', 'sinker', 'resampled_atlas_1mm')
+    wf.connect(threshold, 'out_file', 'sinker', wf.name)
 
     # Outputspec
     wf.connect(threshold, 'out_file', 'outputspec', 'out_file')
