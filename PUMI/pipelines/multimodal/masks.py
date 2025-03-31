@@ -8,7 +8,7 @@ import nipype.interfaces.ants as ants
 
 @QcPipeline(inputspec_fields=['mask', 'template'],
             outputspec_fields=['out_file'])
-def qc(wf, filename, **kwargs):
+def qc(wf, parent_wf_name, **kwargs):
     """
     Pipeline for generating QC images for ventricle mask creation.
 
@@ -48,7 +48,7 @@ def qc(wf, filename, **kwargs):
     wf.connect('inputspec', 'template', plot, 'template')
 
     # Sinking
-    wf.connect(plot, 'out_file', 'sinker', filename)
+    wf.connect(plot, 'out_file', 'sinker', f'qc_{parent_wf_name}')
 
     # Output
     wf.connect(plot, 'out_file', 'outputspec', 'out_file')
@@ -122,7 +122,7 @@ def create_ventricle_mask(wf, fallback_threshold=0, fallback_dilate_mask=0, **kw
     wf.connect(dilate_ventricle_mask, 'out_file', combine_csf_ventricles, 'operand_files')
 
     # QC
-    qc_create_ventricle_mask = qc(name='qc_create_ventricle_mask', filename='qc_create_ventricle_mask', qc_dir=wf.qc_dir)
+    qc_create_ventricle_mask = qc(name=f'qc_{wf.name}', parent_wf_name=wf.name, qc_dir=wf.qc_dir)
     wf.connect(combine_csf_ventricles, 'out_file', qc_create_ventricle_mask, 'mask')
     wf.connect('inputspec', 'template', qc_create_ventricle_mask, 'template')
 
@@ -135,7 +135,7 @@ def create_ventricle_mask(wf, fallback_threshold=0, fallback_dilate_mask=0, **kw
 
 @GroupPipeline(inputspec_fields=['mask'],
                outputspec_fields=['out_file'])
-def resample_mask(wf, resolution=1.0, apply_smoothing=False, qc_filename='qc_resampled_mask', **kwargs):
+def resample_mask(wf, resolution=1.0, apply_smoothing=False, **kwargs):
     """
     Pipeline for resampling an atlas to a specified resolution using ANTS.
 
@@ -165,9 +165,9 @@ def resample_mask(wf, resolution=1.0, apply_smoothing=False, qc_filename='qc_res
     wf.connect(resample, 'output_image', threshold, 'in_file')
 
     # Create QC images
-    qc_resampled_atlas = qc(name=qc_filename, filename=qc_filename, qc_dir=wf.qc_dir)
-    wf.connect(threshold, 'out_file', qc_resampled_atlas, 'mask')
-    wf.connect('inputspec', 'mask', qc_resampled_atlas, 'template')
+    qc_resampled_mask = qc(name=f'qc_{wf.name}', parent_wf_name=wf.name, qc_dir=wf.qc_dir)
+    wf.connect(threshold, 'out_file', qc_resampled_mask, 'mask')
+    wf.connect('inputspec', 'mask', qc_resampled_mask, 'template')
 
     # Sinking
     wf.connect(threshold, 'out_file', 'sinker', 'resampled_atlas_1mm')

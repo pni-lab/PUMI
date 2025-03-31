@@ -26,6 +26,8 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS_HARDCODED', resample_ventricle_
     Parameters:
         bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL', 'HD-BET' or 'deepbet'.
         reg_tool (str): Set to registration tool you want to use. Can be 'FSL' or 'ANTS'.
+        resample_ventricle_mask_to_1mm_fallback (bool): Whether to resample ventricle mask to 1mm resolution (used if settings.ini does not specify it).
+        smooth_ventricle_mask_before_resampling_fallback (bool): Whether to smooth ventricle mask before resampling (used if settings.ini does not specify it).
 
     Inputs:
         brain (str): Path to the brain which should be segmented.
@@ -99,10 +101,9 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS_HARDCODED', resample_ventricle_
     if should_resample_to_1mm:
         # Add the resample_mask workflow for 1mm resampling
         resample_to_1mm = resample_mask(
-            name='resample_to_1mm',
+            name='resample_ventricle_mask_to_1mm_wf',
             resolution=1.0,
-            apply_smoothing=should_smooth_ventricle_mask_before_resampling,
-            qc_filename='qc_resample_ventricle_mask_to_1mm'
+            apply_smoothing=should_smooth_ventricle_mask_before_resampling
         )
 
     if std_ventricle_mask_file:
