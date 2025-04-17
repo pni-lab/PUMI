@@ -1,5 +1,6 @@
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
+from PUMI.pipelines.multimodal.image_manipulation import vol2png
 from PUMI.utils import get_reference, get_config, create_coregistration_qc, registration_ants_hardcoded
 from nipype import Function
 from nipype.interfaces import fsl
@@ -24,18 +25,17 @@ def qc(wf, **kwargs):
         - The quality check image
 
     """
-    plot = Node(Function(input_names=['registered_brain', 'template'],
-                         output_names=['out_file'],
-                         function=create_coregistration_qc),
-                name='plot')
-    wf.connect('inputspec', 'in_file', plot, 'registered_brain')
-    wf.connect('inputspec', 'ref_brain', plot, 'template')
+
+    # Create png images for quality check
+    anat2mni_qc = vol2png('anat2mni_qc')
+    wf.connect('inputspec', 'ref_brain', anat2mni_qc, 'bg_image')
+    wf.connect('inputspec', 'in_file', anat2mni_qc, 'overlay_image')
 
     # sinking
-    wf.connect(plot, 'out_file', 'sinker', 'qc_anat2mni')
+    wf.connect(anat2mni_qc, 'out_file', 'sinker', 'qc_anat2mni')
 
     # output
-    wf.connect(plot, 'out_file', 'outputspec', 'out_file')
+    wf.connect(anat2mni_qc, 'out_file', 'outputspec', 'out_file')
 
 
 @AnatPipeline(inputspec_fields=['brain', 'head'],
@@ -113,7 +113,7 @@ def anat2mni_fsl(wf,
 
 
 @AnatPipeline(inputspec_fields=['brain', 'head'],
-              outputspec_fields=['output_brain', 'xfm', 'inv_xfm', 'std_template'])
+              outputspec_fields=['output_brain', 'xfm', 'inv_xfm', 'inv_linear_xfm', 'std_template'])
 def anat2mni_ants(wf,
                   ref_head=None,
                   ref_brain=None,
@@ -128,6 +128,17 @@ def anat2mni_ants(wf,
         ref_head = get_reference(wf, 'head')
     if ref_brain is None:
         ref_brain = get_reference(wf, 'brain')
+
+    # Calculate linear transformation with FSL (necessary for segmentation with fsl fast if priors are set).
+    linear_reg = Node(interface=fsl.FLIRT(), name='linear_reg')
+    linear_reg.inputs.cost = 'corratio'
+    linear_reg.inputs.reference = ref_brain
+    wf.connect('inputspec', 'brain', linear_reg, 'in_file')
+
+    # Calculate the inverse of the linear transformation
+    inv_linear_reg = Node(interface=fsl.utils.ConvertXFM(), name='inv_linear_reg')
+    inv_linear_reg.inputs.invert_xfm = True
+    wf.connect(linear_reg, 'out_matrix_file', inv_linear_reg, 'in_file')
 
     reg = Node(interface=Registration(), name="reg")
     reg.inputs.fixed_image = ref_head
@@ -165,7 +176,7 @@ def anat2mni_ants(wf,
 
     # Create png images for quality check
     anat2mni_ants_qc = qc(name='anat2mni_ants_qc', qc_dir=wf.qc_dir)
-    anat2mni_ants_qc.inputs.ref_brain = ref_brain
+    anat2mni_ants_qc.get_node('inputspec').inputs.ref_brain = ref_brain
     wf.connect(image_transform, 'output_image', anat2mni_ants_qc, 'in_file')
 
     # sinking
@@ -176,6 +187,7 @@ def anat2mni_ants(wf,
     wf.get_node('outputspec').inputs.std_template = ref_brain
     wf.connect(reg, 'composite_transform', 'outputspec', 'xfm')
     wf.connect(reg, 'inverse_composite_transform', 'outputspec', 'inv_xfm')
+    wf.connect(inv_linear_reg, 'out_file', 'outputspec', 'inv_linear_xfm')
     wf.connect(image_transform, 'output_image', 'outputspec', 'output_brain')
 
 

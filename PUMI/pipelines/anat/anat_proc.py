@@ -2,18 +2,18 @@ import nipype.interfaces.afni as afni
 import nipype.interfaces.fsl as fsl
 import nipype.interfaces.ants as ants
 from PUMI.engine import NestedNode as Node
-from PUMI.pipelines.anat.anat2mni import anat2mni_fsl, anat2mni_ants_hardcoded
-from PUMI.pipelines.multimodal.masks import create_ventricle_mask
-from PUMI.pipelines.anat.segmentation import bet_fsl, tissue_segmentation_fsl, bet_hd, bet_deepbet
+from PUMI.pipelines.anat.anat2mni import anat2mni_fsl, anat2mni_ants_hardcoded, anat2mni_ants
+from PUMI.pipelines.multimodal.masks import create_ventricle_mask, resample_mask
+from PUMI.pipelines.anat.segmentation import bet_fsl, tissue_segmentation_fsl, bet_hd, bet_deepbet, \
+    template_tissue_segmentation_fsl
 from PUMI.engine import AnatPipeline
 from PUMI.utils import get_reference
-
 
 @AnatPipeline(inputspec_fields=['in_file'],
               outputspec_fields=['brain', 'brain_mask', 'head', 'probmap_gm', 'probmap_wm', 'probmap_csf',
                                  'probmap_ventricle', 'parvol_gm', 'parvol_wm', 'parvol_csf', 'partvol_map',
                                  'anat2mni_warpfield', 'mni2anat_warpfield', 'std_brain', 'std_template'])
-def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
+def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS_HARDCODED', resample_ventricle_mask_to_1mm_fallback=False, smooth_ventricle_mask_before_resampling_fallback=False, **kwargs):
     """
 
     Performs processing of anatomical images:
@@ -26,6 +26,8 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     Parameters:
         bet_tool (str): Set to brain extraction tool you want to use. Can be 'FSL', 'HD-BET' or 'deepbet'.
         reg_tool (str): Set to registration tool you want to use. Can be 'FSL' or 'ANTS'.
+        resample_ventricle_mask_to_1mm_fallback (bool): Whether to resample ventricle mask to 1mm resolution (used if settings.ini does not specify it).
+        smooth_ventricle_mask_before_resampling_fallback (bool): Whether to smooth ventricle mask before resampling (used if settings.ini does not specify it).
 
     Inputs:
         brain (str): Path to the brain which should be segmented.
@@ -68,15 +70,19 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
 
     # Step 2: Transform head from anatomical space to MNI space
 
+    reg_tool = wf.cfg_parser.get('ANAT2MNI', 'reg_tool', fallback=reg_tool).strip()
+
     if reg_tool == 'FSL':
         anat2mni_wf = anat2mni_fsl('anat2mni_fsl')
     elif reg_tool == 'ANTS':
+        anat2mni_wf = anat2mni_ants('anat2mni_ants')
+    elif reg_tool == 'ANTS_HARDCODED':
         anat2mni_wf = anat2mni_ants_hardcoded('anat2mni_ants_hardcoded')
     else:
-        raise ValueError('reg_tool can be \'ANTS\' or \'FSL\' but not ' + reg_tool)
-
+        raise ValueError('reg_tool can be \'ANTS\', \'ANTS_HARDCODED\' or \'FSL\' but not ' + reg_tool)
     wf.connect('inputspec', 'in_file', anat2mni_wf, 'head')
     wf.connect(bet_wf, 'out_file', anat2mni_wf, 'brain')
+
 
     # Step 3: Apply tissue segmentation
 
@@ -85,41 +91,79 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     wf.connect(anat2mni_wf, 'inv_linear_xfm', tissue_segmentation_wf, 'stand2anat_xfm')  # Used to transform FSL priors to subject space
 
     # Step 4: If needed, create ventricle mask, afterward resample ventricle mask to MNI space
-
     std_ventricle_mask_file = wf.cfg_parser.get('TEMPLATES', 'ventricle_mask', fallback='')
     std_csf_probseg_file = wf.cfg_parser.get('TEMPLATES', 'csf_probseg', fallback='')
 
-    if std_ventricle_mask_file:
-        resample_std_ventricle = Node(
-            interface=afni.Resample(outputtype='NIFTI_GZ', in_file=get_reference(wf, 'ventricle_mask')),
-            name='resample_std_ventricle'
+    # Check if we should resample to 1mm
+    should_resample_to_1mm = wf.cfg_parser.getboolean('ANAT_PROC', 'resample_ventricle_mask_to_1mm', fallback=resample_ventricle_mask_to_1mm_fallback)
+    should_smooth_ventricle_mask_before_resampling = wf.cfg_parser.getboolean('ANAT_PROC', 'smooth_ventricle_mask_before_resampling', fallback=smooth_ventricle_mask_before_resampling_fallback)
+    
+    # Initialize resample_to_1mm workflow if needed
+    resample_to_1mm = None
+    if should_resample_to_1mm:
+        resample_to_1mm = resample_mask(
+            name='resample_ventricle_mask_to_1mm_wf',
+            resolution=1.0,
+            apply_smoothing=should_smooth_ventricle_mask_before_resampling
         )
+
+    resample_std_ventricle = Node(
+        interface=afni.Resample(outputtype='NIFTI_GZ'),
+        name='resample_std_ventricle'
+    )
+
+    if std_ventricle_mask_file:
+
+        # Use existing ventricle mask (but resample to 1mm if requested)
+        if should_resample_to_1mm:
+            resample_to_1mm.get_node('inputspec').inputs.mask = get_reference(wf, 'ventricle_mask')
+            wf.connect(resample_to_1mm, 'out_file', resample_std_ventricle, 'in_file')
+        else:
+            resample_std_ventricle.inputs.in_file = get_reference(wf, 'ventricle_mask')
+    
     elif std_csf_probseg_file:
+        # Create mask from CSF probability segmentation
         create_ventricle_mask_wf = create_ventricle_mask(name='create_ventricle_mask_wf')
         create_ventricle_mask_wf.get_node('inputspec').inputs.csf_probseg = get_reference(wf, 'csf_probseg')
         create_ventricle_mask_wf.get_node('inputspec').inputs.template = get_reference(wf, 'brain')
 
-        resample_std_ventricle = Node(
-            interface=afni.Resample(outputtype='NIFTI_GZ'),
-            name='resample_std_ventricle'
-        )
-        wf.connect(create_ventricle_mask_wf, 'out_file', resample_std_ventricle, 'in_file')
+        if should_resample_to_1mm:
+            wf.connect(create_ventricle_mask_wf, 'out_file', resample_to_1mm, 'mask')
+            wf.connect(resample_to_1mm, 'out_file', resample_std_ventricle, 'in_file')
+        else:
+            wf.connect(create_ventricle_mask_wf, 'out_file', resample_std_ventricle, 'in_file')
+    
     else:
-        raise ValueError("Either 'ventricle_mask' or 'csf_probseg' must be specified in settings.ini!")
+        # Create mask from template tissue segmentation
+        template_tissue_segmentation_wf = template_tissue_segmentation_fsl('template_tissue_segmentation_wf')
+        template_tissue_segmentation_wf.get_node('inputspec').inputs.in_file = get_reference(wf, 'brain')
+
+        create_ventricle_mask_wf = create_ventricle_mask(name='create_ventricle_mask_wf')
+        wf.connect(template_tissue_segmentation_wf, 'probmap_csf', create_ventricle_mask_wf, 'csf_probseg')
+        create_ventricle_mask_wf.get_node('inputspec').inputs.template = get_reference(wf, 'brain')
+
+        if should_resample_to_1mm:
+            wf.connect(create_ventricle_mask_wf, 'out_file', resample_to_1mm, 'mask')
+            wf.connect(resample_to_1mm, 'out_file', resample_std_ventricle, 'in_file')
+        else:
+            wf.connect(create_ventricle_mask_wf, 'out_file', resample_std_ventricle, 'in_file')
+
     wf.connect(anat2mni_wf, 'std_template', resample_std_ventricle, 'master')
 
     # Step 5: Transform ventricle mask from MNI space to anat space
-
     if reg_tool == 'FSL':
         unwarp_ventricle = Node(interface=fsl.ApplyWarp(), name='unwarp_ventricle')
         wf.connect(resample_std_ventricle, 'out_file', unwarp_ventricle, 'in_file')
         wf.connect('inputspec', 'in_file', unwarp_ventricle, 'ref_file')
         wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', unwarp_ventricle, 'field_file')
-    elif reg_tool == 'ANTS':
+    elif reg_tool in ['ANTS', 'ANTS_HARDCODED']:
         unwarp_ventricle = Node(interface=ants.ApplyTransforms(), name='unwarp_ventricle')
         wf.connect(resample_std_ventricle, 'out_file', unwarp_ventricle, 'input_image')
         wf.connect('inputspec', 'in_file', unwarp_ventricle, 'reference_image')
-        wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', unwarp_ventricle, 'transforms')
+        if reg_tool == 'ANTS_HARDCODED':
+            wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', unwarp_ventricle, 'transforms')
+        else:
+            wf.connect(anat2mni_wf, 'inv_xfm', unwarp_ventricle, 'transforms')
 
     # Step 6: Mask csf segmentation with anat-space ventricle mask
 
@@ -127,7 +171,7 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     wf.connect(tissue_segmentation_wf, 'probmap_csf', anat_ventricle_mask, 'in_file')
     if reg_tool == 'FSL':
         wf.connect(unwarp_ventricle, 'out_file', anat_ventricle_mask, 'in_file2')
-    elif reg_tool == 'ANTS':
+    else:
         wf.connect(unwarp_ventricle, 'output_image', anat_ventricle_mask, 'in_file2')
 
     # Outputs
@@ -135,8 +179,12 @@ def anat_proc(wf, bet_tool='FSL', reg_tool='ANTS', **kwargs):
     wf.connect('inputspec', 'in_file', 'outputspec', 'head')
     wf.connect(bet_wf, 'out_file', 'outputspec', 'brain')
     wf.connect(bet_wf, 'brain_mask', 'outputspec', 'brain_mask')
-    wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', 'outputspec', 'mni2anat_warpfield')
-    wf.connect(anat2mni_wf, 'nonlinear_xfm', 'outputspec', 'anat2mni_warpfield')
+    if reg_tool == 'ANTS':
+        wf.connect(anat2mni_wf, 'inv_xfm', 'outputspec', 'mni2anat_warpfield')
+        wf.connect(anat2mni_wf, 'xfm', 'outputspec', 'anat2mni_warpfield')
+    else:
+        wf.connect(anat2mni_wf, 'inv_nonlinear_xfm', 'outputspec', 'mni2anat_warpfield')
+        wf.connect(anat2mni_wf, 'nonlinear_xfm', 'outputspec', 'anat2mni_warpfield')
     wf.connect(anat2mni_wf, 'output_brain', 'outputspec', 'std_brain')
     wf.connect(anat2mni_wf, 'std_template', 'outputspec', 'std_template')
     wf.connect(anat_ventricle_mask, 'out_file', 'outputspec', 'probmap_ventricle')

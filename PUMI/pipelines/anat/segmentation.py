@@ -1,4 +1,4 @@
-from PUMI.engine import QcPipeline
+from PUMI.engine import QcPipeline, GroupPipeline
 from PUMI.interfaces.HDBet import HDBet
 from PUMI.utils import create_segmentation_qc
 from nipype.interfaces import fsl
@@ -283,6 +283,67 @@ def bet_hd(wf, **kwargs):
 
     wf.connect(bet, 'out_file', 'outputspec', 'out_file')
     wf.connect(bet, 'mask_file', 'outputspec', 'brain_mask')
+
+
+@GroupPipeline(inputspec_fields=['in_file'],
+               outputspec_fields=['probmap_csf', 'probmap_gm', 'probmap_wm', 'mixeltype', 'parvol_csf', 'parvol_gm',
+                                 'parvol_wm', 'partial_volume_map'])
+def template_tissue_segmentation_fsl(wf, **kwargs):
+    """
+
+      Perform segmentation of a brain extracted T1w image.
+
+      Inputs:
+          brain (str): Path to the brain which should be segmented.
+
+      Outputs:
+          probmap_csf (str): Path to csf probability map.
+          probmap_gm (str): Path to gm probability map.
+          probmap_wm (str): Path to wm probability map
+          mixeltype (str): Path to mixeltype volume file
+          parvol_csf (str): Path to csf partial volume file
+          parvol_gm (str): Path to gm partial volume file
+          parvol_wm (str): Path to wm partial volume file
+          partial_volume_map (str): Path to partial volume map
+
+      Acknowledgements:
+          Modified version of CPAC.seg_preproc.seg_preproc (https://github.com/FCP-INDI/C-PAC) and Balint Kinces code (2018)
+
+      For a deeper insight:
+          - https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST
+          - https://nipype.readthedocs.io/en/latest/api/generated/nipype.interfaces.fsl.preprocess.html
+
+       """
+
+    fast = Node(interface=fsl.FAST(), name='fast')
+    fast.inputs.img_type = 1
+    fast.inputs.segments = True
+    fast.inputs.probability_maps = True
+    fast.inputs.out_basename = 'fast'
+    wf.connect('inputspec', 'in_file', fast, 'in_files')
+
+    split_probability_maps = Node(interface=Split(), name='split_probability_maps')
+    split_probability_maps.inputs.splits = [1, 1, 1]
+    split_probability_maps.inputs.squeeze = True
+    wf.connect(fast, 'probability_maps', split_probability_maps, 'inlist')
+
+    split_partial_volume_files = Node(interface=Split(), name='split_partial_volume_files')
+    split_partial_volume_files.inputs.splits = [1, 1, 1]
+    split_partial_volume_files.inputs.squeeze = True
+    wf.connect(fast, 'partial_volume_files', split_partial_volume_files, 'inlist')
+
+    qc = qc_tissue_segmentation(name='qc', qc_dir=wf.qc_dir)
+    wf.connect(fast, 'partial_volume_map', qc, 'in_file')
+
+    # output
+    wf.connect(fast, 'mixeltype', 'outputspec', 'mixeltype')
+    wf.connect(fast, 'partial_volume_map', 'outputspec', 'partial_volume_map')
+    wf.connect(split_probability_maps, 'out1', 'outputspec', 'probmap_csf')
+    wf.connect(split_probability_maps, 'out2', 'outputspec', 'probmap_gm')
+    wf.connect(split_probability_maps, 'out3', 'outputspec', 'probmap_wm')
+    wf.connect(split_partial_volume_files, 'out1', 'outputspec', 'parvol_csf')
+    wf.connect(split_partial_volume_files, 'out2', 'outputspec', 'parvol_gm')
+    wf.connect(split_partial_volume_files, 'out3', 'outputspec', 'parvol_wm')
 
 
 @AnatPipeline(inputspec_fields=['brain', 'stand2anat_xfm'],
