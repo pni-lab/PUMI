@@ -2,7 +2,7 @@ from PUMI.pipelines.func.func2standard import atlas2func
 from nipype.interfaces import afni
 import nipype.interfaces.utility as utility
 from PUMI.engine import GroupPipeline, FuncPipeline, NestedNode as Node, QcPipeline
-from PUMI.utils import relabel_atlas, get_reference, TsExtractor, plot_carpet_ts
+from PUMI.utils import relabel_mist_atlas, get_reference, TsExtractor, plot_carpet_ts
 
 
 @QcPipeline(inputspec_fields=['timeseries', 'modules', 'atlas'],
@@ -84,7 +84,7 @@ def pick_atlas(wf, reorder=True, **kwargs):
             interface=utility.Function(
                 input_names=['atlas_file', 'modules', 'labels'],
                 output_names=['relabelled_atlas_file', 'reordered_modules', 'reordered_labels', 'newlabels_file'],
-                function=relabel_atlas
+                function=relabel_mist_atlas
             ),
             name='relabel_atls'
         )
