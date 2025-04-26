@@ -1,6 +1,7 @@
 from .nodes import NestedNode, NestedMapNode
 from .workflow import NestedWorkflow
 from .pipelines import AnatPipeline, FuncPipeline, GroupPipeline, QcPipeline, PumiPipeline, BidsPipeline
+from .apps import BidsApp
 
 __all__ = [
     'NestedNode',
@@ -11,5 +12,6 @@ __all__ = [
     'GroupPipeline',
     'QcPipeline',
     'PumiPipeline',
-    'BidsPipeline'
+    'BidsPipeline',
+    'BidsApp',
 ]
