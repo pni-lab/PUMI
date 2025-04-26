@@ -25,13 +25,19 @@ def qc(wf, **kwargs):
 
     """
 
-    # Create png images for quality check
+    # Create png images for quality check with template as background
     anat2mni_qc = vol2png('anat2mni_qc')
     wf.connect('inputspec', 'ref_brain', anat2mni_qc, 'bg_image')
     wf.connect('inputspec', 'in_file', anat2mni_qc, 'overlay_image')
 
+    # Create png images for quality check with individual anatomy as background
+    anat2mni_tplbckground_qc = vol2png('anat2mni_tplbckground_qc')
+    wf.connect('inputspec', 'in_file', anat2mni_tplbckground_qc, 'bg_image')
+    wf.connect('inputspec', 'ref_brain', anat2mni_tplbckground_qc, 'overlay_image')
+
     # sinking
     wf.connect(anat2mni_qc, 'out_file', 'sinker', 'qc_anat2mni')
+    wf.connect(anat2mni_tplbckground_qc, 'out_file', 'sinker', 'qc_anat2mni_templateBackground')
 
     # output
     wf.connect(anat2mni_qc, 'out_file', 'outputspec', 'out_file')
