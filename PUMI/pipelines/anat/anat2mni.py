@@ -1,7 +1,7 @@
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
 from PUMI.pipelines.multimodal.image_manipulation import vol2png
-from PUMI.utils import get_reference, get_config, create_coregistration_qc, registration_ants_hardcoded
+from PUMI.utils import get_reference, get_config
 from nipype import Function
 from nipype.interfaces import fsl
 from nipype.interfaces.ants import Registration, ApplyTransforms
