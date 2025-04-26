@@ -5,6 +5,7 @@ from .image_transformations import scrub_image, scale_vol, registration_ants_har
 from .statistics import max_from_txt, mean_from_txt, calc_friston_twenty_four, calculate_FD_Jenkinson
 from .textfile_transformations import drop_first_line
 from .timeseries import get_indx, TsExtractor, concatenate, above_threshold
+from .atlas import relabel_atlas, mist_labels, mist_modules
 
 
 __all__ = [
@@ -27,5 +28,8 @@ __all__ = [
     'get_indx',
     'TsExtractor',
     'concatenate',
-    'above_threshold'
+    'above_threshold',
+    'relabel_atlas',
+    'mist_labels',
+    'mist_modules'
 ]
