@@ -6,6 +6,7 @@ from .statistics import max_from_txt, mean_from_txt, calc_friston_twenty_four, c
 from .textfile_transformations import drop_first_line
 from .timeseries import get_indx, TsExtractor, concatenate, above_threshold
 from .atlas import relabel_atlas, mist_labels, mist_modules
+from .rpn import rpn_model
 
 
 __all__ = [
@@ -31,5 +32,6 @@ __all__ = [
     'above_threshold',
     'relabel_atlas',
     'mist_labels',
-    'mist_modules'
+    'mist_modules',
+    'rpn_model'
 ]
