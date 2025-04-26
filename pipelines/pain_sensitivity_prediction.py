@@ -318,7 +318,7 @@ def collect_pain_predictions(wf, **kwargs):
 
 
 @BidsPipeline()
-def rcpl(wf, bbr=True, **kwargs):
+def pain_sensitivity_prediction(wf, bbr=True, **kwargs):
 
     print('* bbr:', bbr)
 
@@ -444,16 +444,16 @@ def rcpl(wf, bbr=True, **kwargs):
     create_dataset_description(wf, pipeline_description_name='RCPL-pipeline')
 
 
-rcpl_app = BidsApp(
-    pipeline=rcpl,
-    name='rcpl',
+app = BidsApp(
+    pipeline=pain_sensitivity_prediction,
+    name='pain_sensitivity_prediction',
     bids_dir='../data_in/pumi-unittest'  # if you pass a cli argument this will be written over!
 )
-rcpl_app.parser.add_argument(
+app.parser.add_argument(
     '--bbr',
     default='yes',
     type=lambda x: (str(x).lower() in ['true', '1', 'yes']),
     help="Use BBR registration: yes/no (default: yes)"
 )
 
-rcpl_app.run()
+app.run()
