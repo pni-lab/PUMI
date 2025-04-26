@@ -9,7 +9,7 @@ from PUMI.pipelines.func.compcor import anat_noise_roi, compcor
 from PUMI.pipelines.anat.func_to_anat import func2anat
 from nipype.interfaces import utility
 from PUMI.pipelines.func.func2func import func2func
-from PUMI.pipelines.func.deconfound import fieldmap_correction_topup
+from PUMI.pipelines.func.deconfound import fieldmap_correction_topup, fieldmap_correction_fugue
 from PUMI.pipelines.func.func_proc import func_proc_despike_afni
 from PUMI.pipelines.func.timeseries_extractor import pick_atlas, extract_timeseries_nativespace
 from PUMI.utils import mist_modules, mist_labels, get_reference, relabel_mist_atlas
@@ -317,40 +317,7 @@ def collect_pain_predictions(wf, **kwargs):
     wf.connect(merge_predictions_wf, 'out_file', 'sinker', 'pain_predictions')
 
 
-@BidsPipeline(output_query={
-    'T1w': dict(
-        datatype='anat',
-        suffix='T1w',
-        extension=['nii', 'nii.gz']
-    ),
-    'bold': dict(
-        datatype='func',
-        suffix='bold',
-        extension=['nii', 'nii.gz']
-    ),
-    'bold_json': dict(
-        datatype='func',
-        suffix='bold',
-        extension='.json'
-    ),
-    'fmap': dict(
-        datatype='fmap',
-        acquisition='bold',
-        suffix='epi',
-        extension=['nii', 'nii.gz']
-    ),
-    'fmap_json': dict(
-        datatype='fmap',
-        acquisition='bold',
-        suffix='epi',
-        extension='.json'
-    ),
-    'sbref': dict(
-        datatype='func',
-        suffix="sbref",
-        extension=['nii', 'nii.gz']
-    )
-})
+@BidsPipeline()
 def rcpl(wf, bbr=True, **kwargs):
 
     print('* bbr:', bbr)
@@ -361,27 +328,54 @@ def rcpl(wf, bbr=True, **kwargs):
     reorient_func_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_func_wf")
     wf.connect('inputspec', 'bold', reorient_func_wf, 'in_file')
 
-    reorient_fmap_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_fmap_wf")
-    wf.connect('inputspec', 'fmap', reorient_fmap_wf, 'in_file')
+    fieldmap_correction_choice = wf.cfg_parser.get('PAIN_PREDICTION_PIPELINE_OPTIONS', 'fieldmap_correction')
+    if fieldmap_correction_choice == 'topup':
+        reorient_fmap_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_fmap_wf")
+        wf.connect('inputspec', 'fmap', reorient_fmap_wf, 'in_file')
 
-    reorient_sbref_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_sbref_wf")
-    wf.connect('inputspec', 'sbref', reorient_sbref_wf, 'in_file')
+        reorient_sbref_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_sbref_wf")
+        wf.connect('inputspec', 'sbref', reorient_sbref_wf, 'in_file')
+
+        anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf', bet_tool='deepbet')
+        wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
+
+        fieldmap_corr = fieldmap_correction_topup('fieldmap_corr')
+        wf.connect(reorient_func_wf, 'out_file', fieldmap_corr, 'main')
+        wf.connect('inputspec', 'bold_json', fieldmap_corr, 'main_json')
+        wf.connect(reorient_fmap_wf, 'out_file', fieldmap_corr, 'fmap')
+        wf.connect('inputspec', 'fmap_json', fieldmap_corr, 'fmap_json')
+        func_input = fieldmap_corr
+    elif fieldmap_correction_choice == 'fugue':
+        reorient_phasediff_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_phasediff_wf")
+        reorient_magnitude_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_magnitude_wf")
+        wf.connect('inputspec', 'phasediff_img', reorient_phasediff_wf, 'in_file')
+        wf.connect('inputspec', 'magnitude_img', reorient_magnitude_wf, 'in_file')
+
+        fieldmap_corr = fieldmap_correction_fugue('fieldmap_corr')
+        wf.connect(reorient_func_wf, 'out_file', fieldmap_corr, 'func')
+        wf.connect('inputspec', 'bold_json', fieldmap_corr, 'func_json')
+        wf.connect(reorient_phasediff_wf, 'out_file', fieldmap_corr, 'phasediff')
+        wf.connect('inputspec', 'phasediff_json', fieldmap_corr, 'phasediff_json')
+        wf.connect(reorient_magnitude_wf, 'out_file', fieldmap_corr, 'magnitude')
+        func_input = fieldmap_corr
+    else:  # no fieldmap correction
+        func_input = reorient_func_wf
+
+    sbref_registration_choice = wf.cfg_parser.getboolean('PAIN_PREDICTION_PIPELINE_OPTIONS', 'sbref_registration')
+    if sbref_registration_choice:
+        reorient_sbref_wf = Node(Reorient2Std(output_type='NIFTI_GZ'), name="reorient_sbref_wf")
+        wf.connect('inputspec', 'sbref', reorient_sbref_wf, 'in_file')
+
+        func2sbref = func2func('func2sbref')
+        wf.connect(func_input, 'out_file', func2sbref, 'func_1')
+        wf.connect(reorient_sbref_wf, 'out_file', func2sbref, 'func_2')
+        func_input = func2sbref
 
     anatomical_preprocessing_wf = anat_proc(name='anatomical_preprocessing_wf', bet_tool='deepbet')
     wf.connect(reorient_struct_wf, 'out_file', anatomical_preprocessing_wf, 'in_file')
 
-    fieldmap_corr = fieldmap_correction_topup('fieldmap_corr')
-    wf.connect(reorient_func_wf, 'out_file', fieldmap_corr, 'main')
-    wf.connect('inputspec', 'bold_json', fieldmap_corr, 'main_json')
-    wf.connect(reorient_fmap_wf, 'out_file', fieldmap_corr, 'fmap')
-    wf.connect('inputspec', 'fmap_json', fieldmap_corr, 'fmap_json')
-
-    func2sbref = func2func('func2sbref')
-    wf.connect(fieldmap_corr, 'out_file', func2sbref, 'func_1')
-    wf.connect(reorient_sbref_wf, 'out_file', func2sbref, 'func_2')
-
     func2anat_wf = func2anat(name='func2anat_wf', bbr=bbr)
-    wf.connect(func2sbref, 'out_file', func2anat_wf, 'func')
+    wf.connect(func_input, 'out_file', func2anat_wf, 'func')
     wf.connect(anatomical_preprocessing_wf, 'brain', func2anat_wf, 'head')
     wf.connect(anatomical_preprocessing_wf, 'probmap_wm', func2anat_wf, 'anat_wm_segmentation')
     wf.connect(anatomical_preprocessing_wf, 'probmap_csf', func2anat_wf, 'anat_csf_segmentation')
@@ -393,7 +387,7 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func2anat_wf, 'ventricle_mask_in_funcspace', compcor_roi_wf, 'ventricle_mask')
 
     func_proc_wf = func_proc_despike_afni('func_proc_wf', bet_tool='deepbet', deepbet_n_dilate=2)
-    wf.connect(func2sbref, 'out_file', func_proc_wf, 'func')
+    wf.connect(func_input, 'out_file', func_proc_wf, 'func')
     wf.connect(compcor_roi_wf, 'out_file', func_proc_wf, 'cc_noise_roi')
 
     pick_atlas_wf = mist_atlas('pick_atlas_wf')
@@ -421,21 +415,30 @@ def rcpl(wf, bbr=True, **kwargs):
     wf.connect(func_proc_wf, 'func_preprocessed', func2std, 'func')
     wf.connect(func_proc_wf, 'mc_ref_vol', func2std, 'bbr2ants_source_file')
 
-    calculate_connectivity_wf = calculate_connectivity('calculate_connectivity_wf')
-    wf.connect(extract_timeseries, 'timeseries', calculate_connectivity_wf, 'ts_files')
-    wf.connect(func_proc_wf, 'FD', calculate_connectivity_wf, 'fd_files')
+    pain_prediction_choice = wf.cfg_parser.get(
+        'PAIN_PREDICTION_PIPELINE_OPTIONS',
+        'predict_pain_sensitivity',
+        fallback='both'
+    )
+    if pain_prediction_choice in ['rpn', 'rcpl', 'both']:
+        calculate_connectivity_wf = calculate_connectivity('calculate_connectivity_wf')
+        wf.connect(extract_timeseries, 'timeseries', calculate_connectivity_wf, 'ts_files')
+        wf.connect(func_proc_wf, 'FD', calculate_connectivity_wf, 'fd_files')
 
-    predict_pain_sensitivity_rpn_wf = predict_pain_sensitivity_rpn('predict_pain_sensitivity_rpn_wf')
-    wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_rpn_wf, 'X')
-    wf.connect(func2sbref, 'out_file', predict_pain_sensitivity_rpn_wf, 'in_file')
+    if pain_prediction_choice in ['rpn', 'both']:
+        predict_pain_sensitivity_rpn_wf = predict_pain_sensitivity_rpn('predict_pain_sensitivity_rpn_wf')
+        wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_rpn_wf, 'X')
+        wf.connect(func_input, 'out_file', predict_pain_sensitivity_rpn_wf, 'in_file')
 
-    predict_pain_sensitivity_rcpl_wf = predict_pain_sensitivity_rcpl('predict_pain_sensitivity_rcpl_wf')
-    wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_rcpl_wf, 'X')
-    wf.connect(func2sbref, 'out_file', predict_pain_sensitivity_rcpl_wf, 'in_file')
+    if pain_prediction_choice in ['rcpl', 'both']:
+        predict_pain_sensitivity_rcpl_wf = predict_pain_sensitivity_rcpl('predict_pain_sensitivity_rcpl_wf')
+        wf.connect(calculate_connectivity_wf, 'features', predict_pain_sensitivity_rcpl_wf, 'X')
+        wf.connect(func_input, 'out_file', predict_pain_sensitivity_rcpl_wf, 'in_file')
 
-    collect_pain_predictions_wf = collect_pain_predictions('collect_pain_predictions_wf')
-    wf.connect(predict_pain_sensitivity_rpn_wf, 'out_file', collect_pain_predictions_wf, 'rpn_out_file')
-    wf.connect(predict_pain_sensitivity_rcpl_wf, 'out_file', collect_pain_predictions_wf, 'rcpl_out_file')
+    if pain_prediction_choice == 'both':
+        collect_pain_predictions_wf = collect_pain_predictions('collect_pain_predictions_wf')
+        wf.connect(predict_pain_sensitivity_rpn_wf, 'out_file', collect_pain_predictions_wf, 'rpn_out_file')
+        wf.connect(predict_pain_sensitivity_rcpl_wf, 'out_file', collect_pain_predictions_wf, 'rcpl_out_file')
 
     wf.write_graph('RCPL-pipeline.png')
     create_dataset_description(wf, pipeline_description_name='RCPL-pipeline')
