@@ -94,3 +94,54 @@ def relabel_atlas(atlas_file, modules, labels):
     newlabels_file = os.path.join(os.getcwd(), 'newlabels.tsv')
     out.to_csv(newlabels_file, sep='\t')
     return relabel_file, reordered_modules, reordered_labels, newlabels_file
+
+
+def relabel_mist_atlas(atlas_file, modules, labels):
+    """
+       Relabel MIST atlas
+       * Beware : currently works only with labelmap!!
+       Parameters:
+           atlas_file(str): Path to the atlas file
+           modules ([str]): List containing the modules in MIST
+           labels ([str]): List containing the labels in MIST
+       Returns:
+           relabel_file (str): Path to relabeld atlas file
+           reordered_modules ([str]): list containing reordered module names
+           reordered_labels ([str]): list containing reordered label names
+           new_labels (str): Path to .tsv-file with the new labels
+    """
+
+    import os
+    import numpy as np
+    import pandas as pd
+    import nibabel as nib
+
+    df = pd.DataFrame({'modules': modules, 'labels': labels})
+    df.index += 1  # indexing from 1
+
+    reordered = df.sort_values(by='modules')
+
+    # relabel labelmap
+    img = nib.load(atlas_file)
+    if len(img.shape) != 3:
+        raise Exception("relabeling does not work for probability maps!")
+
+    lut = reordered.reset_index().sort_values(by="index").index.values + 1
+    lut = np.array([0] + lut.tolist())
+    # maybe this is a bit complicated, but believe me it does what it should
+
+    data = img.get_fdata()
+    newdata = lut[np.array(data, dtype=np.int32)]  # apply lookup table to swap labels
+
+    img = nib.Nifti1Image(newdata.astype(np.float64), img.affine)
+    nib.save(img, 'relabeled_atlas.nii.gz')
+
+    out = reordered.reset_index()
+    out.index = out.index + 1
+    relabel_file = os.path.join(os.getcwd(), 'relabeled_atlas.nii.gz')
+    reordered_modules = reordered['modules'].values.tolist()
+    reordered_labels = reordered['labels'].values.tolist()
+
+    newlabels_file = os.path.join(os.getcwd(), 'newlabels.tsv')
+    out.to_csv(newlabels_file, sep='\t')
+    return relabel_file, reordered_modules, reordered_labels, newlabels_file
