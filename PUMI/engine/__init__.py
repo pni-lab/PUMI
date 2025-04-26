@@ -1,4 +1,4 @@
-from .node import NestedNode, NestedMapNode
+from .nodes import NestedNode, NestedMapNode
 from .workflow import NestedWorkflow
 
 __all__ = [
