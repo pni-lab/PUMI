@@ -2,7 +2,7 @@ from PUMI.pipelines.func.func2standard import atlas2func
 from nipype.interfaces import afni
 import nipype.interfaces.utility as utility
 from PUMI.engine import GroupPipeline, FuncPipeline, NestedNode as Node, QcPipeline
-from PUMI.utils import relabel_atlas, get_reference, TsExtractor, plot_carpet_ts
+from PUMI.utils import relabel_atlas, get_reference, TsExtractor, timeseries_carpet_plot
 
 
 @QcPipeline(inputspec_fields=['timeseries', 'modules', 'atlas'],
@@ -14,7 +14,7 @@ def extract_timeseries_nativespace_qc(wf, **kwargs):
     qc_timeseries = Node(interface=utility.Function(
         input_names=['timeseries', 'modules', 'output_file', 'atlas'],
         output_names=['plotfile'],
-        function=plot_carpet_ts
+        function=timeseries_carpet_plot
     ),
         name="qc_timeseries"
     )
