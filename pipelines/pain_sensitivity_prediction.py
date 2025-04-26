@@ -141,8 +141,7 @@ def pain_sensitivity_prediction(wf, bbr=True, **kwargs):
         wf.connect(predict_pain_sensitivity_rpn_wf, 'out_file', collect_pain_predictions_wf, 'rpn_out_file')
         wf.connect(predict_pain_sensitivity_rcpl_wf, 'out_file', collect_pain_predictions_wf, 'rcpl_out_file')
 
-    wf.write_graph('RCPL-pipeline.png')
-    create_dataset_description(wf, pipeline_description_name='RCPL-pipeline')
+    wf.write_graph('pipeline.png')
 
 
 app = BidsApp(

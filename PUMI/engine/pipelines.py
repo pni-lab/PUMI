@@ -7,6 +7,7 @@ from nipype import Function
 from nipype.utils.filemanip import list_to_filename
 from PUMI import globals
 from PUMI.engine import NestedWorkflow, NestedNode
+from PUMI.engine.reproducibility import create_dataset_description
 import os
 from glob import glob
 
@@ -324,6 +325,9 @@ class BidsPipeline(PumiPipeline):
             wf.add_nodes([sinker])
 
             pipeline_fun(wf=wf, bids_dir=bids_dir, **kwargs)
+
+            # Create dataset description for BIDS compliance
+            create_dataset_description(wf, pipeline_description_name=name)
 
             # todo: should we do any post workflow checks
             # e.g. is outputspec connected
