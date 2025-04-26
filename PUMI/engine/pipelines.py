@@ -200,7 +200,8 @@ class BidsPipeline(PumiPipeline):
         output_query = {}
         for name in input_names:
             config_str = globals.cfg_parser.get('BIDS_INPUTS', name)
-            if config_str.split(':') == 4:
+            print(config_str.split(':'))
+            if len(config_str.split(':')) == 4:
                 datatype, acquisition, suffix, extension = [item.strip() for item in config_str.split(':')]
 
                 output_query[name] = {
@@ -209,7 +210,7 @@ class BidsPipeline(PumiPipeline):
                     'suffix': suffix,
                     'extension': extension.split(',') if ',' in extension else extension
                 }
-            elif config_str.split(':') == 3:
+            elif len(config_str.split(':')) == 3:
                 datatype, suffix, extension = [item.strip() for item in config_str.split(':')]
 
                 output_query[name] = {
@@ -220,7 +221,8 @@ class BidsPipeline(PumiPipeline):
             else:
                 raise ValueError(
                     'Format must be "name = datatype:suffix:possible_extension_1,possible_extension_2"'
-                    + 'or: "name = datatype:acquisition:suffix:possible_extension_1,possible_extension_2"'
+                    + 'or: "name = datatype:acquisition:suffix:possible_extension_1,possible_extension_2" but not '
+                    + f'{name} = {config_str}'
                 )
 
         return output_query
