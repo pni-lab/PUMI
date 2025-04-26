@@ -183,42 +183,43 @@ class BidsPipeline(PumiPipeline):
 
     """
 
+    @staticmethod
+    def get_bids_inputs():
+        """
+        Get BIDS input configuration from settings.ini
+
+        Returns:
+            Dictionary containing the BIDS output query configuration
+        """
+        if not globals.cfg_parser.has_section('BIDS_INPUTS'):
+            raise ValueError('BIDS_INPUTS section not found in settings.ini')
+
+        input_names = globals.cfg_parser.options('BIDS_INPUTS')
+
+        # Convert to output_query format
+        output_query = {}
+        for name in input_names:
+            config_str = globals.cfg_parser.get('BIDS_INPUTS', name)
+            datatype, suffix, extension = [item.strip() for item in config_str.split(':')]
+            output_query[name] = {
+                'datatype': datatype,
+                'suffix': suffix,
+                'extension': extension.split(',') if ',' in extension else extension
+            }
+
+        return output_query
+
 
     def __init__(self, output_query=None):
-        #regexp_sub = [] if regexp_sub is None else regexp_sub
-        #substitutions = []
-        #if default_regexp_sub:
-        #    substitutions = []  # not needed here probably?
-        #substitutions.extend(regexp_sub)
 
-        if output_query is None:
-            self.output_query = {
-                'T1w': dict(
-                    datatype='anat',
-                    suffix='T1w',
-                    extension=['nii', 'nii.gz']
-                ),
-                #'rest': dict(   # todo: how to get rests only
-                #    datatype='func',
-                #    suffix='bold',
-                #    extension=['nii', 'nii.gz']
-                #),
-                'bold': dict(  # this should get all task, only
-                    datatype='func',
-                    suffix='bold',
-                    extension=['nii', 'nii.gz']
-                ),
-                #'fmap': dict(
-                #    modality='fmap',
-                #    extension=['nii', 'nii.gz']
-                #)
-                #'dwi': dict(
-                #    modality='dwi',
-                #    extension=['nii', 'nii.gz']
-                #)
-            }
-        else:
+        if isinstance(output_query, dict):
+            # If output_query is a dict, use it directly (old way)
             self.output_query = output_query
+        elif output_query is None:
+            # If output_query is None, get the inputs from settings.ini
+            self.output_query = self.get_bids_inputs()
+        else:
+            raise ValueError('output_query must be a dict or None!')
 
         super().__init__(None, None, None)
 

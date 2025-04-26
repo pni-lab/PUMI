@@ -319,18 +319,7 @@ def collect_pain_predictions(wf, **kwargs):
     wf.connect(merge_predictions_wf, 'out_file', 'sinker', 'pain_predictions')
 
 
-@BidsPipeline(output_query={
-    'T1w': dict(
-        datatype='anat',
-        suffix='T1w',
-        extension=['nii', 'nii.gz']
-    ),
-    'bold': dict(
-        datatype='func',
-        suffix='bold',
-        extension=['nii', 'nii.gz']
-    )
-})
+@BidsPipeline()
 def rcpl(wf, bbr=True, **kwargs):
 
     print('* bbr:', bbr)
