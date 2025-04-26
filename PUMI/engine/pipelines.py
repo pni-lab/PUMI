@@ -1,5 +1,5 @@
 from configparser import SafeConfigParser
-from nipype.pipeline.engine.nodes import *
+from nipype.pipeline.engine.nodes import Node
 import nipype.interfaces.utility as utility
 from nipype.interfaces import BIDSDataGrabber
 from nipype.interfaces.io import DataSink
@@ -7,6 +7,8 @@ from nipype import Function
 from nipype.utils.filemanip import list_to_filename
 from PUMI import globals
 from PUMI.engine import NestedWorkflow, NestedNode
+import os
+from glob import glob
 
 
 class PumiPipeline:
