@@ -1,3 +1,7 @@
+import hashlib
+
+from nipype.interfaces import BIDSDataGrabber
+
 from PUMI._version import get_versions
 from nipype.pipeline.engine.nodes import *
 import subprocess
@@ -59,8 +63,48 @@ def get_interface_version(interface):
         return tool_name, 'Unknown'
 
 
+def calculate_dataset_hash(bids_dir, output_query):
+    """
+    Calculate SHA256 hash of a BIDS dataset.
+    Uses BIDSDataGrabber to get the exact files that will be used in the pipeline.
+    """
+    hasher = hashlib.sha256()
+
+    grabber = BIDSDataGrabber()
+    grabber.inputs.base_dir = os.path.abspath(bids_dir)
+    grabber.inputs.output_query = output_query
+
+    # Get all subjects
+    subjects = []
+    for sub in glob(os.path.join(bids_dir, 'sub-*')):
+        subjects.append(os.path.basename(sub).split('sub-')[-1])
+
+    # For each subject, get their files and hash them
+    for subject in sorted(subjects):
+        grabber.inputs.subject = subject
+        result = grabber.run()
+
+        # Get all files from the result and sort them
+        files_to_hash = []
+        for key, file_list in result.outputs.get_traitsfree().items():
+            if isinstance(file_list, list):
+                files_to_hash.extend(file_list)
+
+        # Sort and hash the files
+        for file_path in sorted(files_to_hash):
+            try:
+                with open(file_path, 'rb') as f:
+                    hasher.update(f.read())
+            except Exception:
+                # Skip files that can't be read
+                continue
+
+    return hasher.hexdigest()
+
+
 def create_dataset_description(wf,
                                pipeline_description_name,
+                               dataset_hash,
                                dataset_description_name='Derivatives created by PUMI',
                                bids_version='1.9.0'):
     """
@@ -100,6 +144,7 @@ def create_dataset_description(wf,
         'PipelineDescription': {
             'Name': pipeline_description_name,
             'Version': get_versions()['version'],
+            'Dataset Hash': dataset_hash,
             'Software': [{'Name': name, 'Version': version} for name, version in software_versions.items()],
             'Settings': [{section: dict(wf.cfg_parser.items(section)) for section in wf.cfg_parser.sections()}]
         }
