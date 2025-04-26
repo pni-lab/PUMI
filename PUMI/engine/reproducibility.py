@@ -100,7 +100,8 @@ def create_dataset_description(wf,
         'PipelineDescription': {
             'Name': pipeline_description_name,
             'Version': get_versions()['version'],
-            'Software': [{'Name': name, 'Version': version} for name, version in software_versions.items()]
+            'Software': [{'Name': name, 'Version': version} for name, version in software_versions.items()],
+            'Settings': [{section: dict(wf.cfg_parser.items(section)) for section in wf.cfg_parser.sections()}]
         }
     }
 
