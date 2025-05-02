@@ -2,10 +2,14 @@ from nipype.pipeline.engine.workflows import *
 
 
 class NestedWorkflow(Workflow):
-    # input/output filed naming is convenient: no need for 'inputspec.in_file' but simply 'in_file' (as if it was a node)
-    # this is realized by tweaking the inputs of connect
 
-    # plus: connect accepts names instead of objects (for using the pre-specified in/outpoutspec nodes)
+    @property
+    def inputs(self):
+        """Proxy inputs from the inputspec node to support Nipype-style input access"""
+        inputspec = self.get_node('inputspec')
+        if inputspec is None:
+            raise AttributeError("No inputspec node found in workflow")
+        return inputspec.inputs
 
     def connect(self, *args, **kwargs):
 
