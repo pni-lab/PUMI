@@ -102,9 +102,32 @@ def calculate_dataset_hash(bids_dir, output_query):
     return hasher.hexdigest()
 
 
+def calculate_source_hash():
+    """
+    Calculate SHA256 hash of the PUMI Python source code files.
+    """
+    hasher = hashlib.sha256()
+
+    import PUMI
+    pumi_dir = os.path.dirname(PUMI.__file__)
+
+    for root, _, files in os.walk(pumi_dir):
+        for file in sorted(files):
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                try:
+                    with open(file_path, 'rb') as f:
+                        hasher.update(f.read())
+                except Exception:
+                    continue
+
+    return hasher.hexdigest()
+
+
 def create_dataset_description(wf,
                                pipeline_description_name,
                                dataset_hash,
+                               source_hash,
                                dataset_description_name='Derivatives created by PUMI',
                                bids_version='1.9.0'):
     """
@@ -145,6 +168,7 @@ def create_dataset_description(wf,
             'Name': pipeline_description_name,
             'Version': get_versions()['version'],
             'DataGrabber Hash': dataset_hash,
+            'PUMI-Py Hash': source_hash,
             'Software': [{'Name': name, 'Version': version} for name, version in software_versions.items()],
             'Settings': [{section: dict(wf.cfg_parser.items(section)) for section in wf.cfg_parser.sections()}]
         }

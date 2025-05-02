@@ -7,7 +7,7 @@ from nipype import Function
 from nipype.utils.filemanip import list_to_filename
 from PUMI import globals
 from PUMI.engine import NestedWorkflow, NestedNode
-from PUMI.engine.reproducibility import create_dataset_description, calculate_dataset_hash
+from PUMI.engine.reproducibility import create_dataset_description, calculate_dataset_hash, calculate_source_hash
 import os
 from glob import glob
 
@@ -250,6 +250,7 @@ class BidsPipeline(PumiPipeline):
             """
 
             dataset_hash = calculate_dataset_hash(bids_dir, self.output_query)
+            source_hash = calculate_source_hash()
 
             # default: multiproc
             if run_args is None:
@@ -329,7 +330,12 @@ class BidsPipeline(PumiPipeline):
             pipeline_fun(wf=wf, bids_dir=bids_dir, **kwargs)
 
             # Create dataset description for BIDS compliance
-            create_dataset_description(wf, pipeline_description_name=name, dataset_hash=dataset_hash)
+            create_dataset_description(
+                wf,
+                pipeline_description_name=name,
+                dataset_hash=dataset_hash,
+                source_hash=source_hash
+            )
 
             # todo: should we do any post workflow checks
             # e.g. is outputspec connected
