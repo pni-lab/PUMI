@@ -177,6 +177,15 @@ def rpn(wf, **kwargs):
     atlas_selection_wf = atlas_selection('atlas_selection_wf', modularize=True, module_threshold=0.0)
     #atlas_selection_wf.get_node('inputspec').inputs.atlas_dir = ()
 
+    """
+    atlas options:
+    atlas_name_iterables = ['aal','allen','basc','craddock','craddock','destrieux'] #,'difumo','harvard_oxford','juelich','msdl','pauli','pauli','smith','talairach','yeo']
+    atlas_params_iterables = [{},{},{},{},{},{}] #,{'dimension':128},{'atlas_name':'cort-maxprob-thr0-1mm',{'atlas_name':'maxprob-thr0-1mm'},{},{'version':'det'},{},{},{'level_name':'ba'},{}]
+    labelmap_params_iterables = [(),('rsn28',),('122',),('scorr_mean',19),('tcorr_mean',19),()] #,(),(),(),(),(),(),('rsn70',),(),('thick_17',)]
+    modules_name_iterables = ['basc']
+    modules_params_iterables = [{}]
+    modules_labelmap_params_iterables = [('7',)]
+    """
     extract_timeseries = extract_timeseries_nativespace('extract_timeseries')
     wf.connect(atlas_selection_wf, 'labelmap', extract_timeseries, 'atlas')
     wf.connect(atlas_selection_wf, 'labels', extract_timeseries, 'labels')

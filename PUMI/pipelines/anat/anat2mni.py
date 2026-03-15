@@ -1,8 +1,7 @@
 from PUMI.engine import AnatPipeline, QcPipeline
 from PUMI.engine import NestedNode as Node
 from PUMI.pipelines.multimodal.image_manipulation import vol2png
-from PUMI.utils import get_reference, get_config, create_coregistration_qc, registration_ants_hardcoded
-from nipype import Function
+from PUMI.utils import get_reference, get_config, registration_ants_hardcoded
 from nipype.interfaces import fsl
 from nipype.interfaces.ants import Registration, ApplyTransforms
 from nipype.interfaces.utility import Function
@@ -26,13 +25,19 @@ def qc(wf, **kwargs):
 
     """
 
-    # Create png images for quality check
+    # Create png images for quality check with template as background
     anat2mni_qc = vol2png('anat2mni_qc')
     wf.connect('inputspec', 'ref_brain', anat2mni_qc, 'bg_image')
     wf.connect('inputspec', 'in_file', anat2mni_qc, 'overlay_image')
 
+    # Create png images for quality check with individual anatomy as background
+    anat2mni_tplbckground_qc = vol2png('anat2mni_tplbckground_qc')
+    wf.connect('inputspec', 'in_file', anat2mni_tplbckground_qc, 'bg_image')
+    wf.connect('inputspec', 'ref_brain', anat2mni_tplbckground_qc, 'overlay_image')
+
     # sinking
     wf.connect(anat2mni_qc, 'out_file', 'sinker', 'qc_anat2mni')
+    wf.connect(anat2mni_tplbckground_qc, 'out_file', 'sinker', 'qc_anat2mni_templateBackground')
 
     # output
     wf.connect(anat2mni_qc, 'out_file', 'outputspec', 'out_file')

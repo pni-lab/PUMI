@@ -24,7 +24,7 @@ def pick_volume(wf, volume='middle', sink=True, **kwargs):
     """
 
     from nipype.interfaces.fsl import ImageMaths
-    from PUMI.engine import Node
+    from PUMI.engine import NestedNode as Node
     import nipype.interfaces.fsl as fsl
     from nipype import Function
 
@@ -139,7 +139,7 @@ def timecourse2png(wf, plot_type='all', sink=True, **kwargs):
                'vox': use 'x', 'y', 'z' fields for voxel then
                'roi': use 'mask' for roi
     """
-    from PUMI.engine import Node
+    from PUMI.engine import NestedNode as Node
     import nipype.pipeline as pe
     import nipype.interfaces.fsl as fsl
     from nipype import Function

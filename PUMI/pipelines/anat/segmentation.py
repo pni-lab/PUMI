@@ -1,6 +1,6 @@
 from PUMI.engine import QcPipeline, GroupPipeline
 from PUMI.interfaces.HDBet import HDBet
-from PUMI.utils import create_segmentation_qc
+from PUMI.utils.plotting import segmentation_qc_plot
 from nipype.interfaces import fsl
 from nipype.interfaces.utility import Split
 from matplotlib.colors import LinearSegmentedColormap
@@ -33,7 +33,7 @@ def qc_segmentation(wf, sinking_name=None, fmri=False, **kwargs):
     """
     plot = Node(Function(input_names=['overlay', 'bg_img', 'cmap'],
                          output_names=['out_file'],
-                         function=create_segmentation_qc),
+                         function=segmentation_qc_plot),
                 name='plot')
     wf.connect('inputspec', 'background', plot, 'bg_img')
     wf.connect('inputspec', 'overlay', plot, 'overlay')
@@ -69,7 +69,7 @@ def qc_tissue_segmentation(wf, **kwargs):
     """
     plot = Node(Function(input_names=['overlay', 'cmap'],
                          output_names=['out_file'],
-                         function=create_segmentation_qc),
+                         function=segmentation_qc_plot),
                 name='plot')
     colors = ['#00A859', '#FFCC29', '#3E4095']
     plot.inputs.cmap = LinearSegmentedColormap.from_list('tissue_segmentation_colors', colors, N=3)
